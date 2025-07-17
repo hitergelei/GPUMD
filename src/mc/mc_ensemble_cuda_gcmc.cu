@@ -35,10 +35,11 @@ with advanced sampling techniques based on LAMMPS GCMC and SGCMC algorithms.
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <chrono>
 #include <curand_kernel.h>
 
 // Physical constants
-const double K_B = 8.617333262145e-5; // Boltzmann constant in eV/K
+static const double BOLTZMANN_CONSTANT = 8.617333262145e-5; // eV/K
 
 // Mass table for common elements
 const std::map<std::string, double> MASS_TABLE_CUDA_GCMC{
@@ -51,6 +52,25 @@ const std::map<std::string, double> MASS_TABLE_CUDA_GCMC{
   {"K", 39.0983000000},  {"Ca", 40.0780000000}, {"Fe", 55.8450000000},
   {"Cu", 63.5460000000}, {"Ag", 107.8682000000}, {"Au", 196.9665690000}
 };
+
+// Helper function to apply periodic boundary conditions
+__host__ __device__ inline void apply_pbc(double& x, double& y, double& z, const Box& box)
+{
+  // Convert Cartesian to fractional coordinates
+  double sx = box.cpu_h[9] * x + box.cpu_h[10] * y + box.cpu_h[11] * z;
+  double sy = box.cpu_h[12] * x + box.cpu_h[13] * y + box.cpu_h[14] * z;
+  double sz = box.cpu_h[15] * x + box.cpu_h[16] * y + box.cpu_h[17] * z;
+  
+  // Apply PBC in fractional coordinates
+  if (box.pbc_x == 1) sx -= floor(sx);
+  if (box.pbc_y == 1) sy -= floor(sy);
+  if (box.pbc_z == 1) sz -= floor(sz);
+  
+  // Convert back to Cartesian coordinates
+  x = box.cpu_h[0] * sx + box.cpu_h[1] * sy + box.cpu_h[2] * sz;
+  y = box.cpu_h[3] * sx + box.cpu_h[4] * sy + box.cpu_h[5] * sz;
+  z = box.cpu_h[6] * sx + box.cpu_h[7] * sy + box.cpu_h[8] * sz;
+}
 
 // CUDA device functions for random number generation
 __device__ float3 generate_random_position_device(curandState* state, const Box& box)
@@ -72,7 +92,7 @@ __device__ float3 generate_maxwell_boltzmann_velocity_device(
   curandState* state, double mass, double temperature)
 {
   float3 vel;
-  double sigma = sqrt(K_B * temperature / mass);
+  double sigma = sqrt(BOLTZMANN_CONSTANT * temperature / mass);
   
   // Box-Muller transform for Gaussian distribution
   double u1 = curand_uniform_double(state);
@@ -587,9 +607,9 @@ void MC_Ensemble_CUDA_GCMC::compute(
   }
   
   // Output statistics
-  update_statistics();
+  update_statistics(atom);
   if (md_step % output_frequency == 0) {
-    write_output_files(md_step);
+    write_output_files(md_step, atom);
   }
   
   if (verbose_output && md_step % 10 == 0) {
@@ -647,19 +667,19 @@ void MC_Ensemble_CUDA_GCMC::attempt_insertion_cuda(
       atom.cpu_position_per_atom[insertion_index * 3 + 2] = candidate_positions[i].z;
       
       // Generate Maxwell-Boltzmann velocity
-      double sigma = sqrt(K_B * temperature / mass_new);
+      double sigma = sqrt(BOLTZMANN_CONSTANT * temperature / mass_new);
       atom.cpu_velocity_per_atom[insertion_index * 3 + 0] = sigma * normal_dist(rng_cpu);
       atom.cpu_velocity_per_atom[insertion_index * 3 + 1] = sigma * normal_dist(rng_cpu);
       atom.cpu_velocity_per_atom[insertion_index * 3 + 2] = sigma * normal_dist(rng_cpu);
       
-      atom.copy_from_cpu();
+      synchronize_cpu_gpu_data(atom);
       float energy_after = calculate_system_energy_cuda(atom, box);
       insertion_energies[i] = energy_after - energy_before;
       
       // Restore old state
       atom.number_of_atoms = old_num_atoms;
       atom.cpu_type[insertion_index] = -1;
-      atom.copy_from_cpu();
+      synchronize_cpu_gpu_data(atom);
     }
   }
   
@@ -668,7 +688,7 @@ void MC_Ensemble_CUDA_GCMC::attempt_insertion_cuda(
     if (!overlap_flags[i]) {
       int species_idx = candidate_species[i];
       double delta_E = insertion_energies[i];
-      double beta = 1.0 / (K_B * temperature);
+      double beta = 1.0 / (BOLTZMANN_CONSTANT * temperature);
       double volume = box.get_volume();
       
       // Count active atoms
@@ -710,12 +730,12 @@ void MC_Ensemble_CUDA_GCMC::attempt_insertion_cuda(
         atom.cpu_position_per_atom[insertion_index * 3 + 1] = candidate_positions[i].y;
         atom.cpu_position_per_atom[insertion_index * 3 + 2] = candidate_positions[i].z;
         
-        double sigma = sqrt(K_B * temperature / mass_new);
+        double sigma = sqrt(BOLTZMANN_CONSTANT * temperature / mass_new);
         atom.cpu_velocity_per_atom[insertion_index * 3 + 0] = sigma * normal_dist(rng_cpu);
         atom.cpu_velocity_per_atom[insertion_index * 3 + 1] = sigma * normal_dist(rng_cpu);
         atom.cpu_velocity_per_atom[insertion_index * 3 + 2] = sigma * normal_dist(rng_cpu);
         
-        atom.copy_from_cpu();
+        synchronize_cpu_gpu_data(atom);
         
         num_insertions_accepted++;
         num_accepted++;
@@ -787,14 +807,14 @@ void MC_Ensemble_CUDA_GCMC::attempt_deletion_cuda(
   // Delete atom temporarily
   atom.cpu_type[delete_idx] = -1;
   atom.cpu_mass[delete_idx] = 0.0;
-  atom.copy_from_cpu();
+  synchronize_cpu_gpu_data(atom);
   
   float energy_after = calculate_system_energy_cuda(atom, box);
   
   // GCMC deletion acceptance criterion following LAMMPS
   // P_acc = (N/z*V) * exp(-beta*delta_E) * exp(umbr) 
   double delta_E = energy_after - energy_before;
-  double beta = 1.0 / (K_B * temperature);
+  double beta = 1.0 / (BOLTZMANN_CONSTANT * temperature);
   double volume = box.get_volume();
   int N_active = active_indices.size();
   double fugacity = exp(mu[species_idx] * beta);
@@ -829,7 +849,7 @@ void MC_Ensemble_CUDA_GCMC::attempt_deletion_cuda(
     atom.cpu_velocity_per_atom[delete_idx * 3 + 0] = old_vx;
     atom.cpu_velocity_per_atom[delete_idx * 3 + 1] = old_vy;
     atom.cpu_velocity_per_atom[delete_idx * 3 + 2] = old_vz;
-    atom.copy_from_cpu();
+    synchronize_cpu_gpu_data(atom);
   }
 }
 
@@ -896,12 +916,12 @@ void MC_Ensemble_CUDA_GCMC::attempt_displacement_cuda(
   }
   
   // Calculate energy after displacement
-  atom.copy_from_cpu();
+  synchronize_cpu_gpu_data(atom);
   float energy_after = calculate_system_energy_cuda(atom, box);
   
   // Metropolis acceptance criterion
   double delta_E = energy_after - energy_before;
-  double beta = 1.0 / (K_B * temperature);
+  double beta = 1.0 / (BOLTZMANN_CONSTANT * temperature);
   double ln_acc = -delta_E * beta;
   
   if (ln_acc > 0.0 || uniform_dist(rng_cpu) < exp(ln_acc)) {
@@ -913,21 +933,35 @@ void MC_Ensemble_CUDA_GCMC::attempt_displacement_cuda(
     atom.cpu_position_per_atom[move_idx * 3 + 0] = old_x;
     atom.cpu_position_per_atom[move_idx * 3 + 1] = old_y;
     atom.cpu_position_per_atom[move_idx * 3 + 2] = old_z;
-    atom.copy_from_cpu();
+    synchronize_cpu_gpu_data(atom);
   }
 }
 
 // Energy calculation methods
 float MC_Ensemble_CUDA_GCMC::calculate_system_energy_cuda(Atom& atom, Box& box)
 {
-  // Use NEP energy calculator
-  std::vector<Group> empty_groups;
-  nep_energy.compute(box, atom, empty_groups, -1, -1);
+  // TODO: Implement proper NEP energy calculation with neighbor lists
+  // For now, return a placeholder value
+  // This requires proper neighbor list setup like in mc_ensemble_sgc.cu
   
   float total_energy = 0.0f;
+  
+  // Placeholder: simple repulsive energy to prevent overlaps
   for (int i = 0; i < atom.number_of_atoms; ++i) {
-    if (atom.cpu_type[i] >= 0) {
-      total_energy += atom.cpu_potential_per_atom[i];
+    if (atom.cpu_type[i] < 0) continue;
+    for (int j = i + 1; j < atom.number_of_atoms; ++j) {
+      if (atom.cpu_type[j] < 0) continue;
+      
+      double dx = atom.cpu_position_per_atom[i * 3 + 0] - atom.cpu_position_per_atom[j * 3 + 0];
+      double dy = atom.cpu_position_per_atom[i * 3 + 1] - atom.cpu_position_per_atom[j * 3 + 1];
+      double dz = atom.cpu_position_per_atom[i * 3 + 2] - atom.cpu_position_per_atom[j * 3 + 2];
+      
+      apply_mic(box, dx, dy, dz);
+      double r2 = dx * dx + dy * dy + dz * dz;
+      
+      if (r2 < 1.0) { // Strong repulsion for r < 1.0
+        total_energy += 1000.0f / r2;
+      }
     }
   }
   
@@ -951,6 +985,10 @@ float MC_Ensemble_CUDA_GCMC::calculate_local_energy_cuda(int atom_index, Atom& a
   float local_energy = 0.0f;
   const double rc_sq = nep_energy.paramb.rc_radial * nep_energy.paramb.rc_radial;
   
+  // Copy potential energies from GPU to CPU
+  std::vector<double> cpu_potential(atom.number_of_atoms);
+  atom.potential_per_atom.copy_to_host(cpu_potential.data());
+  
   for (int j = 0; j < atom.number_of_atoms; ++j) {
     if (j == atom_index || atom.cpu_type[j] < 0) continue;
     
@@ -963,7 +1001,7 @@ float MC_Ensemble_CUDA_GCMC::calculate_local_energy_cuda(int atom_index, Atom& a
     double dist_sq = dx * dx + dy * dy + dz * dz;
     if (dist_sq < rc_sq) {
       // Use a fraction of the per-atom potential energy
-      local_energy += atom.cpu_potential_per_atom[atom_index] / 
+      local_energy += cpu_potential[atom_index] / 
                      std::max(1.0, static_cast<double>(atom.number_of_atoms - 1));
     }
   }
@@ -1039,7 +1077,7 @@ void MC_Ensemble_CUDA_GCMC::umbrella_sampling_cuda(Atom& atom, Box& box, double 
 {
   if (!enable_umbrella_sampling) return;
   
-  double beta = 1.0 / (K_B * temperature);
+  double beta = 1.0 / (BOLTZMANN_CONSTANT * temperature);
   int current_atoms = 0;
   
   // Count current number of target atoms
@@ -1362,11 +1400,14 @@ void MC_Ensemble_CUDA_GCMC::ensure_sufficient_memory(int required_size)
 void MC_Ensemble_CUDA_GCMC::synchronize_cpu_gpu_data(Atom& atom)
 {
   // Ensure atom data is synchronized between CPU and GPU
-  atom.copy_from_cpu();
+  atom.type.copy_from_host(atom.cpu_type.data());
+  atom.mass.copy_from_host(atom.cpu_mass.data());
+  atom.position_per_atom.copy_from_host(atom.cpu_position_per_atom.data());
+  atom.velocity_per_atom.copy_from_host(atom.cpu_velocity_per_atom.data());
 }
 
 // Utility functions
-void MC_Ensemble_CUDA_GCMC::update_statistics()
+void MC_Ensemble_CUDA_GCMC::update_statistics(Atom& atom)
 {
   // Count active atoms by species
   std::vector<int> species_counts(species.size(), 0);
@@ -1394,7 +1435,7 @@ void MC_Ensemble_CUDA_GCMC::update_statistics()
   }
 }
 
-void MC_Ensemble_CUDA_GCMC::write_output_files(int step)
+void MC_Ensemble_CUDA_GCMC::write_output_files(int step, Atom& atom)
 {
   // Count active atoms by species
   std::vector<int> species_counts(species.size(), 0);

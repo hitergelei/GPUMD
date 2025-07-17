@@ -337,10 +337,9 @@ void MC::parse_mc(const char** param, int num_param, std::vector<Group>& groups,
     mc_ensemble.reset(new MC_Ensemble_SGC(
       param, num_param, num_steps_mc, true, species, types, num_atoms_species, mu_or_phi, kappa));
   } else if (mc_ensemble_type == 3) {
-    // Standard GCMC
+    // Standard GCMC - not implemented yet, using CUDA GCMC instead
     check_species_sgc(groups, atom);
-    mc_ensemble.reset(new MC_Ensemble_GCMC(
-      param, num_param, num_steps_mc, species, types, mu_or_phi, 1.0));
+    PRINT_INPUT_ERROR("Standard GCMC not implemented yet. Use ensemble type 4 for CUDA GCMC.\n");
   } else if (mc_ensemble_type == 4) {
     // CUDA-accelerated GCMC
     check_species_sgc(groups, atom);

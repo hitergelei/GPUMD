@@ -180,6 +180,9 @@ protected:
   bool crystallization_detection_enabled;
   bool enable_pressure_coupling;
   
+  // Wang-Landau sampling parameters
+  double wang_landau_factor;
+  
   // Umbrella sampling parameters
   int target_type;              // Target atom type for umbrella sampling
   int umbrella_target_atoms;    // Target number of atoms for umbrella sampling
@@ -260,8 +263,8 @@ private:
   void initialize_parameters();
   void setup_cuda_kernels();
   void allocate_working_arrays(int size);
-  void update_statistics();
-  void write_output_files(int step);
+  void update_statistics(Atom& atom);
+  void write_output_files(int step, Atom& atom);
   bool check_energy_conservation();
   void handle_cuda_errors(const std::string& operation);
   

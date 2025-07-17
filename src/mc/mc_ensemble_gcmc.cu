@@ -1303,6 +1303,7 @@ void MC_Ensemble_GCMC::wang_landau_sampling(Atom& atom, Box& box, double tempera
 }
 
 // Umbrella sampling method for rare event sampling
+// https://github.com/FTurci/lammps-gcmc-umbrella
 void MC_Ensemble_GCMC::umbrella_sampling(Atom& atom, Box& box, double temperature) {
     // Implements umbrella sampling with biasing potential
     // Currently placeholder implementation

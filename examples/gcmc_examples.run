@@ -1,0 +1,179 @@
+# Example run.in files for GCMC simulations with GPUMD
+
+# ==============================================================================
+# Example 1: Ar adsorption on graphene (Standard GCMC)
+# ==============================================================================
+# This example simulates Ar adsorption on a graphene surface
+# Temperature: 300K, Chemical potential: -2.5 eV
+
+potential nep.txt               # NEP potential file
+velocity 300                   # Initialize velocities at 300K  
+ensemble nve                   # NVE ensemble for MD steps
+
+# GCMC parameters:
+# - Every 100 MD steps, perform 50 MC trials
+# - Temperature: 300K (constant)
+# - 1 species: Ar with chemical potential -2.5 eV
+mc gcmc 100 50 300.0 300.0 1 Ar -2.5
+
+time_step 1                    # 1 fs time step
+dump_thermo 100               # Output thermodynamics every 100 steps
+dump_position 1000 1          # Output positions every 1000 steps
+run 100000                    # Run for 100,000 steps
+
+# ==============================================================================
+# Example 2: CO2/CH4 mixture adsorption (CUDA-accelerated GCMC)
+# ==============================================================================  
+# This example simulates competitive adsorption of CO2 and CH4
+# Uses GPU acceleration for better performance
+
+potential nep_co2_ch4.txt     # NEP potential for CO2/CH4 system
+velocity 300
+ensemble nve
+
+# CUDA GCMC with two species:
+# - CO2: chemical potential -3.2 eV (higher affinity)
+# - CH4: chemical potential -2.8 eV (lower affinity)
+mc cuda_gcmc 50 100 300.0 300.0 2 CO2 -3.2 CH4 -2.8
+
+time_step 1
+dump_thermo 50
+dump_position 500 1
+run 50000
+
+# ==============================================================================
+# Example 3: H2O adsorption in zeolite pores (Group-specific GCMC)
+# ==============================================================================
+# This example applies GCMC only to atoms in specific regions
+
+potential nep_h2o_zeolite.txt
+grouping atomic_numbers       # Define groups by atomic numbers
+velocity 300
+ensemble nve
+
+# Apply GCMC only to group 0 (e.g., pore region)
+# H2O molecules with chemical potential -1.8 eV
+mc gcmc 100 50 300.0 300.0 1 H2O -1.8 group 0 0
+
+time_step 1  
+dump_thermo 100
+dump_position 1000 1
+run 100000
+
+# ==============================================================================
+# Example 4: Temperature-dependent adsorption (Standard GCMC)
+# ==============================================================================
+# This example studies temperature effects from 250K to 400K
+
+potential nep.txt
+velocity 250                  # Start at 250K
+ensemble nve
+
+# Temperature ramping from 250K to 400K
+# N2 adsorption with chemical potential -2.1 eV
+mc gcmc 200 100 250.0 400.0 1 N2 -2.1
+
+time_step 1
+dump_thermo 200
+dump_position 2000 1  
+run 200000                   # Long run to see temperature effects
+
+# ==============================================================================
+# Example 5: High-pressure gas adsorption (CUDA GCMC with enhanced sampling)
+# ==============================================================================
+# This example uses CUDA GCMC for high-pressure conditions
+
+potential nep_mof.txt        # MOF (Metal-Organic Framework) potential
+velocity 300
+ensemble nve
+
+# High chemical potential for high-pressure simulation
+# Enhanced sampling with frequent MC trials
+mc cuda_gcmc 25 200 300.0 300.0 1 CO2 -1.5
+
+time_step 1
+dump_thermo 25
+dump_position 250 1
+run 25000
+
+# ==============================================================================
+# Example 6: Multi-component gas separation (CUDA GCMC)
+# ==============================================================================
+# This example simulates separation of a 3-component gas mixture
+
+potential nep_separation.txt
+velocity 350
+ensemble nve
+
+# Three-component mixture: CO2, N2, CH4
+# Different chemical potentials represent selectivity
+mc cuda_gcmc 75 150 350.0 350.0 3 CO2 -2.8 N2 -3.5 CH4 -3.1
+
+time_step 1
+dump_thermo 75  
+dump_position 750 1
+run 75000
+
+# ==============================================================================
+# Example 7: Low-temperature adsorption study (Standard GCMC) 
+# ==============================================================================
+# This example studies adsorption at low temperatures
+
+potential nep_cryo.txt
+velocity 77                  # Liquid nitrogen temperature
+ensemble nve
+
+# Low-temperature Ar adsorption
+# Lower chemical potential due to lower temperature
+mc gcmc 150 75 77.0 77.0 1 Ar -3.2
+
+time_step 0.5               # Smaller time step for stability
+dump_thermo 150
+dump_position 1500 1
+run 150000
+
+# ==============================================================================
+# Example 8: Pressure swing adsorption cycle (CUDA GCMC)
+# ==============================================================================
+# This example simulates a pressure cycle
+
+potential nep_psa.txt
+velocity 300
+ensemble nve
+
+# High pressure phase (high chemical potential)
+mc cuda_gcmc 50 100 300.0 300.0 1 CO2 -2.0
+time_step 1
+run 25000
+
+# Switch to low pressure (lower chemical potential)  
+mc cuda_gcmc 50 100 300.0 300.0 1 CO2 -4.0
+run 25000
+
+# ==============================================================================
+# Notes for using these examples:
+# ==============================================================================
+#
+# 1. NEP potential files:
+#    - Make sure the potential file contains the species used in GCMC
+#    - Species names in MC command must match those in the potential
+#
+# 2. Chemical potential selection:
+#    - Start with literature values or theoretical estimates
+#    - Adjust based on desired loading/density
+#    - More negative values = lower pressure/loading
+#
+# 3. Performance tuning:
+#    - Standard GCMC: good for systems < 10,000 atoms
+#    - CUDA GCMC: recommended for systems > 10,000 atoms
+#    - Adjust num_steps_md and num_steps_mc based on system size
+#
+# 4. Output monitoring:
+#    - Check acceptance rates in output files
+#    - Monitor energy stability
+#    - Verify mass balance for multi-component systems
+#
+# 5. System preparation:
+#    - Ensure adequate box size for insertion
+#    - Pre-equilibrate the framework before GCMC
+#    - Consider using replicate command for larger systems

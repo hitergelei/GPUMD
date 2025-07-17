@@ -69,7 +69,7 @@ public:
     Atom& atom, Box& box, std::vector<Group>& groups,
     int grouping_method, int group_id, double temperature, int& num_accepted);
 
-  // Advanced GCMC methods
+  // Additional MC move types
   void attempt_volume_change_cuda(Atom& atom, Box& box, double temperature, int& num_accepted);
   void attempt_cluster_moves_cuda(Atom& atom, Box& box, double temperature, int& num_accepted);
   void attempt_identity_change_cuda(Atom& atom, Box& box, double temperature, int& num_accepted);
@@ -196,6 +196,14 @@ protected:
   int umbrella_update_frequency;     // frequency to update umbrella parameters
   bool umbrella_adaptive;            // whether to use adaptive umbrella sampling
   std::vector<double> umbrella_force_constants; // force constants for different species
+  
+  // Adaptive umbrella sampling variables
+  int mc_attempts;
+  int attempted_insertions;
+  int attempted_deletions;
+  int num_accepted_insertions;
+  int num_accepted_deletions;
+  bool enable_adaptive_umbrella;
   
   // GPU memory arrays
   GPU_Vector<float> gpu_candidate_positions_x;

@@ -20,6 +20,7 @@ The driver class for the various MC ensembles.
 #include "mc.cuh"
 #include "mc_ensemble_canonical.cuh"
 #include "mc_ensemble_sgc.cuh"
+#include "mc_ensemble_cuda_gcmc.cuh"
 #include "model/atom.cuh"
 #include "utilities/common.cuh"
 #include "utilities/gpu_macro.cuh"
@@ -219,6 +220,12 @@ void MC::parse_mc(const char** param, int num_param, std::vector<Group>& groups,
   } else if (strcmp(param[1], "vcsgc") == 0) {
     printf("Perform VCSGC MCMD:\n");
     mc_ensemble_type = 2;
+  } else if (strcmp(param[1], "gcmc") == 0) {
+    printf("Perform GCMC (Grand Canonical Monte Carlo):\n");
+    mc_ensemble_type = 3;
+  } else if (strcmp(param[1], "cuda_gcmc") == 0) {
+    printf("Perform CUDA-accelerated GCMC:\n");
+    mc_ensemble_type = 4;
   } else {
     PRINT_INPUT_ERROR("invalid MC ensemble for MCMD.\n");
   }
@@ -258,17 +265,17 @@ void MC::parse_mc(const char** param, int num_param, std::vector<Group>& groups,
     temperature_initial,
     temperature_final);
 
-  if (mc_ensemble_type == 1 || mc_ensemble_type == 2) {
+  if (mc_ensemble_type == 1 || mc_ensemble_type == 2 || mc_ensemble_type == 3 || mc_ensemble_type == 4) {
     if (num_param < 7) {
-      PRINT_INPUT_ERROR("reading error for num_types in SGC/VCSGC MCMD.\n");
+      PRINT_INPUT_ERROR("reading error for num_types in SGC/VCSGC/GCMC MCMD.\n");
     }
     if (!is_valid_int(param[6], &num_types_mc)) {
-      PRINT_INPUT_ERROR("number of types in SGC/VCSGC MC trials should be an integer.\n");
+      PRINT_INPUT_ERROR("number of types in SGC/VCSGC/GCMC MC trials should be an integer.\n");
     }
-    if (num_types_mc < 2 || num_types_mc > 4) {
-      PRINT_INPUT_ERROR("number of types in SGC/VCSGC MC trials should be 2 to 4.\n");
+    if (num_types_mc < 1 || num_types_mc > 4) {
+      PRINT_INPUT_ERROR("number of types in SGC/VCSGC/GCMC MC trials should be 1 to 4.\n");
     }
-    printf("    number of species involved in SGC/VCSGC = %d.\n", num_types_mc);
+    printf("    number of species involved in SGC/VCSGC/GCMC = %d.\n", num_types_mc);
 
     if (num_param < (7 + num_types_mc * 2)) {
       PRINT_INPUT_ERROR("not enough (species, mu) or (species, phi) inputs.\n");
@@ -303,6 +310,8 @@ void MC::parse_mc(const char** param, int num_param, std::vector<Group>& groups,
     num_param_before_group = 7 + num_types_mc * 2;
   } else if (mc_ensemble_type == 2) {
     num_param_before_group = 8 + num_types_mc * 2;
+  } else if (mc_ensemble_type == 3 || mc_ensemble_type == 4) {
+    num_param_before_group = 7 + num_types_mc * 2;
   }
 
   if (num_param > num_param_before_group) {
@@ -327,6 +336,16 @@ void MC::parse_mc(const char** param, int num_param, std::vector<Group>& groups,
     check_species_sgc(groups, atom);
     mc_ensemble.reset(new MC_Ensemble_SGC(
       param, num_param, num_steps_mc, true, species, types, num_atoms_species, mu_or_phi, kappa));
+  } else if (mc_ensemble_type == 3) {
+    // Standard GCMC
+    check_species_sgc(groups, atom);
+    mc_ensemble.reset(new MC_Ensemble_GCMC(
+      param, num_param, num_steps_mc, species, types, mu_or_phi, 1.0));
+  } else if (mc_ensemble_type == 4) {
+    // CUDA-accelerated GCMC
+    check_species_sgc(groups, atom);
+    mc_ensemble.reset(new MC_Ensemble_CUDA_GCMC(
+      param, num_param, num_steps_mc, species, types, mu_or_phi, 1.0, temperature_initial));
   }
 
   do_mcmd = true;

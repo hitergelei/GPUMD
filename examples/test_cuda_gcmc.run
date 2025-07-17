@@ -1,0 +1,23 @@
+# 测试GCMC功能的run.in文件
+
+# 基本设置
+potential nep.txt
+velocity 300
+
+# 集合设置
+ensemble nve
+
+# CUDA GCMC测试
+# 语法: mc cuda_gcmc <md_steps> <mc_steps> <T_initial> <T_final> <num_species> <species1> <mu1> [<species2> <mu2>] ...
+mc cuda_gcmc 100 50 300.0 300.0 1 Ar -2.5
+
+# 时间步长
+time_step 1
+
+# 运行模拟
+run 10000
+
+# 输出会产生：
+# gcmc_cuda.out - 主统计文件
+# energy_cuda.out - 能量数据
+# statistics_cuda.out - 详细统计

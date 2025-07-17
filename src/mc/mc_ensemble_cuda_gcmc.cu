@@ -418,6 +418,14 @@ MC_Ensemble_CUDA_GCMC::MC_Ensemble_CUDA_GCMC(
   enable_bias_potential = false;
   enable_crystallization_detection = false;
   enable_pressure_coupling = false;
+  enable_adaptive_umbrella = false;
+  
+  // Initialize adaptive umbrella sampling variables
+  mc_attempts = 0;
+  attempted_insertions = 0;
+  attempted_deletions = 0;
+  num_accepted_insertions = 0;
+  num_accepted_deletions = 0;
   
   // Initialize enhanced sampling parameters
   wang_landau_factor = 1.0;
@@ -623,15 +631,15 @@ void MC_Ensemble_CUDA_GCMC::attempt_insertion_cuda(
       
       atom.cpu_type[insertion_index] = types[species_idx];
       atom.cpu_mass[insertion_index] = mass_new;
-      atom.cpu_position_per_atom[0][insertion_index] = candidate_positions[i].x;
-      atom.cpu_position_per_atom[1][insertion_index] = candidate_positions[i].y;
-      atom.cpu_position_per_atom[2][insertion_index] = candidate_positions[i].z;
+      atom.cpu_position_per_atom[insertion_index * 3 + 0] = candidate_positions[i].x;
+      atom.cpu_position_per_atom[insertion_index * 3 + 1] = candidate_positions[i].y;
+      atom.cpu_position_per_atom[insertion_index * 3 + 2] = candidate_positions[i].z;
       
       // Generate Maxwell-Boltzmann velocity
       double sigma = sqrt(K_B * temperature / mass_new);
-      atom.cpu_velocity_per_atom[0][insertion_index] = sigma * normal_dist(rng_cpu);
-      atom.cpu_velocity_per_atom[1][insertion_index] = sigma * normal_dist(rng_cpu);
-      atom.cpu_velocity_per_atom[2][insertion_index] = sigma * normal_dist(rng_cpu);
+      atom.cpu_velocity_per_atom[insertion_index * 3 + 0] = sigma * normal_dist(rng_cpu);
+      atom.cpu_velocity_per_atom[insertion_index * 3 + 1] = sigma * normal_dist(rng_cpu);
+      atom.cpu_velocity_per_atom[insertion_index * 3 + 2] = sigma * normal_dist(rng_cpu);
       
       atom.copy_from_cpu();
       float energy_after = calculate_system_energy_cuda(atom, box);
@@ -679,14 +687,14 @@ void MC_Ensemble_CUDA_GCMC::attempt_insertion_cuda(
         
         atom.cpu_type[insertion_index] = types[species_idx];
         atom.cpu_mass[insertion_index] = mass_new;
-        atom.cpu_position_per_atom[0][insertion_index] = candidate_positions[i].x;
-        atom.cpu_position_per_atom[1][insertion_index] = candidate_positions[i].y;
-        atom.cpu_position_per_atom[2][insertion_index] = candidate_positions[i].z;
+        atom.cpu_position_per_atom[insertion_index * 3 + 0] = candidate_positions[i].x;
+        atom.cpu_position_per_atom[insertion_index * 3 + 1] = candidate_positions[i].y;
+        atom.cpu_position_per_atom[insertion_index * 3 + 2] = candidate_positions[i].z;
         
         double sigma = sqrt(K_B * temperature / mass_new);
-        atom.cpu_velocity_per_atom[0][insertion_index] = sigma * normal_dist(rng_cpu);
-        atom.cpu_velocity_per_atom[1][insertion_index] = sigma * normal_dist(rng_cpu);
-        atom.cpu_velocity_per_atom[2][insertion_index] = sigma * normal_dist(rng_cpu);
+        atom.cpu_velocity_per_atom[insertion_index * 3 + 0] = sigma * normal_dist(rng_cpu);
+        atom.cpu_velocity_per_atom[insertion_index * 3 + 1] = sigma * normal_dist(rng_cpu);
+        atom.cpu_velocity_per_atom[insertion_index * 3 + 2] = sigma * normal_dist(rng_cpu);
         
         atom.copy_from_cpu();
         
@@ -750,12 +758,12 @@ void MC_Ensemble_CUDA_GCMC::attempt_deletion_cuda(
   // Store atom data
   int old_type = atom.cpu_type[delete_idx];
   double old_mass = atom.cpu_mass[delete_idx];
-  double old_x = atom.cpu_position_per_atom[0][delete_idx];
-  double old_y = atom.cpu_position_per_atom[1][delete_idx];
-  double old_z = atom.cpu_position_per_atom[2][delete_idx];
-  double old_vx = atom.cpu_velocity_per_atom[0][delete_idx];
-  double old_vy = atom.cpu_velocity_per_atom[1][delete_idx];
-  double old_vz = atom.cpu_velocity_per_atom[2][delete_idx];
+  double old_x = atom.cpu_position_per_atom[delete_idx * 3 + 0];
+  double old_y = atom.cpu_position_per_atom[delete_idx * 3 + 1];
+  double old_z = atom.cpu_position_per_atom[delete_idx * 3 + 2];
+  double old_vx = atom.cpu_velocity_per_atom[delete_idx * 3 + 0];
+  double old_vy = atom.cpu_velocity_per_atom[delete_idx * 3 + 1];
+  double old_vz = atom.cpu_velocity_per_atom[delete_idx * 3 + 2];
   
   // Delete atom temporarily
   atom.cpu_type[delete_idx] = -1;
@@ -789,12 +797,12 @@ void MC_Ensemble_CUDA_GCMC::attempt_deletion_cuda(
     // Reject deletion - restore atom
     atom.cpu_type[delete_idx] = old_type;
     atom.cpu_mass[delete_idx] = old_mass;
-    atom.cpu_position_per_atom[0][delete_idx] = old_x;
-    atom.cpu_position_per_atom[1][delete_idx] = old_y;
-    atom.cpu_position_per_atom[2][delete_idx] = old_z;
-    atom.cpu_velocity_per_atom[0][delete_idx] = old_vx;
-    atom.cpu_velocity_per_atom[1][delete_idx] = old_vy;
-    atom.cpu_velocity_per_atom[2][delete_idx] = old_vz;
+    atom.cpu_position_per_atom[delete_idx * 3 + 0] = old_x;
+    atom.cpu_position_per_atom[delete_idx * 3 + 1] = old_y;
+    atom.cpu_position_per_atom[delete_idx * 3 + 2] = old_z;
+    atom.cpu_velocity_per_atom[delete_idx * 3 + 0] = old_vx;
+    atom.cpu_velocity_per_atom[delete_idx * 3 + 1] = old_vy;
+    atom.cpu_velocity_per_atom[delete_idx * 3 + 2] = old_vz;
     atom.copy_from_cpu();
   }
 }
@@ -832,32 +840,32 @@ void MC_Ensemble_CUDA_GCMC::attempt_displacement_cuda(
   float energy_before = calculate_system_energy_cuda(atom, box);
   
   // Store old position
-  double old_x = atom.cpu_position_per_atom[0][move_idx];
-  double old_y = atom.cpu_position_per_atom[1][move_idx];
-  double old_z = atom.cpu_position_per_atom[2][move_idx];
+  double old_x = atom.cpu_position_per_atom[move_idx * 3 + 0];
+  double old_y = atom.cpu_position_per_atom[move_idx * 3 + 1];
+  double old_z = atom.cpu_position_per_atom[move_idx * 3 + 2];
   
   // Apply displacement
-  atom.cpu_position_per_atom[0][move_idx] += dx;
-  atom.cpu_position_per_atom[1][move_idx] += dy;
-  atom.cpu_position_per_atom[2][move_idx] += dz;
+  atom.cpu_position_per_atom[move_idx * 3 + 0] += dx;
+  atom.cpu_position_per_atom[move_idx * 3 + 1] += dy;
+  atom.cpu_position_per_atom[move_idx * 3 + 2] += dz;
   
   // Apply periodic boundary conditions
-  apply_pbc(atom.cpu_position_per_atom[0][move_idx], 
-           atom.cpu_position_per_atom[1][move_idx], 
-           atom.cpu_position_per_atom[2][move_idx], box);
+  apply_pbc(atom.cpu_position_per_atom[move_idx * 3 + 0], 
+           atom.cpu_position_per_atom[move_idx * 3 + 1], 
+           atom.cpu_position_per_atom[move_idx * 3 + 2], box);
   
   // Check for overlap
   bool has_overlap = check_overlap_cuda(
-    atom.cpu_position_per_atom[0][move_idx],
-    atom.cpu_position_per_atom[1][move_idx],
-    atom.cpu_position_per_atom[2][move_idx],
+    atom.cpu_position_per_atom[move_idx * 3 + 0],
+    atom.cpu_position_per_atom[move_idx * 3 + 1],
+    atom.cpu_position_per_atom[move_idx * 3 + 2],
     atom, box, min_distance);
   
   if (has_overlap) {
     // Restore old position
-    atom.cpu_position_per_atom[0][move_idx] = old_x;
-    atom.cpu_position_per_atom[1][move_idx] = old_y;
-    atom.cpu_position_per_atom[2][move_idx] = old_z;
+    atom.cpu_position_per_atom[move_idx * 3 + 0] = old_x;
+    atom.cpu_position_per_atom[move_idx * 3 + 1] = old_y;
+    atom.cpu_position_per_atom[move_idx * 3 + 2] = old_z;
     return;
   }
   
@@ -876,9 +884,9 @@ void MC_Ensemble_CUDA_GCMC::attempt_displacement_cuda(
     num_accepted++;
   } else {
     // Reject displacement - restore old position
-    atom.cpu_position_per_atom[0][move_idx] = old_x;
-    atom.cpu_position_per_atom[1][move_idx] = old_y;
-    atom.cpu_position_per_atom[2][move_idx] = old_z;
+    atom.cpu_position_per_atom[move_idx * 3 + 0] = old_x;
+    atom.cpu_position_per_atom[move_idx * 3 + 1] = old_y;
+    atom.cpu_position_per_atom[move_idx * 3 + 2] = old_z;
     atom.copy_from_cpu();
   }
 }
@@ -920,9 +928,9 @@ float MC_Ensemble_CUDA_GCMC::calculate_local_energy_cuda(int atom_index, Atom& a
   for (int j = 0; j < atom.number_of_atoms; ++j) {
     if (j == atom_index || atom.cpu_type[j] < 0) continue;
     
-    double dx = atom.cpu_position_per_atom[0][atom_index] - atom.cpu_position_per_atom[0][j];
-    double dy = atom.cpu_position_per_atom[1][atom_index] - atom.cpu_position_per_atom[1][j];
-    double dz = atom.cpu_position_per_atom[2][atom_index] - atom.cpu_position_per_atom[2][j];
+    double dx = atom.cpu_position_per_atom[atom_index * 3 + 0] - atom.cpu_position_per_atom[j * 3 + 0];
+    double dy = atom.cpu_position_per_atom[atom_index * 3 + 1] - atom.cpu_position_per_atom[j * 3 + 1];
+    double dz = atom.cpu_position_per_atom[atom_index * 3 + 2] - atom.cpu_position_per_atom[j * 3 + 2];
     
     apply_mic(box, dx, dy, dz);
     
@@ -969,9 +977,9 @@ bool MC_Ensemble_CUDA_GCMC::check_overlap_cuda(
   for (int i = 0; i < atom.number_of_atoms; ++i) {
     if (atom.cpu_type[i] < 0) continue; // Skip inactive atoms
     
-    double dx = atom.cpu_position_per_atom[0][i] - x;
-    double dy = atom.cpu_position_per_atom[1][i] - y;
-    double dz = atom.cpu_position_per_atom[2][i] - z;
+    double dx = atom.cpu_position_per_atom[i * 3 + 0] - x;
+    double dy = atom.cpu_position_per_atom[i * 3 + 1] - y;
+    double dz = atom.cpu_position_per_atom[i * 3 + 2] - z;
     
     apply_mic(box, dx, dy, dz);
     
@@ -1009,7 +1017,7 @@ void MC_Ensemble_CUDA_GCMC::umbrella_sampling_cuda(Atom& atom, Box& box, double 
   int current_atoms = 0;
   
   // Count current number of target atoms
-  for (int i = 0; i < atom.N; i++) {
+  for (int i = 0; i < atom.number_of_atoms; i++) {
     if (atom.type[i] == target_type) {
       current_atoms++;
     }
@@ -1061,7 +1069,7 @@ void MC_Ensemble_CUDA_GCMC::update_umbrella_parameters(Atom& atom, Box& box)
   if (!enable_umbrella_sampling) return;
   
   int current_atoms = 0;
-  for (int i = 0; i < atom.N; i++) {
+  for (int i = 0; i < atom.number_of_atoms; i++) {
     if (atom.type[i] == target_type) {
       current_atoms++;
     }
@@ -1147,9 +1155,9 @@ bool MC_Ensemble_CUDA_GCMC::validate_system_state_cuda(Atom& atom, Box& box)
     for (int j = i + 1; j < atom.number_of_atoms; ++j) {
       if (atom.cpu_type[j] < 0) continue;
       
-      double dx = atom.cpu_position_per_atom[0][i] - atom.cpu_position_per_atom[0][j];
-      double dy = atom.cpu_position_per_atom[1][i] - atom.cpu_position_per_atom[1][j];
-      double dz = atom.cpu_position_per_atom[2][i] - atom.cpu_position_per_atom[2][j];
+      double dx = atom.cpu_position_per_atom[i * 3 + 0] - atom.cpu_position_per_atom[j * 3 + 0];
+      double dy = atom.cpu_position_per_atom[i * 3 + 1] - atom.cpu_position_per_atom[j * 3 + 1];
+      double dz = atom.cpu_position_per_atom[i * 3 + 2] - atom.cpu_position_per_atom[j * 3 + 2];
       
       apply_mic(box, dx, dy, dz);
       
@@ -1460,4 +1468,46 @@ bool MC_Ensemble_CUDA_GCMC::load_checkpoint_cuda(const std::string& filename)
   checkpoint.close();
   printf("CUDA GCMC checkpoint loaded from %s\n", filename.c_str());
   return true;
+}
+
+// Additional MC move implementations
+void MC_Ensemble_CUDA_GCMC::attempt_volume_change_cuda(
+  Atom& atom, Box& box, double temperature, int& num_accepted)
+{
+  num_volume_changes_attempted++;
+  // Placeholder implementation - volume changes require careful handling of pressure
+  // In a full implementation, this would:
+  // 1. Generate random volume change
+  // 2. Scale all atomic positions
+  // 3. Calculate energy change
+  // 4. Apply NPT acceptance criterion
+  
+  // For now, just return without doing anything
+  if (verbose_output) {
+    printf("CUDA GCMC: Volume change attempted (not implemented)\n");
+  }
+}
+
+void MC_Ensemble_CUDA_GCMC::attempt_cluster_moves_cuda(
+  Atom& atom, Box& box, double temperature, int& num_accepted)
+{
+  num_cluster_moves_attempted++;
+  // Placeholder implementation for cluster moves
+  // Would involve moving groups of atoms together
+  
+  if (verbose_output) {
+    printf("CUDA GCMC: Cluster move attempted (not implemented)\n");
+  }
+}
+
+void MC_Ensemble_CUDA_GCMC::attempt_identity_change_cuda(
+  Atom& atom, Box& box, double temperature, int& num_accepted)
+{
+  num_identity_changes_attempted++;
+  // Placeholder implementation for identity changes
+  // Would involve changing atom types while keeping positions
+  
+  if (verbose_output) {
+    printf("CUDA GCMC: Identity change attempted (not implemented)\n");
+  }
 }

@@ -80,6 +80,14 @@ public:
   void parallel_tempering_cuda(Atom& atom, Box& box, double temperature, int& num_accepted);
   void bias_potential_cuda(Atom& atom, Box& box, double& energy_bias);
   
+  // Umbrella sampling specific methods
+  double calculate_umbrella_bias_energy(int current_atoms, int target_atoms, double force_constant);
+  void update_umbrella_parameters(Atom& atom, Box& box);
+  void apply_umbrella_bias_to_insertion(double& ln_acc, int n_before, int n_after);
+  void apply_umbrella_bias_to_deletion(double& ln_acc, int n_before, int n_after);
+  void adaptive_umbrella_tuning();
+  void write_umbrella_statistics(int step);
+  
   // Energy calculations
   float calculate_system_energy_cuda(Atom& atom, Box& box);
   float calculate_local_energy_cuda(int atom_index, Atom& atom, Box& box);
@@ -173,9 +181,21 @@ protected:
   bool enable_pressure_coupling;
   
   double wang_landau_factor;
-  double umbrella_force_constant;
+  double umbrella_force_constant;    // k parameter for umbrella sampling
+  int umbrella_target_atoms;         // n0 parameter for umbrella sampling
+  int umbrella_current_atoms;        // current number of target atoms
+  double umbrella_bias_energy;       // current umbrella bias energy
   std::vector<double> bias_potential_params;
   std::vector<double> order_parameters;
+  std::vector<double> umbrella_bias_history;  // history of umbrella bias energies
+  std::vector<int> atom_count_umbrella_history; // history of atom counts for umbrella
+  
+  // Umbrella sampling specific parameters
+  double umbrella_temperature;       // temperature for umbrella sampling
+  double umbrella_acceptance_ratio;  // acceptance ratio for umbrella moves
+  int umbrella_update_frequency;     // frequency to update umbrella parameters
+  bool umbrella_adaptive;            // whether to use adaptive umbrella sampling
+  std::vector<double> umbrella_force_constants; // force constants for different species
   
   // GPU memory arrays
   GPU_Vector<float> gpu_candidate_positions_x;

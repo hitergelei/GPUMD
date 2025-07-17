@@ -177,18 +177,14 @@ protected:
   bool enable_umbrella_sampling;
   bool enable_parallel_tempering;
   bool enable_bias_potential;
-  bool enable_crystallization_detection;
+  bool crystallization_detection_enabled;
   bool enable_pressure_coupling;
   
-  double wang_landau_factor;
-  double umbrella_force_constant;    // k parameter for umbrella sampling
-  int umbrella_target_atoms;         // n0 parameter for umbrella sampling
-  int umbrella_current_atoms;        // current number of target atoms
-  double umbrella_bias_energy;       // current umbrella bias energy
-  std::vector<double> bias_potential_params;
-  std::vector<double> order_parameters;
-  std::vector<double> umbrella_bias_history;  // history of umbrella bias energies
-  std::vector<int> atom_count_umbrella_history; // history of atom counts for umbrella
+  // Umbrella sampling parameters
+  int target_type;              // Target atom type for umbrella sampling
+  int umbrella_target_atoms;    // Target number of atoms for umbrella sampling
+  double umbrella_force_constant; // Force constant for umbrella potential
+  double umbrella_bias_energy;  // Current umbrella bias energy
   
   // Umbrella sampling specific parameters
   double umbrella_temperature;       // temperature for umbrella sampling

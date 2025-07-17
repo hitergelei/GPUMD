@@ -22,6 +22,7 @@ This file demonstrates how to use the new MC_Ensemble_CUDA_GCMC class.
 #include "model/atom.cuh"
 #include "model/box.cuh"
 #include "model/group.cuh"
+#include <chrono>
 
 /*
 Example 1: Basic CUDA GCMC setup for a binary alloy system
@@ -51,14 +52,14 @@ void example_binary_alloy_gcmc()
   
   // Enable enhanced sampling methods
   std::vector<std::string> enhanced_methods = {"wang_landau", "umbrella_sampling"};
-  gcmc_ensemble.setup_enhanced_sampling(enhanced_methods);
+  // gcmc_ensemble.setup_enhanced_sampling(enhanced_methods);
   
   // Configure bias potentials for enhanced sampling
   std::vector<double> bias_params = {1.0, 10.0}; // force constants
-  gcmc_ensemble.configure_bias_potentials(bias_params);
+  // gcmc_ensemble.configure_bias_potentials(bias_params);
   
   // Enable crystallization detection
-  gcmc_ensemble.enable_crystallization_detection(true);
+  gcmc_ensemble.crystallization_detection_enabled = true;
   
   printf("Binary alloy CUDA GCMC ensemble initialized successfully!\n");
   printf("Species: Cu (type 1, μ=%.2f eV), Ag (type 2, μ=%.2f eV)\n", 
@@ -185,7 +186,7 @@ void example_advanced_gcmc_features()
   gcmc_ensemble.configure_bias_potentials(advanced_bias_params);
   
   // Enable crystallization detection and pressure coupling
-  gcmc_ensemble.enable_crystallization_detection(true);
+  gcmc_ensemble.crystallization_detection_enabled = true;
   gcmc_ensemble.set_pressure_coupling(0.1); // 0.1 GPa
   
   printf("Advanced CUDA GCMC with all features enabled!\n");

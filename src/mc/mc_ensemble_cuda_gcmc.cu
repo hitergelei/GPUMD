@@ -416,8 +416,14 @@ MC_Ensemble_CUDA_GCMC::MC_Ensemble_CUDA_GCMC(
   enable_umbrella_sampling = false;
   enable_parallel_tempering = false;
   enable_bias_potential = false;
-  enable_crystallization_detection = false;
+  crystallization_detection_enabled = false;
   enable_pressure_coupling = false;
+  
+  // Initialize umbrella sampling parameters
+  umbrella_force_constant = 0.0;
+  umbrella_target_atoms = 0;
+  umbrella_bias_energy = 0.0;
+  target_type = -1;
   enable_adaptive_umbrella = false;
   
   // Initialize adaptive umbrella sampling variables
@@ -430,6 +436,11 @@ MC_Ensemble_CUDA_GCMC::MC_Ensemble_CUDA_GCMC(
   // Initialize enhanced sampling parameters
   wang_landau_factor = 1.0;
   umbrella_force_constant = 10.0;
+  
+  // Initialize umbrella sampling parameters
+  target_type = 0;             // Default to first atom type
+  umbrella_target_atoms = 50;  // Default target number
+  umbrella_bias_energy = 0.0;
   
   // Initialize CUDA parameters
   cuda_blocks_per_grid = 256;
@@ -666,15 +677,23 @@ void MC_Ensemble_CUDA_GCMC::attempt_insertion_cuda(
         if (atom.cpu_type[j] >= 0) N_active++;
       }
       
-      // GCMC insertion acceptance criterion
-      double ln_acc = mu[species_idx] * beta - delta_E * beta + log(volume / (N_active + 1));
+      // GCMC insertion acceptance criterion following LAMMPS
+      // P_acc = (z*V/(N+1)) * exp(-beta*delta_E) * exp(umbr)
+      // where z = exp(beta*mu) is the fugacity
+      double fugacity = exp(mu[species_idx] * beta);
+      double acceptance_ratio = fugacity * volume / (N_active + 1) * exp(-beta * delta_E);
       
       // Apply umbrella sampling bias if enabled
       if (enable_umbrella_sampling && types[species_idx] == target_type) {
-        apply_umbrella_bias_to_insertion(ln_acc, N_active, N_active + 1);
+        int n_before = N_active;
+        int n_after = N_active + 1;
+        double umbr = -0.5 * umbrella_force_constant * 
+                     ((n_after - umbrella_target_atoms) * (n_after - umbrella_target_atoms) - 
+                      (n_before - umbrella_target_atoms) * (n_before - umbrella_target_atoms));
+        acceptance_ratio *= exp(umbr);
       }
       
-      if (ln_acc > 0.0 || uniform_dist(rng_cpu) < exp(ln_acc)) {
+      if (uniform_dist(rng_cpu) < acceptance_ratio) {
         // Accept insertion
         int insertion_index = atom.number_of_atoms;
         if (insertion_index >= max_atoms) {
@@ -772,20 +791,27 @@ void MC_Ensemble_CUDA_GCMC::attempt_deletion_cuda(
   
   float energy_after = calculate_system_energy_cuda(atom, box);
   
-  // GCMC deletion acceptance criterion
+  // GCMC deletion acceptance criterion following LAMMPS
+  // P_acc = (N/z*V) * exp(-beta*delta_E) * exp(umbr) 
   double delta_E = energy_after - energy_before;
   double beta = 1.0 / (K_B * temperature);
   double volume = box.get_volume();
   int N_active = active_indices.size();
+  double fugacity = exp(mu[species_idx] * beta);
   
-  double ln_acc = -mu[species_idx] * beta - delta_E * beta + log(N_active / volume);
+  double acceptance_ratio = N_active / (fugacity * volume) * exp(-beta * delta_E);
   
   // Apply umbrella sampling bias if enabled
   if (enable_umbrella_sampling && old_type == target_type) {
-    apply_umbrella_bias_to_deletion(ln_acc, N_active, N_active - 1);
+    int n_before = N_active;
+    int n_after = N_active - 1;
+    double umbr = -0.5 * umbrella_force_constant * 
+                 ((n_after - umbrella_target_atoms) * (n_after - umbrella_target_atoms) - 
+                  (n_before - umbrella_target_atoms) * (n_before - umbrella_target_atoms));
+    acceptance_ratio *= exp(umbr);
   }
   
-  if (ln_acc > 0.0 || uniform_dist(rng_cpu) < exp(ln_acc)) {
+  if (uniform_dist(rng_cpu) < acceptance_ratio) {
     // Accept deletion
     num_deletions_accepted++;
     num_accepted++;
@@ -1018,7 +1044,7 @@ void MC_Ensemble_CUDA_GCMC::umbrella_sampling_cuda(Atom& atom, Box& box, double 
   
   // Count current number of target atoms
   for (int i = 0; i < atom.number_of_atoms; i++) {
-    if (atom.type[i] == target_type) {
+    if (atom.cpu_type[i] == target_type) {
       current_atoms++;
     }
   }
@@ -1039,6 +1065,7 @@ void MC_Ensemble_CUDA_GCMC::apply_umbrella_bias_to_insertion(double& ln_acc, int
   
   // Calculate umbrella bias contribution following LAMMPS implementation
   // umbr = -beta * 0.5 * k * ((n_after - n0)^2 - (n_before - n0)^2)
+  // Note: beta is already included in ln_acc calculation, so we don't multiply by beta here
   double n0 = static_cast<double>(umbrella_target_atoms);
   double k = umbrella_force_constant;
   double n_before_d = static_cast<double>(n_before);
@@ -1046,7 +1073,7 @@ void MC_Ensemble_CUDA_GCMC::apply_umbrella_bias_to_insertion(double& ln_acc, int
   
   double umbr = -0.5 * k * ((n_after_d - n0) * (n_after_d - n0) - (n_before_d - n0) * (n_before_d - n0));
   
-  ln_acc += umbr; // Add umbrella bias to acceptance probability
+  ln_acc += umbr; // Add umbrella bias to log acceptance probability
 }
 
 void MC_Ensemble_CUDA_GCMC::apply_umbrella_bias_to_deletion(double& ln_acc, int n_before, int n_after)
@@ -1070,7 +1097,7 @@ void MC_Ensemble_CUDA_GCMC::update_umbrella_parameters(Atom& atom, Box& box)
   
   int current_atoms = 0;
   for (int i = 0; i < atom.number_of_atoms; i++) {
-    if (atom.type[i] == target_type) {
+    if (atom.cpu_type[i] == target_type) {
       current_atoms++;
     }
   }
@@ -1140,7 +1167,7 @@ bool MC_Ensemble_CUDA_GCMC::validate_system_state_cuda(Atom& atom, Box& box)
   for (int i = 0; i < atom.number_of_atoms; ++i) {
     if (atom.cpu_type[i] >= 0) {
       for (int d = 0; d < 3; ++d) {
-        if (!std::isfinite(atom.cpu_position_per_atom[d][i])) {
+        if (!std::isfinite(atom.cpu_position_per_atom[i * 3 + d])) {
           printf("Warning: Non-finite coordinate detected at atom %d, dimension %d\n", i, d);
           return false;
         }

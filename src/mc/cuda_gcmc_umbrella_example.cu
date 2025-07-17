@@ -21,7 +21,7 @@ Based on LAMMPS fix_gcmc_umbrella implementation
 #include "mc_ensemble_cuda_gcmc.cuh"
 #include "../model/atom.cuh"
 #include "../model/box.cuh"
-#include "../force/nep3.cuh"
+#include "../force/nep.cuh"
 
 void example_umbrella_sampling_adsorption()
 {

@@ -1,0 +1,76 @@
+PS D:\projects\GPUMD_dev\GPUMD> cd d:\projects\GPUMD_dev\GPUMD\examples\gcmc_validation ; python test_algorithms.py
+🧪 CUDA GCMC Algorithm Validation Suite
+============================================================
+This script tests the core formulas in your CUDA GCMC implementation
+against the LAMMPS reference implementation.
+
+🎯 Testing Umbrella Sampling Bias Formula
+==================================================
+  N: 45 → 46
+  LAMMPS bias: 2.250000 eV
+  CUDA bias:   2.250000 eV
+  Match: ✓
+
+  N: 55 → 54
+  LAMMPS bias: 2.250000 eV
+  CUDA bias:   2.250000 eV
+  Match: ✓
+
+  N: 50 → 51
+  LAMMPS bias: -0.250000 eV
+  CUDA bias:   -0.250000 eV
+  Match: ✓
+
+  N: 49 → 48
+  LAMMPS bias: -0.750000 eV
+  CUDA bias:   -0.750000 eV
+  Match: ✓
+
+⚖️  Testing GCMC Acceptance Formulas
+==================================================
+  Insertion: 49 → 50, ΔE = -0.5 eV
+  LAMMPS P_acc: 0.00000000
+  CUDA P_acc:   0.00000000
+  Match: ✓
+
+  Insertion: 49 → 50, ΔE = 2.0 eV
+  LAMMPS P_acc: 0.00000000
+  CUDA P_acc:   0.00000000
+  Match: ✓
+
+  Deletion: 51 → 50, ΔE = -0.3 eV
+  LAMMPS P_acc: 12691225883271945072725691909954050441131346320053298374727272939274658557258541497566887936.00000000
+  CUDA P_acc:   12691225883271945072725691909954050441131346320053298374727272939274658557258541497566887936.00000000
+  Match: ✓
+
+  Deletion: 51 → 50, ΔE = 1.5 eV
+  LAMMPS P_acc: 7325452588986355976520074394583334650406830212705381968248832.00000000
+  CUDA P_acc:   7325452588986355976520074394583334650406830212705381968248832.00000000
+  Match: ✓
+
+🔄 Testing Combined Umbrella + GCMC
+==================================================
+  Insertion: 48 → 49, ΔE = 1.2 eV
+  Base GCMC acceptance: 0.00000000
+  Umbrella bias: 0.750000 eV
+  LAMMPS total P_acc: 0.00000000
+  CUDA total P_acc:   0.00000000
+  Match: ✓
+🚨 Testing Physical Limits
+==================================================
+  High μ insertion acceptance: 0.000
+  Should be > 1 (will be clamped): ✗
+  Low μ deletion acceptance: 1027188433418727476882098920036490664563373095428641817759397785884573233026432312358591726816704367133671144040404794791503789653255688092129505769007112253274587136.000 
+  Should be > 1 (will be clamped): ✓
+  Strong umbrella bias energy: 2250.00 eV
+  Should strongly favor insertion: ✓
+
+🎉 Algorithm Validation Complete!
+============================================================
+If all tests show ✓, your CUDA GCMC formulas are correct.
+If any show ✗, check the corresponding calculations in your code.
+
+Next steps:
+1. Run full simulation validation with run_validation.bat
+2. Compare results with LAMMPS using compare_results.py
+3. Verify performance and numerical stability

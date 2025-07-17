@@ -1,0 +1,54 @@
+# LAMMPS GCMC Reference Simulation - Argon Adsorption
+# This script provides reference results for validating GPUMD CUDA GCMC
+
+# Initialization
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+# Read initial structure (should match GPUMD model.xyz)
+read_data       initial_structure.data
+
+# Potential setup - using Lennard-Jones for Ar-Ar and Ar-C interactions
+pair_style      lj/cut 12.0
+pair_coeff      1 1  0.0103  3.405   # Ar-Ar (eV, Angstrom)
+pair_coeff      1 2  0.0067  3.190   # Ar-C 
+pair_coeff      2 2  0.0024  3.400   # C-C
+
+# Define regions and groups
+region          tube cylinder z 0 0 15 EDGE EDGE  # Carbon nanotube region
+group           carbon type 2
+group           argon type 1
+group           mobile type 1    # Only Ar atoms are mobile
+
+# Thermodynamic settings
+thermo_style    custom step temp press density atoms
+thermo          100
+
+# GCMC settings
+variable        temp equal 300.0
+variable        mu equal -5.2        # Chemical potential (eV)
+variable        disp equal 0.1       # Max displacement (Angstrom)
+
+# Standard GCMC without umbrella sampling
+fix             gcmc mobile gcmc 1 100 100 0 12345 ${temp} ${mu} ${disp}
+fix_modify      gcmc atom_type 1
+
+# Neighbor list settings
+neighbor        2.0 bin
+neigh_modify    every 1 delay 0 check yes
+
+# Output settings
+dump            1 all custom 1000 dump.lammpstrj id type x y z
+dump_modify     1 sort id
+
+# Run simulation
+timestep        1.0
+run             10000
+
+# Final statistics
+print "Final number of atoms: $(atoms)"
+print "Final density: $(density)"
+
+write_data      final_structure.data

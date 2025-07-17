@@ -69,6 +69,17 @@ private:
   GPU_Vector<double> candidate_positions_z;
   GPU_Vector<int> overlap_results;
   GPU_Vector<float> energy_changes;
+  
+  // Enhanced sampling parameters
+  bool enable_wang_landau;
+  bool enable_umbrella_sampling;
+  bool enable_parallel_tempering;
+  bool enable_bias_potential;
+  
+  // Statistics tracking
+  std::vector<double> acceptance_history;
+  std::vector<int> atom_count_history;
+  int total_mc_steps_performed;
     
   void attempt_insertion(  
     Atom& atom, Box& box, std::vector<Group>& groups,  
@@ -109,5 +120,10 @@ private:
   // Error checking and validation
   bool validate_system_state(Atom& atom, Box& box);
   void check_energy_conservation(Atom& atom, Box& box);
-  void detect_crystallization(Atom& atom, Box& box);  
+  void detect_crystallization(Atom& atom, Box& box);
+  
+  // Performance and diagnostics
+  void print_performance_statistics();
+  void save_checkpoint(const std::string& filename);
+  bool load_checkpoint(const std::string& filename);  
 };

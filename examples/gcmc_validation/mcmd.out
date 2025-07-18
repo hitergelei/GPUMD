@@ -12,3 +12,9 @@
 # num_MD_steps  acceptance_ratio [species_concentrations]
 # mc gcmc 10 200 300 300 1 Pb -2.0 1.0 
 # num_MD_steps  acceptance_ratio [species_concentrations]
+# mc gcmc 1 100 300 300 1 Pb -2.0 1.0 
+# num_MD_steps  acceptance_ratio [species_concentrations]
+# mc gcmc 1 100 300 300 1 Pb -2.0 1.0 
+# num_MD_steps  acceptance_ratio [species_concentrations]
+# mc gcmc 1 100 300 300 1 Pb -2.0 1.0 
+# num_MD_steps  acceptance_ratio [species_concentrations]

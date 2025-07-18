@@ -2,5 +2,5 @@ potential TePb_nep.txt
 velocity 300
 ensemble nvt_lan 300 300 100
 time_step 1
-mc gcmc 1 100 300 300 1 Pb -2.0 1.0
+mc gcmc 1 100 300 300 1 Pb -2.0 1.0 seed 12345
 run 100

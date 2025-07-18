@@ -1,0 +1,63 @@
+
+***************************************************************
+*                 Welcome to use GPUMD                        *
+*     (Graphics Processing Units Molecular Dynamics)          *
+*                     version 4.2                             *
+*              This is the gpumd executable                   *
+***************************************************************
+
+
+---------------------------------------------------------------
+Compiling options:
+---------------------------------------------------------------
+
+DEBUG is off: Use different PRNG seeds for different runs.
+
+---------------------------------------------------------------
+GPU information:
+---------------------------------------------------------------
+
+number of GPUs = 1
+Device id:                   0
+    Device name:             NVIDIA GeForce RTX 4060 Laptop GPU
+    Compute capability:      8.9
+    Amount of global memory: 7.99561 GB
+    Number of SMs:           24
+
+---------------------------------------------------------------
+Started running GPUMD.
+---------------------------------------------------------------
+
+
+---------------------------------------------------------------
+Started initializing positions and related parameters.
+---------------------------------------------------------------
+
+Number of atoms is 250.
+Use periodic boundary conditions along x.
+Use periodic boundary conditions along y.
+Use periodic boundary conditions along z.
+Box matrix h = [a, b, c] is
+    0.0000000000e+00    1.6425982650e+01    1.6425982650e+01
+    1.6425982650e+01    0.0000000000e+00    1.6425982650e+01
+    1.6425982650e+01    1.6425982650e+01    0.0000000000e+00
+Inverse box matrix g = inv(h) is
+   -3.0439579211e-02    3.0439579211e-02    3.0439579211e-02
+    3.0439579211e-02   -3.0439579211e-02    3.0439579211e-02
+    3.0439579211e-02    3.0439579211e-02   -3.0439579211e-02
+Do not specify initial velocities here.
+Have 1 grouping method(s).
+There is only one group of atoms in grouping method 0.
+    250 atoms in group 0.
+There are 2 atom types.
+    125 atoms of type 0.
+    125 atoms of type 1.
+Initialized velocities with default T = 300 K.
+
+---------------------------------------------------------------
+Finished initializing positions and related parameters.
+---------------------------------------------------------------
+
+
+---------------------------------------------------------------
+Started executing the commands in run.in.

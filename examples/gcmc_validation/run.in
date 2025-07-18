@@ -1,40 +1,4 @@
-# GPUMD GCMC Validation - Argon Adsorption in Carbon Nanotube
-
-# Basic simulation parameters
-potential       nep.txt                    # Neural network potential file
-velocity        300                        # Initial temperature (K)
-
-# Monte Carlo ensemble setup
-ensemble        gcmc_cuda  300  0.1  1000  # GCMC with CUDA acceleration
-# Syntax: gcmc_cuda <temperature> <max_displacement> <mc_steps>
-
-# GCMC species configuration  
-species         Ar                         # Adsorbing species
-chemical_potential  -5.2                   # Chemical potential (eV)
-insertion_probability   0.3                # Probability of insertion moves
-deletion_probability    0.3                # Probability of deletion moves  
-displacement_probability 0.4               # Probability of displacement moves
-
-# Umbrella sampling parameters (optional)
-umbrella_sampling   true                   # Enable umbrella sampling
-umbrella_target     50                     # Target number of Ar atoms
-umbrella_force_constant  0.5              # Force constant (eV)
-target_species      Ar                     # Species for umbrella sampling
-
-# Advanced GCMC settings
-max_insertions_per_step    10              # Max insertions per MC step
-max_deletions_per_step     10              # Max deletions per MC step
-min_distance              2.5              # Minimum insertion distance (Å)
-overlap_cutoff            2.0              # Overlap detection cutoff (Å)
-energy_cutoff            10.0              # Energy cutoff for rejection (eV)
-
-# Output settings
-time_step       1                          # MC step (not time step)
-dump_thermo     100                        # Output frequency
-dump_position   1000                       # Position dump frequency
-run             10000                      # Total MC steps
-
-# Additional analysis outputs
-dump_gcmc_stats   gcmc_stats.out          # GCMC statistics output
-dump_umbrella     umbrella.out            # Umbrella sampling statistics
-dump_energy       energy.out              # Energy trajectory
+potential TePb_nep.txt
+velocity 300
+mc gcmc 100 100 300 300 1 Pb -2.0 1.0 group 0 0
+run 100

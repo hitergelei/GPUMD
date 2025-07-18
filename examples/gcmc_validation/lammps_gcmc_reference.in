@@ -1,0 +1,94 @@
+# LAMMPS GCMC Input for Te-Pb System - Reference Validation
+# Based on /home/hjchen/software/GPUMD_dev_wsl/GPUMD/src/GCMC/lammps/in.lammps.eV
+# Modified for Te-Pb system to match GPUMD validation
+
+units metal
+atom_style atomic
+dimension 3
+boundary p p p
+
+# Read initial structure
+read_data initial_structure.data
+
+# Get box information first
+variable xlo equal xlo
+variable xhi equal xhi  
+variable ylo equal ylo
+variable yhi equal yhi
+variable zlo equal zlo
+variable zhi equal zhi
+
+# Define region with small margins to ensure it's within the box
+region whole block ${xlo} ${xhi} ${ylo} ${yhi} ${zlo} ${zhi}
+
+# Simple LJ potential for Te-Pb (placeholder - would need NEP equivalent)
+# Note: These parameters are approximations for validation purposes
+pair_style lj/cut 12.0
+pair_coeff 1 1 0.0103 3.405 12.0  # Te-Te
+pair_coeff 1 2 0.0067 3.195 12.0  # Te-Pb  
+pair_coeff 2 2 0.0024 3.400 12.0  # Pb-Pb
+pair_modify shift yes
+
+# Initialize velocities for initial equilibration
+velocity all create 300.0 4928459 rot yes dist gaussian
+
+# Check initial system
+variable initial_atoms equal atoms
+variable box_volume equal vol
+print "Initial atoms: ${initial_atoms}"
+print "Box volume: ${box_volume} A^3"
+
+# Define groups (Te=type 1, Pb=type 2)
+group tellurium type 1
+group lead type 2
+group mobile type 2    # Only Pb atoms are mobile for GCMC
+
+# Neighbor list
+neighbor 2.0 bin
+neigh_modify every 1 delay 0 check yes
+
+# Thermodynamic output
+thermo_style custom step temp press density atoms pe ke etotal
+thermo 10
+
+# GCMC fix - matching GPUMD parameters
+# Temperature: 300K, Chemical potential: -2.0 eV for Pb
+# Displacement: 1.0 Angstrom (GPUMD default)
+variable temp equal 300.0
+variable mu equal -2.0
+variable disp equal 1.0
+
+# GCMC fix: attempts every 1 step, 100 exchange, 100 displacement moves
+# Only operate on Pb atoms (type 2)
+# Syntax: fix ID group-ID gcmc N X M type seed T mu displace keyword values
+fix gcmc_fix mobile gcmc 1 100 100 2 12345 ${temp} ${mu} ${disp} region whole
+
+# Brief equilibration before main run
+fix nvt_equil all nvt temp ${temp} ${temp} 0.1
+run 10
+unfix nvt_equil
+
+# Output trajectory
+dump gcmc_dump all custom 10 gcmc_lammps.lammpstrj id type x y z
+
+# Run simulation - same duration as GPUMD
+timestep 0.001
+run 100
+
+# Final output and statistics
+variable final_atoms equal atoms
+variable final_density equal density
+variable final_volume equal vol
+print "Final atoms: ${final_atoms}"
+print "Final density: ${final_density}"
+print "Final volume: ${final_volume} A^3"
+
+# Count atoms by type
+group te_final type 1
+group pb_final type 2
+variable n_te equal count(te_final)
+variable n_pb equal count(pb_final)
+print "Final Te atoms: ${n_te}"
+print "Final Pb atoms: ${n_pb}"
+
+write_data final_lammps.data

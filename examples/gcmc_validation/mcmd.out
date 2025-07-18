@@ -1,0 +1,2 @@
+# mc gcmc 100 100 300 300 1 Pb -2.0 1.0 group 0 0 
+# num_MD_steps  acceptance_ratio [species_concentrations]

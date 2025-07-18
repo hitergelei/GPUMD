@@ -1,0 +1,213 @@
+LAMMPS (29 Aug 2024 - Update 3)
+# LAMMPS GCMC Input for Te-Pb System - Reference Validation
+# Based on /home/hjchen/software/GPUMD_dev_wsl/GPUMD/src/GCMC/lammps/in.lammps.eV
+# Modified for Te-Pb system to match GPUMD validation
+
+units metal
+atom_style atomic
+dimension 3
+boundary p p p
+
+# Read initial structure
+read_data initial_structure.data
+Reading data file ...
+  triclinic box = (0 0 0) to (23.229847 20.117638 18.967091) with tilt (11.614924 11.614924 6.7058793)
+WARNING: Triclinic box skew is large. LAMMPS will run inefficiently. (../domain.cpp:221)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  250 atoms
+  read_data CPU = 0.000 seconds
+
+# Get box information first
+variable xlo equal xlo
+variable xhi equal xhi
+variable ylo equal ylo
+variable yhi equal yhi
+variable zlo equal zlo
+variable zhi equal zhi
+
+# Define region with small margins to ensure it's within the box
+region whole block ${xlo} ${xhi} ${ylo} ${yhi} ${zlo} ${zhi}
+region whole block 0 ${xhi} ${ylo} ${yhi} ${zlo} ${zhi}
+region whole block 0 23.2298474389351 ${ylo} ${yhi} ${zlo} ${zhi}
+region whole block 0 23.2298474389351 0 ${yhi} ${zlo} ${zhi}
+region whole block 0 23.2298474389351 0 20.1176380081547 ${zlo} ${zhi}
+region whole block 0 23.2298474389351 0 20.1176380081547 0 ${zhi}
+region whole block 0 23.2298474389351 0 20.1176380081547 0 18.9670910093632
+
+# Simple LJ potential for Te-Pb (placeholder - would need NEP equivalent)
+# Note: These parameters are approximations for validation purposes
+pair_style lj/cut 12.0
+pair_coeff 1 1 0.0103 3.405 12.0  # Te-Te
+pair_coeff 1 2 0.0067 3.195 12.0  # Te-Pb
+pair_coeff 2 2 0.0024 3.400 12.0  # Pb-Pb
+pair_modify shift yes
+
+# Initialize velocities for initial equilibration
+velocity all create 300.0 4928459 rot yes dist gaussian
+
+# Check initial system
+variable initial_atoms equal atoms
+variable box_volume equal vol
+print "Initial atoms: ${initial_atoms}"
+Initial atoms: 250
+print "Box volume: ${box_volume} A^3"
+Box volume: 8863.88422599881 A^3
+
+# Define groups (Te=type 1, Pb=type 2)
+group tellurium type 1
+125 atoms in group tellurium
+group lead type 2
+125 atoms in group lead
+group mobile type 2    # Only Pb atoms are mobile for GCMC
+125 atoms in group mobile
+
+# Neighbor list
+neighbor 2.0 bin
+neigh_modify every 1 delay 0 check yes
+
+# Thermodynamic output
+thermo_style custom step temp press density atoms pe ke etotal
+thermo 10
+
+# GCMC fix - matching GPUMD parameters
+# Temperature: 300K, Chemical potential: -2.0 eV for Pb
+# Displacement: 1.0 Angstrom (GPUMD default)
+variable temp equal 300.0
+variable mu equal -2.0
+variable disp equal 1.0
+
+# GCMC fix: attempts every 1 step, 100 exchange, 100 displacement moves
+# Only operate on Pb atoms (type 2)
+# Syntax: fix ID group-ID gcmc N X M type seed T mu displace keyword values
+fix gcmc_fix mobile gcmc 1 100 100 2 12345 ${temp} ${mu} ${disp} region whole
+fix gcmc_fix mobile gcmc 1 100 100 2 12345 300 ${mu} ${disp} region whole
+fix gcmc_fix mobile gcmc 1 100 100 2 12345 300 -2 ${disp} region whole
+fix gcmc_fix mobile gcmc 1 100 100 2 12345 300 -2 1 region whole
+
+# Brief equilibration before main run
+fix nvt_equil all nvt temp ${temp} ${temp} 0.1
+fix nvt_equil all nvt temp 300 ${temp} 0.1
+fix nvt_equil all nvt temp 300 300 0.1
+run 10
+Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 14
+  ghost atom cutoff = 14
+  binsize = 7, bins = 7 4 3
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/cut, perpetual
+      attributes: half, newton on
+      pair build: half/bin/atomonly/newton/tri
+      stencil: half/bin/3d/tri
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 3.243 | 3.243 | 3.243 Mbytes
+   Step          Temp          Press         Density        Atoms        PotEng         KinEng         TotEng    
+         0   300            5664.6217      7.8400791            250  -6.8387147      9.6557328      2.8170181    
+        10   236.30944      2595.9443      5.4722816            189  -5.5994588      7.6058028      2.006344     
+Loop time of 0.0221352 on 1 procs for 10 steps with 189 atoms
+
+Performance: 39.033 ns/day, 0.615 hours/ns, 451.768 timesteps/s, 85.384 katom-step/s
+97.7% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.0015934  | 0.0015934  | 0.0015934  |   0.0 |  7.20
+Neigh   | 0.015207   | 0.015207   | 0.015207   |   0.0 | 68.70
+Comm    | 0.00023222 | 0.00023222 | 0.00023222 |   0.0 |  1.05
+Output  | 7.2556e-05 | 7.2556e-05 | 7.2556e-05 |   0.0 |  0.33
+Modify  | 0.0050098  | 0.0050098  | 0.0050098  |   0.0 | 22.63
+Other   |            | 2.028e-05  |            |       |  0.09
+
+Nlocal:            189 ave         189 max         189 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           2854 ave        2854 max        2854 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:          23115 ave       23115 max       23115 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 23115
+Ave neighs/atom = 122.30159
+Neighbor list builds = 10
+Dangerous builds = 0
+unfix nvt_equil
+
+# Output trajectory
+dump gcmc_dump all custom 10 gcmc_lammps.lammpstrj id type x y z
+
+# Run simulation - same duration as GPUMD
+timestep 0.001
+run 100
+WARNING: No fixes with time integration, atoms won't move (../verlet.cpp:60)
+Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
+Per MPI rank memory allocation (min/avg/max) = 3.305 | 3.305 | 3.305 Mbytes
+   Step          Temp          Press         Density        Atoms        PotEng         KinEng         TotEng    
+        10   312.98431      2595.9443      5.4722816            189  -5.5994588      7.6058028      2.006344     
+        20   312.98431      2595.9443      5.4722816            189  -5.5994588      7.6058028      2.006344     
+        30   312.98431      2595.9443      5.4722816            189  -5.5994588      7.6058028      2.006344     
+        40   312.98431      2595.9443      5.4722816            189  -5.5994588      7.6058028      2.006344     
+        50   312.98431      2595.9443      5.4722816            189  -5.5994588      7.6058028      2.006344     
+        60   312.98431      2595.9443      5.4722816            189  -5.5994588      7.6058028      2.006344     
+        70   312.98431      2595.9443      5.4722816            189  -5.5994588      7.6058028      2.006344     
+        80   312.98431      2595.9443      5.4722816            189  -5.5994588      7.6058028      2.006344     
+        90   312.98431      2595.9443      5.4722816            189  -5.5994588      7.6058028      2.006344     
+       100   312.98431      2595.9443      5.4722816            189  -5.5994588      7.6058028      2.006344     
+       110   312.98431      2595.9443      5.4722816            189  -5.5994588      7.6058028      2.006344     
+Loop time of 0.179733 on 1 procs for 100 steps with 189 atoms
+
+Performance: 48.071 ns/day, 0.499 hours/ns, 556.380 timesteps/s, 105.156 katom-step/s
+97.7% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.015498   | 0.015498   | 0.015498   |   0.0 |  8.62
+Neigh   | 0.14464    | 0.14464    | 0.14464    |   0.0 | 80.47
+Comm    | 0.002369   | 0.002369   | 0.002369   |   0.0 |  1.32
+Output  | 0.0016707  | 0.0016707  | 0.0016707  |   0.0 |  0.93
+Modify  | 0.015363   | 0.015363   | 0.015363   |   0.0 |  8.55
+Other   |            | 0.0001966  |            |       |  0.11
+
+Nlocal:            189 ave         189 max         189 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           2854 ave        2854 max        2854 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:          23115 ave       23115 max       23115 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 23115
+Ave neighs/atom = 122.30159
+Neighbor list builds = 100
+Dangerous builds = 0
+
+# Final output and statistics
+variable final_atoms equal atoms
+variable final_density equal density
+variable final_volume equal vol
+print "Final atoms: ${final_atoms}"
+Final atoms: 189
+print "Final density: ${final_density}"
+Final density: 5.47228157292649
+print "Final volume: ${final_volume} A^3"
+Final volume: 8863.88422599881 A^3
+
+# Count atoms by type
+group te_final type 1
+125 atoms in group te_final
+group pb_final type 2
+64 atoms in group pb_final
+variable n_te equal count(te_final)
+variable n_pb equal count(pb_final)
+print "Final Te atoms: ${n_te}"
+Final Te atoms: 125
+print "Final Pb atoms: ${n_pb}"
+Final Pb atoms: 64
+
+write_data final_lammps.data
+System init for write_data ...
+Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
+WARNING: Not all mixed pair coeffs generated from mixing. Use write_data with 'pair ij' option to store all pair coeffs. (../write_data.cpp:364)
+Total wall time: 0:00:00

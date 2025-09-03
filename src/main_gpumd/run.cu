@@ -682,7 +682,7 @@ void Run::parse_run(const char** param, int num_param)
   if (!is_valid_int(param[1], &number_of_steps)) {
     PRINT_INPUT_ERROR("number of steps should be an integer.\n");
   }
-  printf("Run %d steps.\n", number_of_steps);
+  printf("Run %d steps.\n", number_of_steps); 
 
   // set target temperature for temperature-dependent NEP
   force.temperature = integrate.temperature1;

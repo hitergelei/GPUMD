@@ -437,7 +437,13 @@ static std::string get_filename_potential()
     std::vector<std::string> tokens = get_tokens(line);
     if (tokens.size() >= 2) {
       if (tokens[0] == "potential") {
-        filename_potential = tokens[1];
+        if (tokens.size() >= 3 && tokens[1] == "adp") {
+          // For ADP: potential adp filename.adp
+          filename_potential = tokens[2];
+        } else {
+          // For other potentials: potential filename
+          filename_potential = tokens[1];
+        }
       }
     }
   }
@@ -457,26 +463,76 @@ static std::vector<std::string> get_atom_symbols(std::string& filename_potential
     exit(1);
   }
 
-  std::vector<std::string> tokens = get_tokens(input_potential);
-  if (tokens.size() < 3) {
-    std::cout << "The first line of the potential file should have at least 3 items." << std::endl;
-    exit(1);
+  // Check if this is an ADP file by looking at the file extension
+  bool is_adp_file = (filename_potential.size() >= 4 && 
+                      filename_potential.substr(filename_potential.size() - 4) == ".adp");
+  
+  std::vector<std::string> tokens;
+  
+  if (is_adp_file) {
+    // For ADP files, skip the first 3 comment lines and read the 4th line
+    std::string line;
+    for (int i = 0; i < 3; ++i) {
+      if (!std::getline(input_potential, line)) {
+        std::cout << "Error: ADP file has less than 4 lines." << std::endl;
+        exit(1);
+      }
+    }
+    // Read the 4th line which contains element information
+    if (!std::getline(input_potential, line)) {
+      std::cout << "Error: Cannot read element information from ADP file." << std::endl;
+      exit(1);
+    }
+    std::istringstream iss(line);
+    std::string token;
+    while (iss >> token) {
+      tokens.push_back(token);
+    }
+    
+    // For ADP files, the format is: Nelements Element1 Element2 ... ElementN
+    if (tokens.size() < 2) {
+      std::cout << "The ADP element line should have at least 2 items." << std::endl;
+      exit(1);
+    }
+    
+    int number_of_types = get_int_from_token(tokens[0], __FILE__, __LINE__);
+    if (tokens.size() != 1 + number_of_types) {
+      std::cout << "The ADP element line should have " << number_of_types
+                << " atom symbols after the number." << std::endl;
+      exit(1);
+    }
+    
+    std::vector<std::string> atom_symbols(number_of_types);
+    for (int n = 0; n < number_of_types; ++n) {
+      atom_symbols[n] = tokens[1 + n];
+    }
+    
+    input_potential.close();
+    return atom_symbols;
+  } else {
+    // For other potential files, read the first line
+    tokens = get_tokens(input_potential);
+    
+    if (tokens.size() < 3) {
+      std::cout << "The first line of the potential file should have at least 3 items." << std::endl;
+      exit(1);
+    }
+    
+    int number_of_types = get_int_from_token(tokens[1], __FILE__, __LINE__);
+    if (tokens.size() != 2 + number_of_types) {
+      std::cout << "The first line of the potential file should have " << number_of_types
+                << " atom symbols." << std::endl;
+      exit(1);
+    }
+    
+    std::vector<std::string> atom_symbols(number_of_types);
+    for (int n = 0; n < number_of_types; ++n) {
+      atom_symbols[n] = tokens[2 + n];
+    }
+    
+    input_potential.close();
+    return atom_symbols;
   }
-
-  int number_of_types = get_int_from_token(tokens[1], __FILE__, __LINE__);
-  if (tokens.size() != 2 + number_of_types) {
-    std::cout << "The first line of the potential file should have " << number_of_types
-              << " atom symbols." << std::endl;
-    exit(1);
-  }
-
-  std::vector<std::string> atom_symbols(number_of_types);
-  for (int n = 0; n < number_of_types; ++n) {
-    atom_symbols[n] = tokens[2 + n];
-  }
-
-  input_potential.close();
-  return atom_symbols;
 }
 
 void initialize_position(

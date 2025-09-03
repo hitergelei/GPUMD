@@ -15,6 +15,7 @@ Interatomic potentials
    tersoff_mini
    lennard_jones
    eam
+   adp
    fcp
    nep
    nep_ilp

@@ -18,6 +18,7 @@ The driver class calculating force and related quantities.
 #ifdef USE_TENSORFLOW
 #include "dp.cuh"
 #endif
+#include "adp.cuh"
 #include "eam.cuh"
 #include "eam_alloy.cuh"
 #include "fcp.cuh"
@@ -78,6 +79,29 @@ void Force::parse_potential(
   }
 
   std::unique_ptr<Potential> potential;
+  
+  // Special handling for ADP potential
+  if (num_param == 3 && strcmp(param[1], "adp") == 0) {
+    potential.reset(new ADP(param[2], number_of_atoms));
+    gpuError_t e_after_adp = gpuDeviceSynchronize();
+    if(e_after_adp != gpuSuccess){
+      printf("FORCE ERROR: CUDA error right after ADP construction: %s (%d)\n", gpuGetErrorString(e_after_adp),(int)e_after_adp);
+    }
+    
+    potential->N1 = 0;
+    potential->N2 = number_of_atoms;
+    
+    // Move the pointer into the list of potentials
+    potentials.push_back(std::move(potential));
+  // Print current sizes of atom property vectors if already allocated
+  // (Cannot access Atom here directly; will rely on later Force::compute prints.)
+    has_non_nep = true;
+    if (potentials.size() > 1 && has_non_nep) {
+      PRINT_INPUT_ERROR("Multiple potentials may only be used with NEP potentials.\n");
+    }
+    return;
+  }
+  
   FILE* fid_potential = my_fopen(param[1], "r");
   char potential_name[100];
   int count = fscanf(fid_potential, "%s", potential_name);
@@ -489,6 +513,9 @@ void Force::compute(
   GPU_Vector<double>& virial_per_atom)
 {
   const int number_of_atoms = type.size();
+  
+  // Optionally skip PBC to isolate crash; define FORCE_DEBUG_SKIP_PBC to bypass
+#ifndef FORCE_DEBUG_SKIP_PBC
   if (!is_fcp) {
     gpu_apply_pbc<<<(number_of_atoms - 1) / 128 + 1, 128>>>(
       number_of_atoms,
@@ -497,6 +524,8 @@ void Force::compute(
       position_per_atom.data() + number_of_atoms,
       position_per_atom.data() + number_of_atoms * 2);
   }
+#endif
+  GPU_CHECK_KERNEL
 
   initialize_properties<<<(number_of_atoms - 1) / 128 + 1, 128>>>(
     number_of_atoms,
@@ -776,14 +805,20 @@ void Force::compute(
   GPU_Vector<double>& mass_per_atom)
 {
   const int number_of_atoms = type.size();
+  // Instrumentation: pre-compute sync and size report
+  gpuError_t e_pre = gpuDeviceSynchronize();
   if (!is_fcp) {
+#ifdef FORCE_DEBUG_SKIP_PBC
+#else
     gpu_apply_pbc<<<(number_of_atoms - 1) / 128 + 1, 128>>>(
       number_of_atoms,
       box,
       position_per_atom.data(),
       position_per_atom.data() + number_of_atoms,
       position_per_atom.data() + number_of_atoms * 2);
+#endif
   }
+  GPU_CHECK_KERNEL
 
   initialize_properties<<<(number_of_atoms - 1) / 128 + 1, 128>>>(
     number_of_atoms,

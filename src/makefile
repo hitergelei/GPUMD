@@ -17,11 +17,11 @@
 # some flags
 ###########################################################
 CC = nvcc
-CUDA_ARCH=-arch=sm_60
+CUDA_ARCH=-arch=sm_89
 ifdef OS # For Windows with the cl.exe compiler
 CFLAGS = -O3 $(CUDA_ARCH)
 else # For linux
-CFLAGS = -std=c++14 -O3 $(CUDA_ARCH)
+CFLAGS = -std=c++14 -O3 -DSTRONG_DEBUG $(CUDA_ARCH)
 endif
 INC = -I./
 LDFLAGS = 

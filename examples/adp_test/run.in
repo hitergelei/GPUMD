@@ -1,7 +1,7 @@
 potential adp Ni.adp
-velocity 300
+#velocity 300
 ensemble nve
 time_step 1
 dump_thermo 1
 dump_force 1
-run 2
+run 1

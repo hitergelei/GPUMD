@@ -1,6 +1,0 @@
-potential lj_nist 0 5.168 2.36 3.55
-velocity 300
-ensemble nve
-time_step 1
-dump_thermo 1
-run 2

@@ -53,7 +53,7 @@ IMPORTANT NOTES BASED ON LAMMPS IMPLEMENTATION:
 #include <vector>
 
 #define BLOCK_SIZE_FORCE 64
-#define MAX_ADP_NEIGHBORS 400
+#define MAX_ADP_NEIGHBORS 50
 
 // ADP-specific neighbor compression kernel (remove duplicates, cap length)
 __global__ void compress_adp_neighbors(int N, int maxN, int* g_NN, int* g_NL)
@@ -319,6 +319,12 @@ void ADP::read_adp_file(const char* file_potential)
   }
   
   input_file.close();
+  
+  // DEBUG: Check F(rho) values
+  printf("DEBUG: First few F(rho) values: %.6f, %.6f, %.6f\n",
+         adp_data.F_rho[0], adp_data.F_rho[1], adp_data.F_rho[2]);
+  printf("DEBUG: Last few F(rho) values: %.6f, %.6f, %.6f\n",
+         adp_data.F_rho[adp_data.nrho-3], adp_data.F_rho[adp_data.nrho-2], adp_data.F_rho[adp_data.nrho-1]);
 }
 
 void ADP::setup_spline_interpolation()
@@ -364,6 +370,12 @@ void ADP::setup_spline_interpolation()
     adp_data.F_rho.data(), total_rho_points, adp_data.drho,
     adp_data.F_rho_a.data(), adp_data.F_rho_b.data(),
     adp_data.F_rho_c.data(), adp_data.F_rho_d.data(), adp_data.Nelements, adp_data.nrho);
+    
+  // DEBUG: Check F(rho) spline coefficients
+  printf("DEBUG: First few F_rho_a: %.6f, %.6f, %.6f\n",
+         adp_data.F_rho_a[0], adp_data.F_rho_a[1], adp_data.F_rho_a[2]);
+  printf("DEBUG: Last few F_rho_a: %.6f, %.6f, %.6f\n",
+         adp_data.F_rho_a[adp_data.nrho-3], adp_data.F_rho_a[adp_data.nrho-2], adp_data.F_rho_a[adp_data.nrho-1]);
     
   
   // rho_r splines
@@ -445,6 +457,9 @@ void ADP::calculate_cubic_spline_coefficients(
       d_func[j] = (c_func[j+1] - c_func[j]) / (3.0 * h[j]);
       a_func[j] = y_func[j];
     }
+    
+    // CRITICAL FIX: Set the last point explicitly (was missing!)
+    a_func[n_points-1] = y_func[n_points-1];
   }
 }
 
@@ -600,15 +615,40 @@ static __global__ void find_force_adp_step1(
       // No additional scaling needed as spline coefficients include 1/drho scaling
       // Fp /= drho;  // REMOVED: This was causing excessive values
     } else {
-      // If outside table range, use boundary values
+      // If outside table range, use linear extrapolation
       if (rho_index <= 0.0) {
-        // Use first point
-        F = F_rho_a[F_base];  // This should be the value at the first point
-        Fp = 0.0;  // Set derivative to zero at boundary
+        // Use first point with zero derivative
+        F = F_rho_a[F_base];  
+        Fp = 0.0;  
       } else {
-        // Use last point  
-        F = F_rho_a[F_base + nrho - 1];  // This should be the value at the last point
-        Fp = 0.0;  // Set derivative to zero at boundary
+        // Density too high - use linear extrapolation from last two points
+        double F_last = F_rho_a[F_base + nrho - 1];  
+        double F_second_last = F_rho_a[F_base + nrho - 2];
+        double slope = (F_last - F_second_last) / drho;
+        double excess_rho = rho - (nrho - 1) * drho;
+        F = F_last + slope * excess_rho;
+        Fp = slope;
+        
+        // DEBUG: Warning for density overflow
+        if (n1 == 0) {
+          printf("WARNING: Density %.6f exceeds table range (max=%.6f) for atom %d\n",
+                 rho, (nrho-1)*drho, n1);
+          printf("  Using linear extrapolation: F_last=%.6f, slope=%.6f, F_extrap=%.6f\n",
+                 F_last, slope, F);
+        }
+      }
+    }
+    
+    // DEBUG: Add detailed F(rho) interpolation information
+    if (n1 == 0) {
+      printf("DEBUG F(rho) atom 0: rho=%.6f, rho_index=%.6f, irho=%d, F_base=%d\n",
+             rho, rho_index, irho, F_base);
+      printf("DEBUG F(rho) atom 0: F=%.6f, Fp=%.6f, boundary_check: rho_index>=0=%d, irho<nrho-1=%d\n",
+             F, Fp, (rho_index >= 0.0), (irho < nrho - 1));
+      printf("DEBUG F(rho) atom 0: nrho=%d, max_rho=%.6f, actual_rho=%.6f\n",
+             nrho, (nrho-1)*drho, rho);
+      if (irho >= nrho - 1) {
+        printf("DEBUG F(rho) atom 0: F_last_direct=%.6f\n", F_rho_a[F_base + nrho - 1]);
       }
     }
     
@@ -854,8 +894,10 @@ static __global__ void find_force_adp_step2(
           fy += force_total_y;
           fz += force_total_z;
           
-          // Add pair potential energy (half to avoid double counting)
-          pe += 0.5 * phi_val;
+          // Add pair potential energy (only for i<j to avoid double counting)
+          if (n1 < n2) {
+            pe += phi_val;
+          }
           
           // DEBUG: Energy contributions for first pair of atom 0
           if (n1 == 0 && i1 == 0) {

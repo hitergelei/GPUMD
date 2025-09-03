@@ -1,0 +1,51 @@
+# LAMMPS input script to generate bcc Ni structure
+# This generates a relaxed bcc Ni structure suitable for ADP potential testing
+
+# Initialize
+units		metal
+atom_style	atomic
+dimension	3
+boundary	p p p
+
+# Create lattice and region
+# Use ADP potential equilibrium fcc Ni lattice parameter = 3.52 A
+lattice		fcc 3.52
+region		box block 0 2 0 2 0 2
+create_box	1 box
+create_atoms	1 box
+
+# Set mass
+mass		1 58.6934
+
+# Set ADP potential
+pair_style	adp
+pair_coeff	* * Ni.adp Ni
+
+# Initial velocities
+velocity	all create 300.0 12345
+
+# Energy minimization
+fix		1 all box/relax iso 0.0 vmax 0.001
+minimize	1.0e-8 1.0e-8 10000 10000
+unfix		1
+
+# Final minimization at constant volume
+minimize	1.0e-10 1.0e-10 10000 10000
+
+# Dump the final structure in extxyz format
+dump		1 all custom 1 bcc_ni.xyz id element x y z fx fy fz
+dump_modify	1 element Ni
+
+# Output thermodynamic info
+thermo_style	custom step pe ke temp press vol lx ly lz
+thermo		1
+
+# Run one step to generate output
+run		0
+
+# Clean up
+undump		1
+write_data	bcc_ni.data
+
+print "Final structure written to bcc_ni.xyz"
+print "Data file written to bcc_ni.data"

@@ -56,7 +56,7 @@ IMPORTANT NOTES BASED ON LAMMPS IMPLEMENTATION:
 
 #define BLOCK_SIZE_FORCE 64
 
-// Simple O(N^2) neighbor construction for small boxes (avoids cell-list duplicate visits)
+// Simple O(N^2) neighbor construction for small boxes (avoids duplicates with coarse cell lists)
 static __global__ void build_neighbor_ON2(
   const Box box,
   const int N,
@@ -110,11 +110,10 @@ void ADP::initialize_adp(const char* file_potential, const int number_of_atoms)
   adp_data.mu.resize(number_of_atoms * 3);       // 3 components (x,y,z) per atom
   adp_data.lambda.resize(number_of_atoms * 6);   // 6 components (xx,yy,zz,xy,xz,yz) per atom
   adp_data.NN.resize(number_of_atoms);
-  adp_data.NL.resize(number_of_atoms * 1024);     // enlarged allocation for neighbor list
+  adp_data.NL.resize(number_of_atoms * 400);     // consistent with EAM, sufficient for ADP
   adp_data.cell_count.resize(number_of_atoms);
   adp_data.cell_count_sum.resize(number_of_atoms);
   adp_data.cell_contents.resize(number_of_atoms);
-  adp_data.d_F_rho_i_g.resize(number_of_atoms);
   
   // Copy spline coefficients to GPU
   int total_rho_points = adp_data.Nelements * adp_data.nrho;
@@ -172,8 +171,7 @@ void ADP::initialize_adp(const char* file_potential, const int number_of_atoms)
   adp_data.w_r_c_g.copy_from_host(adp_data.w_r_c.data());
   adp_data.w_r_d_g.copy_from_host(adp_data.w_r_d.data());
   
-  printf("ADP potential initialized with %d elements and cutoff = %f Angstrom.\n", 
-             adp_data.Nelements, adp_data.rc);
+  printf("Use %d-element ADP potential, rc = %.6f.\n", adp_data.Nelements, adp_data.rc);
 }
 
 void ADP::read_adp_file(const char* file_potential)
@@ -205,23 +203,9 @@ void ADP::read_adp_file(const char* file_potential)
   std::istringstream iss5(line);
   iss5 >> adp_data.nrho >> adp_data.drho >> adp_data.nr >> adp_data.dr >> adp_data.rc;
   
-  printf("Reading ADP potential with %d elements: ", adp_data.Nelements);
-  for (int i = 0; i < adp_data.Nelements; i++) {
-    printf("%s ", adp_data.elements_list[i].c_str());
-  }
-  printf("\n");
-  printf("  nrho = %d, drho = %f\n", adp_data.nrho, adp_data.drho);
-  printf("  nr = %d, dr = %f\n", adp_data.nr, adp_data.dr);
-  printf("  cutoff = %f\n", adp_data.rc);
-  
   rc = adp_data.rc;
   
   // Initialize storage arrays
-  adp_data.atomic_number.resize(adp_data.Nelements);
-  adp_data.atomic_mass.resize(adp_data.Nelements);
-  adp_data.lattice_constant.resize(adp_data.Nelements);
-  adp_data.lattice_type.resize(adp_data.Nelements);
-  
   adp_data.F_rho.resize(adp_data.Nelements * adp_data.nrho);
   adp_data.rho_r.resize(adp_data.Nelements * adp_data.nr);
   
@@ -229,9 +213,7 @@ void ADP::read_adp_file(const char* file_potential)
   for (int element = 0; element < adp_data.Nelements; element++) {
     // Line: atomic number, mass, lattice constant, lattice type
     std::getline(input_file, line);
-    std::istringstream iss_elem(line);
-    iss_elem >> adp_data.atomic_number[element] >> adp_data.atomic_mass[element] 
-             >> adp_data.lattice_constant[element] >> adp_data.lattice_type[element];
+    // Ignore these values in GPUMD
     
     // Read embedding function F(rho) for this element
     int base_rho = element * adp_data.nrho;
@@ -333,11 +315,6 @@ void ADP::read_adp_file(const char* file_potential)
   
   input_file.close();
   
-  // DEBUG: Check F(rho) values
-  printf("DEBUG: First few F(rho) values: %.6f, %.6f, %.6f\n",
-         adp_data.F_rho[0], adp_data.F_rho[1], adp_data.F_rho[2]);
-  printf("DEBUG: Last few F(rho) values: %.6f, %.6f, %.6f\n",
-         adp_data.F_rho[adp_data.nrho-3], adp_data.F_rho[adp_data.nrho-2], adp_data.F_rho[adp_data.nrho-1]);
 }
 
 void ADP::setup_spline_interpolation()
@@ -384,13 +361,6 @@ void ADP::setup_spline_interpolation()
     adp_data.F_rho_a.data(), adp_data.F_rho_b.data(),
     adp_data.F_rho_c.data(), adp_data.F_rho_d.data(), adp_data.Nelements, adp_data.nrho);
     
-  // DEBUG: Check F(rho) spline coefficients
-  printf("DEBUG: First few F_rho_a: %.6f, %.6f, %.6f\n",
-         adp_data.F_rho_a[0], adp_data.F_rho_a[1], adp_data.F_rho_a[2]);
-  printf("DEBUG: Last few F_rho_a: %.6f, %.6f, %.6f\n",
-         adp_data.F_rho_a[adp_data.nrho-3], adp_data.F_rho_a[adp_data.nrho-2], adp_data.F_rho_a[adp_data.nrho-1]);
-    
-  
   // rho_r splines
   calculate_cubic_spline_coefficients(
     adp_data.rho_r.data(), total_r_points, adp_data.dr,
@@ -471,8 +441,7 @@ void ADP::calculate_cubic_spline_coefficients(
       a_func[j] = y_func[j];
     }
     
-    // CRITICAL FIX: Set the last point explicitly (was missing!)
-    a_func[n_points-1] = y_func[n_points-1];
+  a_func[n_points-1] = y_func[n_points-1];
   }
 }
 
@@ -504,12 +473,12 @@ static __global__ void find_force_adp_step1(
   const int N,
   const int N1,
   const int N2,
-  const int MN_cap,
   const int Nelements,
   const int nrho,
   const double drho,
   const int nr,
   const double dr,
+  const double rc,
   const Box box,
   const int* g_NN,
   const int* g_NL,
@@ -542,10 +511,6 @@ static __global__ void find_force_adp_step1(
   
   if (n1 < N2) {
     int NN = g_NN[n1];
-    if (NN > MN_cap) {
-      printf("ADP WARN: NN(%d) > cap(%d) for atom %d. Truncating.\n", NN, MN_cap, n1);
-      NN = MN_cap;
-    }
     int type1 = g_type[n1];
     
     double x1 = g_x[n1];
@@ -573,9 +538,10 @@ static __global__ void find_force_adp_step1(
       apply_mic(box, delx, dely, delz);
       double d12 = sqrt(delx * delx + dely * dely + delz * delz);
       
-      if (d12 < dr * nr && d12 > 1e-12) {
+      if (d12 < rc && d12 > 1e-12) {
         double r_index = d12 / dr;
         int ir = (int)r_index;
+        // In ADP (LAMMPS setfl), density contribution to atom i uses rho(r) of neighbor j's element type
         int rho_base = type2 * nr;
         int pair_base = get_pair_index(type1, type2, Nelements) * nr;
         
@@ -585,11 +551,6 @@ static __global__ void find_force_adp_step1(
           interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d, 
                          rho_base + ir, r_index - ir, dr, rho_val, rho_deriv);
           rho += rho_val;
-          
-          // DEBUG: Print density contribution for first atom
-          if (n1 == 0 && i1 < 3) {
-            printf("  Neighbor %d: r=%f, rho_val=%f, rho_total=%f\n", i1, d12, rho_val, rho);
-          }
           
           // Calculate u and w values for dipole and quadruple terms
           double u_val, u_deriv, w_val, w_deriv;
@@ -620,13 +581,9 @@ static __global__ void find_force_adp_step1(
     
     double F = 0.0, Fp = 0.0;
     
-    // CRITICAL FIX: Add proper boundary checking for F(rho) table
     if (rho_index >= 0.0 && irho < nrho - 1) {
       interpolate_adp(F_rho_a, F_rho_b, F_rho_c, F_rho_d,
                      F_base + irho, rho_index - irho, drho, F, Fp);
-      // NOTE: Fp from spline interpolation already has correct units
-      // No additional scaling needed as spline coefficients include 1/drho scaling
-      // Fp /= drho;  // REMOVED: This was causing excessive values
     } else {
       // If outside table range, use linear extrapolation
       if (rho_index <= 0.0) {
@@ -641,36 +598,7 @@ static __global__ void find_force_adp_step1(
         double excess_rho = rho - (nrho - 1) * drho;
         F = F_last + slope * excess_rho;
         Fp = slope;
-        
-        // DEBUG: Warning for density overflow
-        if (n1 == 0) {
-          printf("WARNING: Density %.6f exceeds table range (max=%.6f) for atom %d\n",
-                 rho, (nrho-1)*drho, n1);
-          printf("  Using linear extrapolation: F_last=%.6f, slope=%.6f, F_extrap=%.6f\n",
-                 F_last, slope, F);
-        }
       }
-    }
-    
-    // DEBUG: Add detailed F(rho) interpolation information
-    if (n1 == 0) {
-      printf("DEBUG F(rho) atom 0: rho=%.6f, rho_index=%.6f, irho=%d, F_base=%d\n",
-             rho, rho_index, irho, F_base);
-      printf("DEBUG F(rho) atom 0: F=%.6f, Fp=%.6f, boundary_check: rho_index>=0=%d, irho<nrho-1=%d\n",
-             F, Fp, (rho_index >= 0.0), (irho < nrho - 1));
-      printf("DEBUG F(rho) atom 0: nrho=%d, max_rho=%.6f, actual_rho=%.6f\n",
-             nrho, (nrho-1)*drho, rho);
-      if (irho >= nrho - 1) {
-        printf("DEBUG F(rho) atom 0: F_last_direct=%.6f\n", F_rho_a[F_base + nrho - 1]);
-      }
-    }
-    
-    // DEBUG: Print some values to diagnose the problem
-    if (n1 == 0) {
-      printf("DEBUG step1 atom 0: NN=%d, rho=%.6f, F=%.6f, mu=(%.3f,%.3f,%.3f)\n",
-             NN, rho, F, mu_x, mu_y, mu_z);
-      printf("DEBUG step1 atom 0: lambda=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f)\n",
-             lambda_xx, lambda_yy, lambda_zz, lambda_yz, lambda_xz, lambda_xy);
     }
     
     // Calculate ADP energy contributions following LAMMPS exactly
@@ -710,10 +638,10 @@ static __global__ void find_force_adp_step2(
   const int N,
   const int N1,
   const int N2,
-  const int MN_cap,
   const int Nelements,
   const int nr,
   const double dr,
+  const double rc,
   const Box box,
   const int* g_NN,
   const int* g_NL,
@@ -750,10 +678,6 @@ static __global__ void find_force_adp_step2(
   
   if (n1 < N2) {
     int NN = g_NN[n1];
-    if (NN > MN_cap) {
-      printf("ADP WARN: NN(%d) > cap(%d) for atom %d in step2. Truncating.\n", NN, MN_cap, n1);
-      NN = MN_cap;
-    }
     int type1 = g_type[n1];
     
     double x1 = g_x[n1];
@@ -791,7 +715,7 @@ static __global__ void find_force_adp_step2(
   apply_mic(box, delx, dely, delz);
   double d12 = sqrt(delx * delx + dely * dely + delz * delz);
       
-      if (d12 < dr * nr && d12 > 1e-12) {
+      if (d12 < rc && d12 > 1e-12) {
         double d12_inv = 1.0 / d12;
         
         double r_index = d12 / dr;
@@ -806,21 +730,18 @@ static __global__ void find_force_adp_step2(
           double rho1_val, rho1_deriv, rho2_val, rho2_deriv;
           double phi_rphi_val, phi_rphi_deriv, u_val, u_deriv, w_val, w_deriv;
           
+          // rho1_*: density at atom i due to j (uses rho of type j)
           interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d,
-                         rho1_base + ir, r_index - ir, dr, rho1_val, rho1_deriv);
+                         rho2_base + ir, r_index - ir, dr, rho1_val, rho1_deriv);
+          // rho2_*: density at atom j due to i (uses rho of type i)
           interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d,
-                         rho2_base + ir, r_index - ir, dr, rho2_val, rho2_deriv);
+                         rho1_base + ir, r_index - ir, dr, rho2_val, rho2_deriv);
           interpolate_adp(phi_r_a, phi_r_b, phi_r_c, phi_r_d,
                          pair_base + ir, r_index - ir, dr, phi_rphi_val, phi_rphi_deriv);
           interpolate_adp(u_r_a, u_r_b, u_r_c, u_r_d,
                          pair_base + ir, r_index - ir, dr, u_val, u_deriv);
           interpolate_adp(w_r_a, w_r_b, w_r_c, w_r_d,
                          pair_base + ir, r_index - ir, dr, w_val, w_deriv);
-          
-          // NOTE: Our spline interpolation already returns correct derivatives
-          // with proper scaling included in the spline coefficients
-          // No additional scaling needed
-          
           // Convert r*phi(r) back to phi(r) and calculate phi'(r)
           // phi_rphi_val is r*phi(r) from the table
           // phi_rphi_deriv is d(r*phi)/dr from interpolation
@@ -842,20 +763,9 @@ static __global__ void find_force_adp_step2(
           // 1. Pair potential force
           double force_pair = phi_deriv;
           
-          // 2. Embedding density force (EAM-like)
-          double force_density = g_Fp[n1] * rho2_deriv + g_Fp[n2] * rho1_deriv;
-          
-          // DEBUG: Print first neighbor's values for atom 0
-          if (n1 == 0 && i1 == 0) {
-            printf("DEBUG - Atom 0, Neighbor 0:\n");
-            printf("  Distance r = %f\n", d12);
-            printf("  phi_rphi_val = %f, phi_rphi_deriv = %f\n", phi_rphi_val, phi_rphi_deriv);
-            printf("  phi_val = %f, phi_deriv = %f\n", phi_val, phi_deriv);
-            printf("  rho1_val = %f, rho1_deriv = %f\n", rho1_val, rho1_deriv);
-            printf("  rho2_val = %f, rho2_deriv = %f\n", rho2_val, rho2_deriv);
-            printf("  force_pair = %f, force_density = %f\n", force_pair, force_density);
-            printf("  Fp[n1] = %f, Fp[n2] = %f\n", g_Fp[n1], g_Fp[n2]);
-          }
+          // 2. Embedding density force (EAM-like), psip = Fp[i]*rhojp + Fp[j]*rhoip
+          // here rhojp == rho1_deriv (density at i due to j), rhoip == rho2_deriv (density at j due to i)
+          double force_density = g_Fp[n1] * rho1_deriv + g_Fp[n2] * rho2_deriv;
           
           // 3. Calculate ADP force components following LAMMPS exactly
           // Based on LAMMPS pair_adp.cpp formulation
@@ -908,34 +818,33 @@ static __global__ void find_force_adp_step2(
           fy += force_total_y;
           fz += force_total_z;
           
-          // Add pair potential energy (only for i<j to avoid double counting)
-          if (n1 < n2) {
-            pe += phi_val;
-          }
-          
-          // DEBUG: Energy contributions for first pair of atom 0
-          if (n1 == 0 && i1 == 0) {
-            printf("DEBUG step2 atom 0: pair_energy=%.6f, phi_val=%.6f\n", 0.5 * phi_val, phi_val);
-          }
-          
-          // Virial tensor contribution: r_ij (from i to j) times force on i due to j (pairwise style)
-          // Following convention used in LJ and other potentials (using force on i):
-          // s_sab += r_ab * f_b (with r = r_j - r_i). Currently del = r_i - r_j, so use -del for r_ij.
-          double rx = -delx;
-          double ry = -dely;
-          double rz = -delz;
-          double fxi = force_total_x;
-          double fyi = force_total_y;
-          double fzi = force_total_z;
-          s_sxx += rx * fxi;
-          s_sxy += rx * fyi;
-          s_sxz += rx * fzi;
-          s_syx += ry * fxi;
-          s_syy += ry * fyi;
-          s_syz += ry * fzi;
-          s_szx += rz * fxi;
-          s_szy += rz * fyi;
-          s_szz += rz * fzi;
+          // Add pair potential energy with 0.5 factor to avoid double counting (as in EAM)
+          pe += 0.5 * phi_val;
+
+          // Per-atom virial using the same convention as EAM:
+          // s = -0.5 * r_ij \otimes f_i (force on i due to j), where r_ij = r_j - r_i
+          const double xij = -delx;
+          const double yij = -dely;
+          const double zij = -delz;
+          const double fxi = force_total_x;
+          const double fyi = force_total_y;
+          const double fzi = force_total_z;
+          const double half = 0.5;
+          const double sxx = fxi * xij * half;
+          const double syy = fyi * yij * half;
+          const double szz = fzi * zij * half;
+          const double sxy = fxi * yij * half;
+          const double sxz = fxi * zij * half;
+          const double syz = fyi * zij * half;
+          s_sxx += sxx;
+          s_syy += syy;
+          s_szz += szz;
+          s_sxy += sxy;
+          s_sxz += sxz;
+          s_syz += syz;
+          s_syx += sxy; // yx mirrors xy
+          s_szx += sxz; // zx mirrors xz
+          s_szy += syz; // zy mirrors yz
         }
       }
     }
@@ -943,16 +852,16 @@ static __global__ void find_force_adp_step2(
     g_fx[n1] += fx;
     g_fy[n1] += fy;
     g_fz[n1] += fz;
-  // Save virial tensor components to global array
-  g_virial[n1 + 0 * N] += s_sxx; // xx
-  g_virial[n1 + 1 * N] += s_syy; // yy
-  g_virial[n1 + 2 * N] += s_szz; // zz
-  g_virial[n1 + 3 * N] += s_sxy; // xy
-  g_virial[n1 + 4 * N] += s_sxz; // xz
-  g_virial[n1 + 5 * N] += s_syz; // yz
-  g_virial[n1 + 6 * N] += s_syx; // yx
-  g_virial[n1 + 7 * N] += s_szx; // zx
-  g_virial[n1 + 8 * N] += s_szy; // zy
+  // Save virial tensor components to global array (EAM convention: subtract accumulated s)
+  g_virial[n1 + 0 * N] -= s_sxx; // xx
+  g_virial[n1 + 1 * N] -= s_syy; // yy
+  g_virial[n1 + 2 * N] -= s_szz; // zz
+  g_virial[n1 + 3 * N] -= s_sxy; // xy
+  g_virial[n1 + 4 * N] -= s_sxz; // xz
+  g_virial[n1 + 5 * N] -= s_syz; // yz
+  g_virial[n1 + 6 * N] -= s_syx; // yx
+  g_virial[n1 + 7 * N] -= s_szx; // zx
+  g_virial[n1 + 8 * N] -= s_szy; // zy
     g_pe[n1] += pe;
   }
 }
@@ -967,14 +876,12 @@ void ADP::compute(
 {
   const int number_of_atoms = type.size();
   int grid_size = (N2 - N1 - 1) / BLOCK_SIZE_FORCE + 1;
-  const int MN_cap = adp_data.NL.size() / number_of_atoms; // per-atom NL capacity
   
-  // Build neighbor list
+  // Build neighbor list with small-box fallback to avoid duplicates
   {
     int nbins[3];
     bool small_box = box.get_num_bins(0.5 * adp_data.rc, nbins);
     if (!small_box) {
-      // Standard ON1 neighbor list
       find_neighbor(
         N1,
         N2,
@@ -988,13 +895,11 @@ void ADP::compute(
         adp_data.NN,
         adp_data.NL);
     } else {
-      // Fallback O(N^2) neighbor construction for small boxes to avoid duplicates
       const double* gx = position_per_atom.data();
       const double* gy = position_per_atom.data() + number_of_atoms;
       const double* gz = position_per_atom.data() + number_of_atoms * 2;
       const int block = 256;
       const int grid = (N2 - N1 - 1) / block + 1;
-      // Launch a simple ON2 kernel defined below
       build_neighbor_ON2<<<grid, block>>>(
         box,
         number_of_atoms,
@@ -1019,12 +924,12 @@ void ADP::compute(
     number_of_atoms,  // This is N parameter
     N1,
     N2,
-    MN_cap,
     adp_data.Nelements,
     adp_data.nrho,
     adp_data.drho,
     adp_data.nr,
     adp_data.dr,
+    adp_data.rc,
     box,
     adp_data.NN.data(),
     adp_data.NL.data(),
@@ -1059,10 +964,10 @@ void ADP::compute(
     number_of_atoms,
     N1,
     N2,
-    MN_cap,
     adp_data.Nelements,
     adp_data.nr,
     adp_data.dr,
+    adp_data.rc,
     box,
     adp_data.NN.data(),
     adp_data.NL.data(),

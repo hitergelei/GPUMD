@@ -42,7 +42,7 @@ struct ADP_Data {
   // EAM-like functions
   std::vector<double> F_rho;      // embedding function F(rho)
   std::vector<double> rho_r;      // electron density function rho(r)
-  std::vector<double> phi_r;      // pair potential phi(r)
+  std::vector<double> phi_r;      // pair potential r*phi(r)
   
   // ADP-specific functions
   std::vector<double> u_r;        // u(r) function for dipole term
@@ -62,13 +62,7 @@ struct ADP_Data {
   GPU_Vector<double> u_r_a_g, u_r_b_g, u_r_c_g, u_r_d_g;
   GPU_Vector<double> w_r_a_g, w_r_b_g, w_r_c_g, w_r_d_g;
   
-  // derivatives for force calculation
-  GPU_Vector<double> d_F_rho_i_g; // derivative of embedding function for each atom
-  
-  std::vector<int> atomic_number;
-  std::vector<double> atomic_mass;
-  std::vector<double> lattice_constant;
-  std::vector<std::string> lattice_type;
+  // (no per-atom host temporaries here)
 };
 
 class ADP : public Potential

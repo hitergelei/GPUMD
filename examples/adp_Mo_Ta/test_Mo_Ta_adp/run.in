@@ -1,4 +1,5 @@
-potential adp Ni.adp
+potential adp Mo.adp
+velocity 0.0001
 ensemble nve
 time_step 0
 dump_thermo 1

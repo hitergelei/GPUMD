@@ -355,6 +355,21 @@ void read_xyz_in_line_3(
         is_allowed_element = true;
       }
     }
+    // Accept numeric species labels (1-based index) by mapping to potential atom symbols
+    if (!is_allowed_element) {
+      bool all_digits = true;
+      for (char c : cpu_atom_symbol[n]) {
+        if (!(c >= '0' && c <= '9')) { all_digits = false; break; }
+      }
+      if (all_digits) {
+        int idx = std::stoi(cpu_atom_symbol[n]);
+        if (idx >= 1 && idx <= number_of_types) {
+          cpu_atom_symbol[n] = atom_symbols[idx - 1];
+          cpu_type[n] = idx - 1;
+          is_allowed_element = true;
+        }
+      }
+    }
     if (!is_allowed_element) {
       PRINT_INPUT_ERROR("There is atom in model.xyz that is not allowed in the used potential.\n");
     }

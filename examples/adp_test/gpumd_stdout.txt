@@ -1,0 +1,92 @@
+
+***************************************************************
+*                 Welcome to use GPUMD                        *
+*     (Graphics Processing Units Molecular Dynamics)          *
+*                     version 4.3                             *
+*              This is the gpumd executable                   *
+***************************************************************
+
+
+---------------------------------------------------------------
+Compiling options:
+---------------------------------------------------------------
+
+DEBUG is off: Use different PRNG seeds for different runs.
+
+---------------------------------------------------------------
+GPU information:
+---------------------------------------------------------------
+
+number of GPUs = 1
+Device id:                   0
+    Device name:             NVIDIA GeForce RTX 4060 Laptop GPU
+    Compute capability:      8.9
+    Amount of global memory: 7.99561 GB
+    Number of SMs:           24
+
+---------------------------------------------------------------
+Started running GPUMD.
+---------------------------------------------------------------
+
+
+---------------------------------------------------------------
+Started initializing positions and related parameters.
+---------------------------------------------------------------
+
+Number of atoms is 32.
+Use periodic boundary conditions along x.
+Use periodic boundary conditions along y.
+Use periodic boundary conditions along z.
+Box matrix h = [a, b, c] is
+    7.0400000000e+00    0.0000000000e+00    0.0000000000e+00
+    0.0000000000e+00    7.0400000000e+00    0.0000000000e+00
+    0.0000000000e+00    0.0000000000e+00    7.0400000000e+00
+Inverse box matrix g = inv(h) is
+    1.4204545455e-01    0.0000000000e+00    0.0000000000e+00
+    0.0000000000e+00    1.4204545455e-01    0.0000000000e+00
+    0.0000000000e+00    0.0000000000e+00    1.4204545455e-01
+Do not specify initial velocities here.
+Have no grouping method.
+There is only one atom type.
+    32 atoms of type 0.
+Initialized velocities with default T = 300 K.
+
+---------------------------------------------------------------
+Finished initializing positions and related parameters.
+---------------------------------------------------------------
+
+
+---------------------------------------------------------------
+Started executing the commands in run.in.
+---------------------------------------------------------------
+
+Use 1-element ADP potential, rc = 5.168000.
+Initialized velocities with input T = 0.01 K.
+Use NVE ensemble for this run.
+Time step for this run is 1 fs.
+Dump thermo every 1 steps.
+Dump force.
+    every 1 steps.
+Run 1 steps.
+    1 steps completed.
+
+---------------------------------------------------------------
+Time used for this run = 0.00244616 second.
+Speed of this run = 13081.7 atom*step/second.
+---------------------------------------------------------------
+
+
+---------------------------------------------------------------
+Finished executing the commands in run.in.
+---------------------------------------------------------------
+
+
+---------------------------------------------------------------
+Time used = 0.025628 s.
+---------------------------------------------------------------
+
+
+---------------------------------------------------------------
+Finished running GPUMD.
+---------------------------------------------------------------
+

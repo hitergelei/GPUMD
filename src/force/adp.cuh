@@ -94,12 +94,4 @@ protected:
     const double* y, int n_total, double dx,
     double* a, double* b, double* c, double* d,
     int n_functions, int n_points);
-  void output_verification_data(
-    int number_of_atoms,
-    const GPU_Vector<int>& type,
-    const GPU_Vector<double>& position_per_atom,
-    const GPU_Vector<double>& force_per_atom,
-    const GPU_Vector<double>& potential_per_atom,
-    const GPU_Vector<double>& virial_per_atom,
-    int step);
 };

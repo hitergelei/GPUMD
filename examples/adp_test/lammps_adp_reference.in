@@ -6,14 +6,15 @@ units metal
 dimension 3
 boundary p p p
 atom_style atomic
-read_data fcc_ni.data
+read_data fcc_ni_no_vel.data
 
 # Use the same ADP potential
 pair_style adp
 pair_coeff * * Ni.adp Ni
 
 # Set same temperature as GPUMD test
-velocity all create 300.0 12345
+#velocity all create 300.0 12345
+velocity all create 0.01 12345
 
 # Run and dump the same configuration
 timestep 0.001

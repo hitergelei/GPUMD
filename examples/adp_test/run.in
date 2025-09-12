@@ -1,5 +1,5 @@
 potential adp Ni.adp
-#velocity 300
+velocity 0.01
 ensemble nve
 time_step 1
 dump_thermo 1

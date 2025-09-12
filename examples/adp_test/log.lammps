@@ -7,15 +7,13 @@ units metal
 dimension 3
 boundary p p p
 atom_style atomic
-read_data fcc_ni.data
+read_data fcc_ni_no_vel.data
 Reading data file ...
   orthogonal box = (5.748559e-08 5.748559e-08 5.748559e-08) to (7.0399999 7.0399999 7.0399999)
   1 by 1 by 1 MPI processor grid
   reading atoms ...
   32 atoms
-  reading velocities ...
-  32 velocities
-  read_data CPU = 0.001 seconds
+  read_data CPU = 0.000 seconds
 
 # Use the same ADP potential
 pair_style adp
@@ -23,7 +21,8 @@ pair_coeff * * Ni.adp Ni
 Reading adp potential file Ni.adp with DATE: 2011-06-20
 
 # Set same temperature as GPUMD test
-velocity all create 300.0 12345
+#velocity all create 300.0 12345
+velocity all create 0.01 12345
 
 # Run and dump the same configuration
 timestep 0.001
@@ -51,22 +50,22 @@ Neighbor list info ...
       bin: standard
 Per MPI rank memory allocation (min/avg/max) = 5.776 | 5.776 | 5.776 Mbytes
    Step          Temp          E_pair         E_mol          TotEng         Press     
-         0   300           -142.4          0             -141.19788      3680.0077    
-         1   299.46508     -142.39785      0             -141.19788      3688.0452    
-Loop time of 0.000238945 on 1 procs for 1 steps with 32 atoms
+         0   0.01          -142.4          0             -142.39996      0.12263945   
+         1   0.0099821357  -142.4          0             -142.39996      0.12290018   
+Loop time of 0.000163294 on 1 procs for 1 steps with 32 atoms
 
-Performance: 361.589 ns/day, 0.066 hours/ns, 4185.064 timesteps/s, 133.922 katom-step/s
-68.6% CPU use with 1 MPI tasks x no OpenMP threads
+Performance: 529.107 ns/day, 0.045 hours/ns, 6123.924 timesteps/s, 195.966 katom-step/s
+50.2% CPU use with 1 MPI tasks x no OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 0.00012433 | 0.00012433 | 0.00012433 |   0.0 | 52.03
+Pair    | 8.283e-05  | 8.283e-05  | 8.283e-05  |   0.0 | 50.72
 Neigh   | 0          | 0          | 0          |   0.0 |  0.00
-Comm    | 4.752e-06  | 4.752e-06  | 4.752e-06  |   0.0 |  1.99
-Output  | 0.00010546 | 0.00010546 | 0.00010546 |   0.0 | 44.14
-Modify  | 1.729e-06  | 1.729e-06  | 1.729e-06  |   0.0 |  0.72
-Other   |            | 2.671e-06  |            |       |  1.12
+Comm    | 4.256e-06  | 4.256e-06  | 4.256e-06  |   0.0 |  2.61
+Output  | 7.0861e-05 | 7.0861e-05 | 7.0861e-05 |   0.0 | 43.39
+Modify  | 2.168e-06  | 2.168e-06  | 2.168e-06  |   0.0 |  1.33
+Other   |            | 3.179e-06  |            |       |  1.95
 
 Nlocal:             32 ave          32 max          32 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
@@ -84,9 +83,9 @@ Dangerous builds = 0
 print "LAMMPS ADP reference data generated"
 LAMMPS ADP reference data generated
 print "Total energy: $(etotal)"
-Total energy: -141.19787815111303075
+Total energy: -142.39995992506791822
 print "Potential energy: $(pe)"
-Potential energy: -142.39785402109774282
+Potential energy: -142.39999992412938923
 print "Kinetic energy: $(ke)"
-Kinetic energy: 1.1999758699847213883
+Kinetic energy: 3.999906146529022896e-05
 Total wall time: 0:00:00

@@ -1,0 +1,125 @@
+LAMMPS (29 Aug 2024)
+# --------------- INITIALIZATION ------------------
+clear
+units           metal
+dimension                     3
+boundary                      p   p    p
+atom_style      atomic
+boundary        p p p
+
+
+# ------- hcp setting by hjchen-------------------
+read_data  Mo_structs_0.dat
+Reading data file ...
+  orthogonal box = (0 0 0) to (9.450121 9.450121 9.450121)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  54 atoms
+  read_data CPU = 0.001 seconds
+
+# # ------------------------ FORCE FIELDS -----------------------
+
+# # 用Ta的ADP势
+pair_style      adp
+# pair_coeff      * *  Ta.adp.txt   Ta
+pair_coeff      * *  Mo.adp   Mo
+
+
+neighbor  0  bin
+
+
+compute eng all pe/atom
+compute eatoms all reduce sum c_eng
+
+
+reset_timestep 0
+thermo 10
+thermo_style custom step pe lx ly lz press pxx pyy pzz c_eatoms
+
+neighbor 0.0 bin
+
+# #dump 1 all custom 400 dump.relax.1.* id type xs ys zs c_csym c_eng
+
+dump  myDump_task all custom 100 dump.lammpstrj   id element type x y z
+dump_modify  myDump_task  element  Mo  sort id
+
+# fix 1 all box/relax iso 0.0 vmax 0.001
+# min_style cg
+# minimize 1e-15 1e-15 5000 5000
+# unfix 1
+run 0
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+Your simulation uses code contributions which should be cited:
+
+- Type Label Framework: https://doi.org/10.1021/acs.jpcb.3c08419
+
+@Article{Gissinger24,
+ author = {Jacob R. Gissinger, Ilia Nikiforov, Yaser Afshar, Brendon Waters, Moon-ki Choi, Daniel S. Karls, Alexander Stukowski, Wonpil Im, Hendrik Heinz, Axel Kohlmeyer, and Ellad B. Tadmor},
+ title = {Type Label Framework for Bonded Force Fields in LAMMPS},
+ journal = {J. Phys. Chem. B},
+ year =    2024,
+ volume =  128,
+ number =  13,
+ pages =   {3282–-3297}
+}
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+WARNING: No fixes with time integration, atoms won't move (../verlet.cpp:60)
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 6.5
+  ghost atom cutoff = 6.5
+  binsize = 3.25, bins = 3 3 3
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair adp, perpetual
+      attributes: half, newton on
+      pair build: half/bin/atomonly/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 5.864 | 5.864 | 5.864 Mbytes
+   Step         PotEng           Lx             Ly             Lz           Press           Pxx            Pyy            Pzz          c_eatoms   
+         0  -580.92169      9.450121       9.450121       9.450121       72007.85       70721.7        74997.842      70304.007     -580.92169    
+Loop time of 7.39e-07 on 1 procs for 0 steps with 54 atoms
+
+135.3% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 7.39e-07   |            |       |100.00
+
+Nlocal:             54 ave          54 max          54 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:            801 ave         801 max         801 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:           1728 ave        1728 max        1728 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 1728
+Ave neighs/atom = 32
+Neighbor list builds = 0
+Dangerous builds = 0
+
+
+
+
+variable N equal count(all)
+variable No equal $N
+variable No equal 54
+
+
+
+variable E equal "c_eatoms"
+variable Ei equal $E
+variable Ei equal -580.921694925083
+
+Total wall time: 0:00:00

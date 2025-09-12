@@ -52,29 +52,42 @@ IMPORTANT NOTES BASED ON LAMMPS IMPLEMENTATION:
 #include <sstream>
 #include <vector>
 
-#define BLOCK_SIZE_FORCE 64
-#define MAX_ADP_NEIGHBORS 50
+// Use the standard GPUMD neighbor list implementation from neighbor.cu
 
-// ADP-specific neighbor compression kernel (remove duplicates, cap length)
-__global__ void compress_adp_neighbors(int N, int maxN, int* g_NN, int* g_NL)
+#define BLOCK_SIZE_FORCE 64
+
+// Simple O(N^2) neighbor construction for small boxes (avoids cell-list duplicate visits)
+static __global__ void build_neighbor_ON2(
+  const Box box,
+  const int N,
+  const int N1,
+  const int N2,
+  const double rc2,
+  const double* __restrict__ x,
+  const double* __restrict__ y,
+  const double* __restrict__ z,
+  int* __restrict__ NN,
+  int* __restrict__ NL)
 {
-  int n = blockIdx.x * blockDim.x + threadIdx.x;
-  if (n < N) {
-    int old_count = g_NN[n];
-    if (old_count <= 1) return;
-    int write = 0;
-    int prev = -1;
-    for (int i = 0; i < old_count; ++i) {
-      int neighbor = g_NL[n + i * N];
-      if (neighbor != prev) {
-        g_NL[n + write * N] = neighbor;
-        prev = neighbor;
-        ++write;
-        if (write == maxN) break;
-      }
+  int n1 = blockIdx.x * blockDim.x + threadIdx.x + N1;
+  if (n1 >= N2) return;
+  double x1 = x[n1];
+  double y1 = y[n1];
+  double z1 = z[n1];
+  int count = 0;
+  for (int n2 = 0; n2 < N; ++n2) {
+    if (n2 == n1) continue;
+    double dx = x[n2] - x1;
+    double dy = y[n2] - y1;
+    double dz = z[n2] - z1;
+    apply_mic(box, dx, dy, dz);
+    double d2 = dx * dx + dy * dy + dz * dz;
+    if (d2 < rc2) {
+      NL[count * N + n1] = n2;
+      ++count;
     }
-    g_NN[n] = write;
   }
+  NN[n1] = count;
 }
 
 ADP::ADP(const char* file_potential, const int number_of_atoms)
@@ -466,14 +479,14 @@ void ADP::calculate_cubic_spline_coefficients(
 // GPU utility functions for interpolation
 __device__ static void interpolate_adp(
   const double* a, const double* b, const double* c, const double* d,
-  int index, double x, double& y, double& yp)
+  int index, double x_frac, double dx, double& y, double& yp)
 {
-  // x is already the fractional part from LAMMPS-style calculation
-  // Use cubic spline interpolation: y = a + b*x + c*x^2 + d*x^3
-  y = a[index] + b[index] * x + c[index] * x * x + d[index] * x * x * x;
-  yp = b[index] + 2.0 * c[index] * x + 3.0 * d[index] * x * x;
-  // NOTE: yp is dy/dx where x is the fractional coordinate
-  // To get dy/dr, we need to multiply by dx/dr = 1/dr in the calling function
+  // Evaluate natural cubic spline on uniform grid with spacing dx
+  // x_frac in [0,1). Physical offset t = x_frac * dx
+  double t = x_frac * dx;
+  y = a[index] + b[index] * t + c[index] * t * t + d[index] * t * t * t;
+  // yp is derivative w.r.t physical variable (drho or dr)
+  yp = b[index] + 2.0 * c[index] * t + 3.0 * d[index] * t * t;
 }
 
 // Get pair index for element types (0-based) consistent with reading order (i loop outer, j<=i)
@@ -491,6 +504,7 @@ static __global__ void find_force_adp_step1(
   const int N,
   const int N1,
   const int N2,
+  const int MN_cap,
   const int Nelements,
   const int nrho,
   const double drho,
@@ -528,10 +542,9 @@ static __global__ void find_force_adp_step1(
   
   if (n1 < N2) {
     int NN = g_NN[n1];
-    if (NN > 400) {
-      // Hard guard against neighbor list overflow (allocation is N*400)
-      printf("ADP ERROR: NN(%d) > 400 for atom %d. Truncating to 400.\n", NN, n1);
-      NN = 400;
+    if (NN > MN_cap) {
+      printf("ADP WARN: NN(%d) > cap(%d) for atom %d. Truncating.\n", NN, MN_cap, n1);
+      NN = MN_cap;
     }
     int type1 = g_type[n1];
     
@@ -570,7 +583,7 @@ static __global__ void find_force_adp_step1(
           // Calculate rho contribution (electron density)
           double rho_val, rho_deriv;
           interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d, 
-                         rho_base + ir, r_index - ir, rho_val, rho_deriv);
+                         rho_base + ir, r_index - ir, dr, rho_val, rho_deriv);
           rho += rho_val;
           
           // DEBUG: Print density contribution for first atom
@@ -581,9 +594,9 @@ static __global__ void find_force_adp_step1(
           // Calculate u and w values for dipole and quadruple terms
           double u_val, u_deriv, w_val, w_deriv;
           interpolate_adp(u_r_a, u_r_b, u_r_c, u_r_d,
-                         pair_base + ir, r_index - ir, u_val, u_deriv);
+                         pair_base + ir, r_index - ir, dr, u_val, u_deriv);
           interpolate_adp(w_r_a, w_r_b, w_r_c, w_r_d,
-                         pair_base + ir, r_index - ir, w_val, w_deriv);
+                         pair_base + ir, r_index - ir, dr, w_val, w_deriv);
           
           // Dipole terms: mu_i += u(r)*del (del = x_i - x_j)
           mu_x += u_val * delx;
@@ -610,7 +623,7 @@ static __global__ void find_force_adp_step1(
     // CRITICAL FIX: Add proper boundary checking for F(rho) table
     if (rho_index >= 0.0 && irho < nrho - 1) {
       interpolate_adp(F_rho_a, F_rho_b, F_rho_c, F_rho_d,
-                     F_base + irho, rho_index - irho, F, Fp);
+                     F_base + irho, rho_index - irho, drho, F, Fp);
       // NOTE: Fp from spline interpolation already has correct units
       // No additional scaling needed as spline coefficients include 1/drho scaling
       // Fp /= drho;  // REMOVED: This was causing excessive values
@@ -697,6 +710,7 @@ static __global__ void find_force_adp_step2(
   const int N,
   const int N1,
   const int N2,
+  const int MN_cap,
   const int Nelements,
   const int nr,
   const double dr,
@@ -736,9 +750,9 @@ static __global__ void find_force_adp_step2(
   
   if (n1 < N2) {
     int NN = g_NN[n1];
-    if (NN > 400) {
-      printf("ADP ERROR: NN(%d) > 400 for atom %d in step2. Truncating to 400.\n", NN, n1);
-      NN = 400;
+    if (NN > MN_cap) {
+      printf("ADP WARN: NN(%d) > cap(%d) for atom %d in step2. Truncating.\n", NN, MN_cap, n1);
+      NN = MN_cap;
     }
     int type1 = g_type[n1];
     
@@ -793,15 +807,15 @@ static __global__ void find_force_adp_step2(
           double phi_rphi_val, phi_rphi_deriv, u_val, u_deriv, w_val, w_deriv;
           
           interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d,
-                         rho1_base + ir, r_index - ir, rho1_val, rho1_deriv);
+                         rho1_base + ir, r_index - ir, dr, rho1_val, rho1_deriv);
           interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d,
-                         rho2_base + ir, r_index - ir, rho2_val, rho2_deriv);
+                         rho2_base + ir, r_index - ir, dr, rho2_val, rho2_deriv);
           interpolate_adp(phi_r_a, phi_r_b, phi_r_c, phi_r_d,
-                         pair_base + ir, r_index - ir, phi_rphi_val, phi_rphi_deriv);
+                         pair_base + ir, r_index - ir, dr, phi_rphi_val, phi_rphi_deriv);
           interpolate_adp(u_r_a, u_r_b, u_r_c, u_r_d,
-                         pair_base + ir, r_index - ir, u_val, u_deriv);
+                         pair_base + ir, r_index - ir, dr, u_val, u_deriv);
           interpolate_adp(w_r_a, w_r_b, w_r_c, w_r_d,
-                         pair_base + ir, r_index - ir, w_val, w_deriv);
+                         pair_base + ir, r_index - ir, dr, w_val, w_deriv);
           
           // NOTE: Our spline interpolation already returns correct derivatives
           // with proper scaling included in the spline coefficients
@@ -953,25 +967,47 @@ void ADP::compute(
 {
   const int number_of_atoms = type.size();
   int grid_size = (N2 - N1 - 1) / BLOCK_SIZE_FORCE + 1;
+  const int MN_cap = adp_data.NL.size() / number_of_atoms; // per-atom NL capacity
   
-  // Find neighbors
-  find_neighbor(
-    N1,
-    N2,
-    adp_data.rc,
-    box,
-    type,
-    position_per_atom,
-    adp_data.cell_count,
-    adp_data.cell_count_sum,
-    adp_data.cell_contents,
-    adp_data.NN,
-    adp_data.NL);
+  // Build neighbor list
   {
-    int blocks = (number_of_atoms + 127) / 128;
-    compress_adp_neighbors<<<blocks,128>>>(number_of_atoms, MAX_ADP_NEIGHBORS, adp_data.NN.data(), adp_data.NL.data());
-    GPU_CHECK_KERNEL
+    int nbins[3];
+    bool small_box = box.get_num_bins(0.5 * adp_data.rc, nbins);
+    if (!small_box) {
+      // Standard ON1 neighbor list
+      find_neighbor(
+        N1,
+        N2,
+        adp_data.rc,
+        box,
+        type,
+        position_per_atom,
+        adp_data.cell_count,
+        adp_data.cell_count_sum,
+        adp_data.cell_contents,
+        adp_data.NN,
+        adp_data.NL);
+    } else {
+      // Fallback O(N^2) neighbor construction for small boxes to avoid duplicates
+      const double* gx = position_per_atom.data();
+      const double* gy = position_per_atom.data() + number_of_atoms;
+      const double* gz = position_per_atom.data() + number_of_atoms * 2;
+      const int block = 256;
+      const int grid = (N2 - N1 - 1) / block + 1;
+      // Launch a simple ON2 kernel defined below
+      build_neighbor_ON2<<<grid, block>>>(
+        box,
+        number_of_atoms,
+        N1,
+        N2,
+        adp_data.rc * adp_data.rc,
+        gx, gy, gz,
+        adp_data.NN.data(),
+        adp_data.NL.data());
+      GPU_CHECK_KERNEL
+    }
   }
+
 
   // Zero only internal accumulators needed for this step; top-level framework already zeroed force/potential/virial.
   adp_data.mu.fill(0.0);      // size 3N
@@ -983,6 +1019,7 @@ void ADP::compute(
     number_of_atoms,  // This is N parameter
     N1,
     N2,
+    MN_cap,
     adp_data.Nelements,
     adp_data.nrho,
     adp_data.drho,
@@ -1022,6 +1059,7 @@ void ADP::compute(
     number_of_atoms,
     N1,
     N2,
+    MN_cap,
     adp_data.Nelements,
     adp_data.nr,
     adp_data.dr,

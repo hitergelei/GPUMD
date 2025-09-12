@@ -1,4 +1,6 @@
-potential adp Mo.adp
+potential adp Mo.adp  Mo
+
+#potential  adp ../../adp_U_Mo/U_Mo.alloy.adp_cor.txt  Mo
 velocity 0.0001
 ensemble nve
 time_step 0

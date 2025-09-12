@@ -13,12 +13,11 @@ Reading data file ...
   1 by 1 by 1 MPI processor grid
   reading atoms ...
   54 atoms
-  read_data CPU = 0.000 seconds
+  read_data CPU = 0.002 seconds
 
 # Use the same ADP potential
 pair_style adp
-#pair_coeff * * Mo.adp Mo
-pair_coeff * *  ../../adp_U_Mo/U_Mo.alloy.adp_cor.txt  Mo
+pair_coeff * * Mo.adp Mo
 
 # Set same temperature as GPUMD test
 #velocity all create 300.0 12345
@@ -39,9 +38,9 @@ run 0
 Neighbor list info ...
   update: every = 1 steps, delay = 0 steps, check = yes
   max neighbors/atom: 2000, page size: 100000
-  master list distance cutoff = 8.196997
-  ghost atom cutoff = 8.196997
-  binsize = 4.0984985, bins = 3 3 3
+  master list distance cutoff = 8.5
+  ghost atom cutoff = 8.5
+  binsize = 4.25, bins = 3 3 3
   1 neighbor lists, perpetual/occasional/extra = 1 0 0
   (1) pair adp, perpetual
       attributes: half, newton on
@@ -50,10 +49,10 @@ Neighbor list info ...
       bin: standard
 Per MPI rank memory allocation (min/avg/max) = 5.9 | 5.9 | 5.9 Mbytes
    Step          Temp          E_pair         E_mol          TotEng         Press     
-         0   0.0001        -367.99712      0             -367.99712      26950.861    
-Loop time of 4.37e-07 on 1 procs for 0 steps with 54 atoms
+         0   0.0001        -580.92169      0             -580.92169      72007.851    
+Loop time of 1.076e-06 on 1 procs for 0 steps with 54 atoms
 
-228.8% CPU use with 1 MPI tasks x no OpenMP threads
+278.8% CPU use with 1 MPI tasks x no OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
@@ -63,17 +62,17 @@ Neigh   | 0          | 0          | 0          |   0.0 |  0.00
 Comm    | 0          | 0          | 0          |   0.0 |  0.00
 Output  | 0          | 0          | 0          |   0.0 |  0.00
 Modify  | 0          | 0          | 0          |   0.0 |  0.00
-Other   |            | 4.37e-07   |            |       |100.00
+Other   |            | 1.076e-06  |            |       |100.00
 
 Nlocal:             54 ave          54 max          54 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
 Nghost:           1187 ave        1187 max        1187 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
-Neighs:           4144 ave        4144 max        4144 min
+Neighs:           4536 ave        4536 max        4536 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
 
-Total # of neighbors = 4144
-Ave neighs/atom = 76.740741
+Total # of neighbors = 4536
+Ave neighs/atom = 84
 Neighbor list builds = 0
 Dangerous builds = 0
 
@@ -81,9 +80,9 @@ Dangerous builds = 0
 print "LAMMPS ADP reference data generated"
 LAMMPS ADP reference data generated
 print "Total energy: $(etotal)"
-Total energy: -367.99712357238610139
+Total energy: -580.92169424000496747
 print "Potential energy: $(pe)"
-Potential energy: -367.99712425746486133
+Potential energy: -580.92169492508378426
 print "Kinetic energy: $(ke)"
 Kinetic energy: 6.8507876849999991762e-07
 

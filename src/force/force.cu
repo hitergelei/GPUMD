@@ -74,32 +74,35 @@ void Force::check_types(const char* file_potential)
 void Force::parse_potential(
   const char** param, int num_param, const Box& box, const int number_of_atoms)
 {
-  if (num_param != 2 && num_param != 3) {
-    PRINT_INPUT_ERROR("potential should have 1 or 2 parameters.\n");
-  }
-
   std::unique_ptr<Potential> potential;
-  
-  // Special handling for ADP potential
-  if (num_param == 3 && strcmp(param[1], "adp") == 0) {
+
+  // Special handling for ADP potential: allow extra tokens after filename (ignored)
+  if (num_param >= 2 && strcmp(param[1], "adp") == 0) {
+    if (num_param < 3) {
+      PRINT_INPUT_ERROR("For ADP: potential adp <file> [elements ...].\n");
+    }
     potential.reset(new ADP(param[2], number_of_atoms));
     gpuError_t e_after_adp = gpuDeviceSynchronize();
     if(e_after_adp != gpuSuccess){
       printf("FORCE ERROR: CUDA error right after ADP construction: %s (%d)\n", gpuGetErrorString(e_after_adp),(int)e_after_adp);
     }
-    
+
     potential->N1 = 0;
     potential->N2 = number_of_atoms;
-    
+
     // Move the pointer into the list of potentials
     potentials.push_back(std::move(potential));
-  // Print current sizes of atom property vectors if already allocated
-  // (Cannot access Atom here directly; will rely on later Force::compute prints.)
+    // Print current sizes of atom property vectors if already allocated
+    // (Cannot access Atom here directly; will rely on later Force::compute prints.)
     has_non_nep = true;
     if (potentials.size() > 1 && has_non_nep) {
       PRINT_INPUT_ERROR("Multiple potentials may only be used with NEP potentials.\n");
     }
     return;
+  }
+
+  if (num_param != 2 && num_param != 3) {
+    PRINT_INPUT_ERROR("potential should have 1 or 2 parameters.\n");
   }
   
   FILE* fid_potential = my_fopen(param[1], "r");

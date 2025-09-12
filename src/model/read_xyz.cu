@@ -26,10 +26,12 @@ The class defining the simulation model.
 #include "utilities/gpu_macro.cuh"
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <set>
 #include <sstream>
 #include <string>
 
@@ -439,7 +441,7 @@ void find_type_size(
   }
 }
 
-static std::string get_filename_potential()
+static void parse_run_in_adp(std::string& filename_potential, std::vector<std::string>& declared)
 {
   std::ifstream input_run("run.in");
   if (!input_run.is_open()) {
@@ -447,105 +449,119 @@ static std::string get_filename_potential()
   }
 
   std::string line;
-  std::string filename_potential;
+  filename_potential.clear();
+  declared.clear();
+
   while (std::getline(input_run, line)) {
-    std::vector<std::string> tokens = get_tokens(line);
-    if (tokens.size() >= 2) {
-      if (tokens[0] == "potential") {
-        if (tokens.size() >= 3 && tokens[1] == "adp") {
-          // For ADP: potential adp filename.adp
-          filename_potential = tokens[2];
-        } else {
-          // For other potentials: potential filename
-          filename_potential = tokens[1];
+    auto tokens_all = get_tokens(line);
+    if (tokens_all.empty()) continue;
+    // strip comments starting with '#'
+    std::vector<std::string> tokens;
+    for (const auto& t : tokens_all) {
+      if (!t.empty() && t[0] == '#') break;
+      tokens.push_back(t);
+    }
+    if (tokens.size() >= 2 && tokens[0] == "potential") {
+      if (tokens.size() >= 3 && tokens[1] == "adp") {
+        filename_potential = tokens[2];
+        declared.clear();
+        for (size_t i = 3; i < tokens.size(); ++i) {
+          declared.push_back(tokens[i]);
         }
+      } else {
+        // For other potentials: potential filename
+        filename_potential = tokens[1];
+        declared.clear();
       }
     }
   }
   input_run.close();
-  if (filename_potential.size() == 0) {
+  if (filename_potential.empty()) {
     PRINT_INPUT_ERROR("There is no 'potential' keyword in run.in.");
-  } else {
-    return filename_potential;
   }
 }
 
 static std::vector<std::string> get_atom_symbols(std::string& filename_potential)
 {
-  std::ifstream input_potential(filename_potential);
-  if (!input_potential.is_open()) {
-    std::cout << "Error: cannot open " + filename_potential << std::endl;
-    exit(1);
-  }
-
-  // Check if this is an ADP file by looking at the file extension
-  bool is_adp_file = (filename_potential.size() >= 4 && 
-                      filename_potential.substr(filename_potential.size() - 4) == ".adp");
-  
-  std::vector<std::string> tokens;
-  
-  if (is_adp_file) {
-    // For ADP files, skip the first 3 comment lines and read the 4th line
+  // Try to parse as ADP/EAM setfl-like: skip 3 comment lines, 4th line lists elements
+  {
+    std::ifstream in(filename_potential);
+    if (!in.is_open()) {
+      std::cout << "Error: cannot open " + filename_potential << std::endl;
+      exit(1);
+    }
     std::string line;
+    bool ok = true;
     for (int i = 0; i < 3; ++i) {
-      if (!std::getline(input_potential, line)) {
-        std::cout << "Error: ADP file has less than 4 lines." << std::endl;
-        exit(1);
+      if (!std::getline(in, line)) { ok = false; break; }
+    }
+    if (ok && std::getline(in, line)) {
+      std::istringstream iss(line);
+      std::vector<std::string> tokens;
+      std::string tok;
+      while (iss >> tok) tokens.push_back(tok);
+
+      // Expect: Nelements Element1 Element2 ... ElementN
+      if (tokens.size() >= 2) {
+        // First token must be an integer, and token[1] must not be a pure number
+        bool t1_is_int = true;
+        try { (void)std::stoi(tokens[0]); } catch (...) { t1_is_int = false; }
+        auto is_number = [](const std::string& s){
+          if (s.empty()) return false;
+          char* endptr = nullptr;
+          strtod(s.c_str(), &endptr);
+          return (*endptr == '\0');
+        };
+        int number_of_types = t1_is_int ? std::stoi(tokens[0]) : -1;
+        if (t1_is_int && number_of_types > 0 && (int)tokens.size() == 1 + number_of_types && !is_number(tokens[1])) {
+          std::vector<std::string> atom_symbols(number_of_types);
+          for (int n = 0; n < number_of_types; ++n) {
+            atom_symbols[n] = tokens[1 + n];
+          }
+          return atom_symbols;
+        } else if (t1_is_int && number_of_types > 0) {
+          // Possibly EAM/ADP setfl variant where line 4 is numeric params and
+          // line 5 lists the element symbols. Try to read the next line.
+          if (std::getline(in, line)) {
+            std::istringstream iss2(line);
+            std::vector<std::string> tokens2;
+            while (iss2 >> tok) tokens2.push_back(tok);
+            if ((int)tokens2.size() == number_of_types && !tokens2.empty() && !is_number(tokens2[0])) {
+              std::vector<std::string> atom_symbols(number_of_types);
+              for (int n = 0; n < number_of_types; ++n) {
+                atom_symbols[n] = tokens2[n];
+              }
+              return atom_symbols;
+            }
+          }
+        }
       }
     }
-    // Read the 4th line which contains element information
-    if (!std::getline(input_potential, line)) {
-      std::cout << "Error: Cannot read element information from ADP file." << std::endl;
+    // fallthrough to other format
+  }
+
+  // Generic potential header: first line contains potential name, number_of_types, then symbols
+  {
+    std::ifstream in2(filename_potential);
+    if (!in2.is_open()) {
+      std::cout << "Error: cannot open " + filename_potential << std::endl;
       exit(1);
     }
-    std::istringstream iss(line);
-    std::string token;
-    while (iss >> token) {
-      tokens.push_back(token);
-    }
-    
-    // For ADP files, the format is: Nelements Element1 Element2 ... ElementN
-    if (tokens.size() < 2) {
-      std::cout << "The ADP element line should have at least 2 items." << std::endl;
-      exit(1);
-    }
-    
-    int number_of_types = get_int_from_token(tokens[0], __FILE__, __LINE__);
-    if (tokens.size() != 1 + number_of_types) {
-      std::cout << "The ADP element line should have " << number_of_types
-                << " atom symbols after the number." << std::endl;
-      exit(1);
-    }
-    
-    std::vector<std::string> atom_symbols(number_of_types);
-    for (int n = 0; n < number_of_types; ++n) {
-      atom_symbols[n] = tokens[1 + n];
-    }
-    
-    input_potential.close();
-    return atom_symbols;
-  } else {
-    // For other potential files, read the first line
-    tokens = get_tokens(input_potential);
-    
+    auto tokens = get_tokens(in2);
     if (tokens.size() < 3) {
-      std::cout << "The first line of the potential file should have at least 3 items." << std::endl;
+      std::cout << "Failed to read element symbols from potential file header: " << filename_potential << std::endl;
       exit(1);
     }
-    
     int number_of_types = get_int_from_token(tokens[1], __FILE__, __LINE__);
-    if (tokens.size() != 2 + number_of_types) {
+    if ((int)tokens.size() != 2 + number_of_types) {
       std::cout << "The first line of the potential file should have " << number_of_types
                 << " atom symbols." << std::endl;
       exit(1);
     }
-    
     std::vector<std::string> atom_symbols(number_of_types);
     for (int n = 0; n < number_of_types; ++n) {
       atom_symbols[n] = tokens[2 + n];
     }
-    
-    input_potential.close();
     return atom_symbols;
   }
 }
@@ -561,7 +577,9 @@ void initialize_position(
   }
 
   std::vector<std::string> atom_symbols;
-  auto filename_potential = get_filename_potential();
+  std::string filename_potential;
+  std::vector<std::string> declared_elements;
+  parse_run_in_adp(filename_potential, declared_elements);
   atom_symbols = get_atom_symbols(filename_potential);
 
   read_xyz_line_1(input, atom.number_of_atoms);
@@ -591,6 +609,38 @@ void initialize_position(
     group);
 
   input.close();
+
+  // If user declared extra element names after ADP filename in run.in, validate them
+  if (!declared_elements.empty()) {
+    // Build set of species actually present in model.xyz
+    std::set<std::string> present_species;
+    for (const auto& s : atom.cpu_atom_symbol) present_species.insert(s);
+    // Build set of allowed symbols from potential file
+    std::set<std::string> allowed_symbols(atom_symbols.begin(), atom_symbols.end());
+
+    auto canonicalize = [](std::string s){
+      if (s.empty()) return s;
+      for (auto& c : s) c = std::tolower(static_cast<unsigned char>(c));
+      s[0] = std::toupper(static_cast<unsigned char>(s[0]));
+      return s;
+    };
+
+    for (auto raw : declared_elements) {
+      std::string sym = canonicalize(raw);
+      // 1) must be a valid chemical symbol (in MASS_TABLE)
+      if (MASS_TABLE.find(sym) == MASS_TABLE.end()) {
+        PRINT_INPUT_ERROR("Invalid element symbol in run.in after ADP filename.");
+      }
+      // 2) must appear in model.xyz species
+      if (present_species.find(sym) == present_species.end()) {
+        PRINT_INPUT_ERROR("Element symbol declared in run.in is not present in model.xyz.");
+      }
+      // 3) must be supported by the ADP potential file
+      if (allowed_symbols.find(sym) == allowed_symbols.end()) {
+        PRINT_INPUT_ERROR("Element symbol declared in run.in is not supported by the ADP potential file.");
+      }
+    }
+  }
 
   for (int m = 0; m < group.size(); ++m) {
     group[m].find_size(atom.number_of_atoms, m);

@@ -76,12 +76,16 @@ void Force::parse_potential(
 {
   std::unique_ptr<Potential> potential;
 
-  // Special handling for ADP potential: allow extra tokens after filename (ignored)
+  // Special handling for ADP potential: allow extra tokens after filename (as options)
   if (num_param >= 2 && strcmp(param[1], "adp") == 0) {
     if (num_param < 3) {
       PRINT_INPUT_ERROR("For ADP: potential adp <file> [elements ...].\n");
     }
-    potential.reset(new ADP(param[2], number_of_atoms));
+    // Collect any extra tokens after the filename as options (e.g., adp_spline=natural)
+    std::vector<std::string> adp_opts;
+    for (int i = 3; i < num_param; ++i) adp_opts.emplace_back(param[i]);
+    potential.reset(adp_opts.empty() ? new ADP(param[2], number_of_atoms)
+                                     : new ADP(param[2], number_of_atoms, adp_opts));
     gpuError_t e_after_adp = gpuDeviceSynchronize();
     if(e_after_adp != gpuSuccess){
       printf("FORCE ERROR: CUDA error right after ADP construction: %s (%d)\n", gpuGetErrorString(e_after_adp),(int)e_after_adp);

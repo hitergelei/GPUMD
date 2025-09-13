@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+"""
+Zero out z2r (r*phi) tables in an ADP (setfl-like) potential file.
+
+Usage:
+  python zero_z2r.py [input_file] [output_file]
+
+If not provided, defaults to:
+  input_file  = U_Mo.alloy.adp_cor.txt
+  output_file = U_Mo.alloy.adp_cor_noz2r.txt
+
+The script preserves the original formatting and line breaks while
+replacing the z2r section with zeros (keeping the same token counts
+per line). u2r and w2r blocks are kept unchanged.
+"""
+
+from pathlib import Path
+import sys
+
+
+def read_tokens_count(line: str) -> int:
+    return 0 if not line.strip() else len(line.split())
+
+
+def consume_block(lines, start_idx, n_values):
+    """Consume lines from start_idx until we accumulate n_values tokens.
+    Returns (end_idx (exclusive), captured_lines, token_counts_per_line).
+    """
+    cur = start_idx
+    cnt = 0
+    captured = []
+    counts = []
+    while cnt < n_values:
+        if cur >= len(lines):
+            raise RuntimeError("Unexpected EOF when consuming a data block.")
+        line = lines[cur]
+        n = read_tokens_count(line)
+        cnt += n
+        captured.append(line)
+        counts.append(n)
+        cur += 1
+    return cur, captured, counts
+
+
+def main():
+    if len(sys.argv) >= 2:
+        infile = Path(sys.argv[1])
+    else:
+        infile = Path('U_Mo.alloy.adp_cor.txt')
+    if len(sys.argv) >= 3:
+        outfile = Path(sys.argv[2])
+    else:
+        stem = infile.stem
+        suffix = infile.suffix
+        outfile = infile.with_name(stem + '_noz2r' + suffix)
+
+    lines = infile.read_text().splitlines()
+    if len(lines) < 6:
+        raise RuntimeError('File too short to be a valid ADP setfl file.')
+
+    out_lines = []
+
+    # Header: first 3 comment lines
+    out_lines.extend(lines[:3])
+
+    # Line 4: Nelements Element1 Element2 ...
+    header4 = lines[3].split()
+    try:
+        nelems = int(header4[0])
+    except Exception:
+        raise RuntimeError('Failed to parse number of elements on line 4.')
+    out_lines.append(lines[3])
+
+    # Line 5: nrho drho nr dr rc
+    header5 = lines[4].split()
+    if len(header5) < 5:
+        raise RuntimeError('Failed to parse line 5: expected nrho drho nr dr rc')
+    try:
+        nrho = int(float(header5[0]))
+        drho = float(header5[1])
+        nr = int(float(header5[2]))
+        dr = float(header5[3])
+        rc = float(header5[4])
+    except Exception:
+        raise RuntimeError('Failed to parse numeric values on line 5.')
+    out_lines.append(lines[4])
+
+    cur = 5
+    # Per-element blocks: info line + F(rho) [nrho] + rho(r) [nr]
+    for _ in range(nelems):
+        # info line
+        out_lines.append(lines[cur])
+        cur += 1
+        # F(rho)
+        cur, frho_block, _ = consume_block(lines, cur, nrho)
+        out_lines.extend(frho_block)
+        # rho(r)
+        cur, rhor_block, _ = consume_block(lines, cur, nr)
+        out_lines.extend(rhor_block)
+
+    # Pair blocks
+    npairs = nelems * (nelems + 1) // 2
+
+    # z2r (r*phi): zero out
+    z2r_zero_lines = []
+    for _ in range(npairs):
+        nxt, z2r_block, counts = consume_block(lines, cur, nr)
+        cur = nxt
+        for n in counts:
+            if n == 0:
+                z2r_zero_lines.append('')
+            else:
+                z2r_zero_lines.append(' '.join(['0'] * n))
+    out_lines.extend(z2r_zero_lines)
+
+    # u2r: keep
+    for _ in range(npairs):
+        cur, u2r_block, _ = consume_block(lines, cur, nr)
+        out_lines.extend(u2r_block)
+
+    # w2r: keep
+    for _ in range(npairs):
+        cur, w2r_block, _ = consume_block(lines, cur, nr)
+        out_lines.extend(w2r_block)
+
+    # Write output
+    outfile.write_text('\n'.join(out_lines) + '\n')
+    print(f"Wrote: {outfile} (z2r set to zero).")
+
+
+if __name__ == '__main__':
+    main()
+

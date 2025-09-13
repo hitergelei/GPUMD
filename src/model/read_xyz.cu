@@ -466,7 +466,10 @@ static void parse_run_in_adp(std::string& filename_potential, std::vector<std::s
         filename_potential = tokens[2];
         declared.clear();
         for (size_t i = 3; i < tokens.size(); ++i) {
-          declared.push_back(tokens[i]);
+          // Only treat plain symbols as declared elements; skip key=value options
+          if (tokens[i].find('=') == std::string::npos) {
+            declared.push_back(tokens[i]);
+          }
         }
       } else {
         // For other potentials: potential filename
@@ -626,6 +629,7 @@ void initialize_position(
     };
 
     for (auto raw : declared_elements) {
+      if (raw.find('=') != std::string::npos) continue; // ignore options like key=value
       std::string sym = canonicalize(raw);
       // 1) must be a valid chemical symbol (in MASS_TABLE)
       if (MASS_TABLE.find(sym) == MASS_TABLE.end()) {

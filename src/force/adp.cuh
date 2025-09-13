@@ -33,6 +33,8 @@ struct ADP_Data {
   // Tabulated functions from ADP file
   int Nelements;
   std::vector<std::string> elements_list;
+  // Optional per-element mass parsed from the ADP file (used for debug)
+  std::vector<double> mass;
   int nrho;
   double drho;
   int nr;
@@ -62,6 +64,11 @@ struct ADP_Data {
   GPU_Vector<double> u_r_a_g, u_r_b_g, u_r_c_g, u_r_d_g;
   GPU_Vector<double> w_r_a_g, w_r_b_g, w_r_c_g, w_r_d_g;
   
+  // Optional per-atom debug accumulators (host reduction, on GPU for convenience)
+  GPU_Vector<double> dbg_F;    // embedding energy contribution per atom
+  GPU_Vector<double> dbg_ADP;  // angular (ADP) energy contribution per atom
+  GPU_Vector<double> dbg_PAIR; // pair energy contribution per atom
+  
   // (no per-atom host temporaries here)
 };
 
@@ -69,7 +76,10 @@ class ADP : public Potential
 {
 public:
   using Potential::compute;
+  // Minimal constructor used by Force::parse_potential for "potential adp <file> [..]"
   ADP(const char* file_potential, const int number_of_atoms);
+  // Extended constructor that accepts optional key=value options (e.g., adp_spline=natural)
+  ADP(const char* file_potential, const int number_of_atoms, const std::vector<std::string>& options);
   virtual ~ADP(void);
   virtual void compute(
     Box& box,
@@ -82,9 +92,16 @@ public:
 
 protected:
   ADP_Data adp_data;
+  // Option parsing and spline configuration
+  void parse_options(const std::vector<std::string>& options);
+  bool use_lammps_spline_ = true; // true: LAMMPS-like spline; false: natural cubic
   void read_adp_file(const char* file_potential);
   void setup_spline_interpolation();
   void calculate_cubic_spline_coefficients(
+    const double* y, int n_total, double dx,
+    double* a, double* b, double* c, double* d,
+    int n_functions, int n_points);
+  void calculate_lammps_like_coefficients(
     const double* y, int n_total, double dx,
     double* a, double* b, double* c, double* d,
     int n_functions, int n_points);

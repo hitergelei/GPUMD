@@ -51,10 +51,16 @@ IMPORTANT NOTES BASED ON LAMMPS IMPLEMENTATION:
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <cctype>
 
 // Use the standard GPUMD neighbor list implementation from neighbor.cu
 
 #define BLOCK_SIZE_FORCE 64
+
+// Debug dump switch for comparing with LAMMPS setfl parsing
+#ifndef ADP_DEBUG_PRINT
+#define ADP_DEBUG_PRINT 1
+#endif
 
 // Simple O(N^2) neighbor construction for small boxes (avoids duplicates with coarse cell lists)
 static __global__ void build_neighbor_ON2(
@@ -90,10 +96,16 @@ static __global__ void build_neighbor_ON2(
   NN[n1] = count;
 }
 
-ADP::ADP(const char* file_potential, const int number_of_atoms)
+ADP::ADP(const char* file_potential, const int number_of_atoms,
+         const std::vector<std::string>& options)
 {
+  parse_options(options);
   initialize_adp(file_potential, number_of_atoms);
 }
+
+// Minimal constructor used by existing Force::parse_potential path
+ADP::ADP(const char* file_potential, const int number_of_atoms)
+  : ADP(file_potential, number_of_atoms, std::vector<std::string>{}) {}
 
 ADP::~ADP(void)
 {
@@ -114,6 +126,9 @@ void ADP::initialize_adp(const char* file_potential, const int number_of_atoms)
   adp_data.cell_count.resize(number_of_atoms);
   adp_data.cell_count_sum.resize(number_of_atoms);
   adp_data.cell_contents.resize(number_of_atoms);
+  adp_data.dbg_F.resize(number_of_atoms);
+  adp_data.dbg_ADP.resize(number_of_atoms);
+  adp_data.dbg_PAIR.resize(number_of_atoms);
   
   // Copy spline coefficients to GPU
   int total_rho_points = adp_data.Nelements * adp_data.nrho;
@@ -172,6 +187,25 @@ void ADP::initialize_adp(const char* file_potential, const int number_of_atoms)
   adp_data.w_r_d_g.copy_from_host(adp_data.w_r_d.data());
   
   printf("Use %d-element ADP potential, rc = %.6f.\n", adp_data.Nelements, adp_data.rc);
+  printf("ADP spline mode: %s.\n", use_lammps_spline_ ? "LAMMPS" : "natural");
+}
+
+void ADP::parse_options(const std::vector<std::string>& options)
+{
+  // Default: LAMMPS-compatible spline
+  use_lammps_spline_ = true;
+  auto to_lower = [](std::string s){ for (auto& c : s) c = std::tolower(static_cast<unsigned char>(c)); return s; };
+  for (auto opt : options) {
+    opt = to_lower(opt);
+    size_t eq = opt.find('=');
+    if (eq == std::string::npos) continue; // ignore tokens like element symbols
+    std::string key = opt.substr(0, eq);
+    std::string val = opt.substr(eq + 1);
+    if (key == "adp_spline" || key == "spline") {
+      if (val == "natural") use_lammps_spline_ = false;
+      else if (val == "lammps") use_lammps_spline_ = true;
+    }
+  }
 }
 
 void ADP::read_adp_file(const char* file_potential)
@@ -194,6 +228,7 @@ void ADP::read_adp_file(const char* file_potential)
   std::istringstream iss4(line);
   iss4 >> adp_data.Nelements;
   adp_data.elements_list.resize(adp_data.Nelements);
+  adp_data.mass.resize(adp_data.Nelements, 0.0);
   for (int i = 0; i < adp_data.Nelements; i++) {
     iss4 >> adp_data.elements_list[i];
   }
@@ -213,7 +248,14 @@ void ADP::read_adp_file(const char* file_potential)
   for (int element = 0; element < adp_data.Nelements; element++) {
     // Line: atomic number, mass, lattice constant, lattice type
     std::getline(input_file, line);
-    // Ignore these values in GPUMD
+    // Parse and store mass for debug/consistency (others ignored)
+    if (!line.empty()) {
+      std::istringstream iss_mass(line);
+      double z = 0.0, m = 0.0, a0 = 0.0; 
+      std::string lattice;
+      iss_mass >> z >> m >> a0 >> lattice;
+      adp_data.mass[element] = m;
+    }
     
     // Read embedding function F(rho) for this element
     int base_rho = element * adp_data.nrho;
@@ -315,6 +357,53 @@ void ADP::read_adp_file(const char* file_potential)
   
   input_file.close();
   
+#if ADP_DEBUG_PRINT
+  // Dump a compact summary for cross-check with LAMMPS
+  {
+    FILE* fp = fopen("adp_debug_setfl_gpumd.txt", "w");
+    if (fp) {
+      fprintf(fp, "file: %s\n", file_potential);
+      fprintf(fp, "nelements=%d nrho=%d drho=%g nr=%d dr=%g cut=%g\n",
+              adp_data.Nelements, adp_data.nrho, adp_data.drho,
+              adp_data.nr, adp_data.dr, adp_data.rc);
+      // per-element F(rho), rho(r)
+      for (int i = 0; i < adp_data.Nelements; ++i) {
+        fprintf(fp, "element[%d]=%s mass=%g\n",
+                i, adp_data.elements_list[i].c_str(), adp_data.mass[i]);
+        int mmax = adp_data.nrho < 5 ? adp_data.nrho : 5;
+        fprintf(fp, "frho first%d:", mmax);
+        for (int m = 0; m < mmax; ++m) {
+          fprintf(fp, " %.16g", adp_data.F_rho[i * adp_data.nrho + m]);
+        }
+        fprintf(fp, "\n");
+        mmax = adp_data.nr < 5 ? adp_data.nr : 5;
+        fprintf(fp, "rhor first%d:", mmax);
+        for (int m = 0; m < mmax; ++m) {
+          fprintf(fp, " %.16g", adp_data.rho_r[i * adp_data.nr + m]);
+        }
+        fprintf(fp, "\n");
+      }
+      // pair arrays in i>=j order
+      int pair_index = 0;
+      int mmax = adp_data.nr < 5 ? adp_data.nr : 5;
+      for (int i = 0; i < adp_data.Nelements; ++i) {
+        for (int j = 0; j <= i; ++j, ++pair_index) {
+          int base = pair_index * adp_data.nr;
+          fprintf(fp, "z2r (%d,%d) first%d:", i, j, mmax);
+          for (int m = 0; m < mmax; ++m) fprintf(fp, " %.16g", adp_data.phi_r[base + m]);
+          fprintf(fp, "\n");
+          fprintf(fp, "u2r (%d,%d) first%d:", i, j, mmax);
+          for (int m = 0; m < mmax; ++m) fprintf(fp, " %.16g", adp_data.u_r[base + m]);
+          fprintf(fp, "\n");
+          fprintf(fp, "w2r (%d,%d) first%d:", i, j, mmax);
+          for (int m = 0; m < mmax; ++m) fprintf(fp, " %.16g", adp_data.w_r[base + m]);
+          fprintf(fp, "\n");
+        }
+      }
+      fclose(fp);
+    }
+  }
+#endif
 }
 
 void ADP::setup_spline_interpolation()
@@ -352,39 +441,51 @@ void ADP::setup_spline_interpolation()
   adp_data.w_r_c.resize(total_pair_points);
   adp_data.w_r_d.resize(total_pair_points);
   
-  // Calculate cubic spline coefficients for accurate interpolation
-  // Using natural cubic splines for smooth interpolation
-  
-  // F_rho splines
-  calculate_cubic_spline_coefficients(
-    adp_data.F_rho.data(), total_rho_points, adp_data.drho,
-    adp_data.F_rho_a.data(), adp_data.F_rho_b.data(),
-    adp_data.F_rho_c.data(), adp_data.F_rho_d.data(), adp_data.Nelements, adp_data.nrho);
-    
-  // rho_r splines
-  calculate_cubic_spline_coefficients(
-    adp_data.rho_r.data(), total_r_points, adp_data.dr,
-    adp_data.rho_r_a.data(), adp_data.rho_r_b.data(),
-    adp_data.rho_r_c.data(), adp_data.rho_r_d.data(), adp_data.Nelements, adp_data.nr);
-  
-  // phi_r, u_r, w_r splines
-  calculate_cubic_spline_coefficients(
-    adp_data.phi_r.data(), total_pair_points, adp_data.dr,
-    adp_data.phi_r_a.data(), adp_data.phi_r_b.data(),
-    adp_data.phi_r_c.data(), adp_data.phi_r_d.data(), 
-    adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
-    
-  calculate_cubic_spline_coefficients(
-    adp_data.u_r.data(), total_pair_points, adp_data.dr,
-    adp_data.u_r_a.data(), adp_data.u_r_b.data(),
-    adp_data.u_r_c.data(), adp_data.u_r_d.data(),
-    adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
-    
-  calculate_cubic_spline_coefficients(
-    adp_data.w_r.data(), total_pair_points, adp_data.dr,
-    adp_data.w_r_a.data(), adp_data.w_r_b.data(),
-    adp_data.w_r_c.data(), adp_data.w_r_d.data(),
-    adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
+  if (use_lammps_spline_) {
+    // Build coefficients equivalent to LAMMPS pair_adp interpolate() (Hermite with estimated slopes)
+    calculate_lammps_like_coefficients(
+      adp_data.F_rho.data(), total_rho_points, adp_data.drho,
+      adp_data.F_rho_a.data(), adp_data.F_rho_b.data(), adp_data.F_rho_c.data(), adp_data.F_rho_d.data(),
+      adp_data.Nelements, adp_data.nrho);
+    calculate_lammps_like_coefficients(
+      adp_data.rho_r.data(), total_r_points, adp_data.dr,
+      adp_data.rho_r_a.data(), adp_data.rho_r_b.data(), adp_data.rho_r_c.data(), adp_data.rho_r_d.data(),
+      adp_data.Nelements, adp_data.nr);
+    calculate_lammps_like_coefficients(
+      adp_data.phi_r.data(), total_pair_points, adp_data.dr,
+      adp_data.phi_r_a.data(), adp_data.phi_r_b.data(), adp_data.phi_r_c.data(), adp_data.phi_r_d.data(),
+      adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
+    calculate_lammps_like_coefficients(
+      adp_data.u_r.data(), total_pair_points, adp_data.dr,
+      adp_data.u_r_a.data(), adp_data.u_r_b.data(), adp_data.u_r_c.data(), adp_data.u_r_d.data(),
+      adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
+    calculate_lammps_like_coefficients(
+      adp_data.w_r.data(), total_pair_points, adp_data.dr,
+      adp_data.w_r_a.data(), adp_data.w_r_b.data(), adp_data.w_r_c.data(), adp_data.w_r_d.data(),
+      adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
+  } else {
+    // Natural cubic splines
+    calculate_cubic_spline_coefficients(
+      adp_data.F_rho.data(), total_rho_points, adp_data.drho,
+      adp_data.F_rho_a.data(), adp_data.F_rho_b.data(),
+      adp_data.F_rho_c.data(), adp_data.F_rho_d.data(), adp_data.Nelements, adp_data.nrho);
+    calculate_cubic_spline_coefficients(
+      adp_data.rho_r.data(), total_r_points, adp_data.dr,
+      adp_data.rho_r_a.data(), adp_data.rho_r_b.data(),
+      adp_data.rho_r_c.data(), adp_data.rho_r_d.data(), adp_data.Nelements, adp_data.nr);
+    calculate_cubic_spline_coefficients(
+      adp_data.phi_r.data(), total_pair_points, adp_data.dr,
+      adp_data.phi_r_a.data(), adp_data.phi_r_b.data(), adp_data.phi_r_c.data(), adp_data.phi_r_d.data(),
+      adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
+    calculate_cubic_spline_coefficients(
+      adp_data.u_r.data(), total_pair_points, adp_data.dr,
+      adp_data.u_r_a.data(), adp_data.u_r_b.data(), adp_data.u_r_c.data(), adp_data.u_r_d.data(),
+      adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
+    calculate_cubic_spline_coefficients(
+      adp_data.w_r.data(), total_pair_points, adp_data.dr,
+      adp_data.w_r_a.data(), adp_data.w_r_b.data(), adp_data.w_r_c.data(), adp_data.w_r_d.data(),
+      adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
+  }
 }
 
 // Calculate cubic spline coefficients for tabulated functions
@@ -458,6 +559,51 @@ __device__ static void interpolate_adp(
   yp = b[index] + 2.0 * c[index] * t + 3.0 * d[index] * t * t;
 }
 
+// Construct LAMMPS-like spline coefficients but stored as (a,b,c,d)
+void ADP::calculate_lammps_like_coefficients(
+  const double* y, int /*n_total*/, double dx,
+  double* a, double* b, double* c, double* d,
+  int n_functions, int n_points)
+{
+  for (int func = 0; func < n_functions; ++func) {
+    int off = func * n_points;
+    const double* yf = y + off;
+    double* af = a + off;
+    double* bf = b + off;
+    double* cf = c + off;
+    double* df = d + off;
+
+    std::vector<double> s(n_points, 0.0);
+    // LAMMPS slopes (PairADP::interpolate):
+    // s[0]   = f[1] - f[0]
+    // s[1]   = 0.5*(f[2] - f[0])
+    // s[i]   = ((f[i-2]-f[i+2]) + 8*(f[i+1]-f[i-1]))/12 for i in [2, n-3]
+    // s[n-2] = 0.5*(f[n-1] - f[n-3])
+    // s[n-1] = f[n-1] - f[n-2]
+    if (n_points >= 2) s[0] = yf[1] - yf[0];
+    if (n_points >= 3) s[1] = 0.5 * (yf[2] - yf[0]);
+    for (int i = 2; i <= n_points - 3; ++i) {
+      s[i] = ((yf[i-2] - yf[i+2]) + 8.0 * (yf[i+1] - yf[i-1])) / 12.0;
+    }
+    if (n_points >= 3) s[n_points - 2] = 0.5 * (yf[n_points - 1] - yf[n_points - 3]);
+    if (n_points >= 2) s[n_points - 1] = yf[n_points - 1] - yf[n_points - 2];
+
+    for (int m = 0; m < n_points - 1; ++m) {
+      double dy = yf[m+1] - yf[m];
+      double c4 = 3.0 * dy - 2.0 * s[m] - s[m+1];
+      double c3 = s[m] + s[m+1] - 2.0 * dy;
+      af[m] = yf[m];
+      bf[m] = s[m] / dx;
+      cf[m] = c4 / (dx * dx);
+      df[m] = c3 / (dx * dx * dx);
+    }
+    af[n_points-1] = yf[n_points-1];
+    bf[n_points-1] = 0.0;
+    cf[n_points-1] = 0.0;
+    df[n_points-1] = 0.0;
+  }
+}
+
 // Get pair index for element types (0-based) consistent with reading order (i loop outer, j<=i)
 __device__ static int get_pair_index(int type1, int type2, int /*Nelements*/)
 {
@@ -505,7 +651,9 @@ static __global__ void find_force_adp_step1(
   double* g_Fp,
   double* g_mu,
   double* g_lambda,
-  double* g_pe)
+  double* g_pe,
+  double* g_dbg_F,
+  double* g_dbg_ADP)
 {
   int n1 = blockIdx.x * blockDim.x + threadIdx.x + N1;
   
@@ -539,25 +687,33 @@ static __global__ void find_force_adp_step1(
       double d12 = sqrt(delx * delx + dely * dely + delz * delz);
       
       if (d12 < rc && d12 > 1e-12) {
-        double r_index = d12 / dr;
-        int ir = (int)r_index;
+        // LAMMPS clamped indexing
+        double pp = d12 / dr + 1.0;
+        int m = (int)pp; if (m < 1) m = 1; if (m > nr - 1) m = nr - 1;
+        double frac = pp - m; if (frac > 1.0) frac = 1.0;
+        int ir = m - 1;
         // In ADP (LAMMPS setfl), density contribution to atom i uses rho(r) of neighbor j's element type
         int rho_base = type2 * nr;
         int pair_base = get_pair_index(type1, type2, Nelements) * nr;
         
-        if (ir < nr - 1) {
-          // Calculate rho contribution (electron density)
-          double rho_val, rho_deriv;
-          interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d, 
-                         rho_base + ir, r_index - ir, dr, rho_val, rho_deriv);
-          rho += rho_val;
-          
-          // Calculate u and w values for dipole and quadruple terms
-          double u_val, u_deriv, w_val, w_deriv;
-          interpolate_adp(u_r_a, u_r_b, u_r_c, u_r_d,
-                         pair_base + ir, r_index - ir, dr, u_val, u_deriv);
-          interpolate_adp(w_r_a, w_r_b, w_r_c, w_r_d,
-                         pair_base + ir, r_index - ir, dr, w_val, w_deriv);
+        // Calculate rho contribution (electron density)
+        double rho_val, rho_deriv;
+        interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d, 
+                       rho_base + ir, frac, dr, rho_val, rho_deriv);
+        rho += rho_val;
+        
+        // Calculate u and w values for dipole and quadruple terms
+        // The ADP setfl format in LAMMPS tabulates u2r = r*u(r) and w2r = r^2*w(r).
+        // Convert interpolated values to the physical u(r) and w(r) here.
+        double u2r_val, u2r_deriv, w2r_val, w2r_deriv;
+        interpolate_adp(u_r_a, u_r_b, u_r_c, u_r_d,
+                       pair_base + ir, frac, dr, u2r_val, u2r_deriv);
+        interpolate_adp(w_r_a, w_r_b, w_r_c, w_r_d,
+                       pair_base + ir, frac, dr, w2r_val, w2r_deriv);
+
+          // ADP setfl convention: u2r = u(r), w2r = w(r)
+          double u_val = u2r_val;
+          double w_val = w2r_val;
           
           // Dipole terms: mu_i += u(r)*del (del = x_i - x_j)
           mu_x += u_val * delx;
@@ -570,36 +726,23 @@ static __global__ void find_force_adp_step1(
           lambda_xy += w_val * delx * dely;
           lambda_xz += w_val * delx * delz;
           lambda_yz += w_val * dely * delz;
-        }
       }
     }
     
     // Calculate embedding energy F(rho) and its derivative
-    double rho_index = rho / drho;
-    int irho = (int)rho_index;
+    // Follow LAMMPS indexing/clamping exactly:
+    // p = rho*rdrho + 1; m = int(p); m = clamp(m, 1, nrho-1); p -= m; p = min(p,1)
     int F_base = type1 * nrho;
-    
+    double pp = rho / drho + 1.0;
+    int m = (int)pp;
+    if (m < 1) m = 1;
+    if (m > nrho - 1) m = nrho - 1;
+    double frac = pp - m;
+    if (frac > 1.0) frac = 1.0;
+    int irho = m - 1; // convert to 0-based interval index
     double F = 0.0, Fp = 0.0;
-    
-    if (rho_index >= 0.0 && irho < nrho - 1) {
-      interpolate_adp(F_rho_a, F_rho_b, F_rho_c, F_rho_d,
-                     F_base + irho, rho_index - irho, drho, F, Fp);
-    } else {
-      // If outside table range, use linear extrapolation
-      if (rho_index <= 0.0) {
-        // Use first point with zero derivative
-        F = F_rho_a[F_base];  
-        Fp = 0.0;  
-      } else {
-        // Density too high - use linear extrapolation from last two points
-        double F_last = F_rho_a[F_base + nrho - 1];  
-        double F_second_last = F_rho_a[F_base + nrho - 2];
-        double slope = (F_last - F_second_last) / drho;
-        double excess_rho = rho - (nrho - 1) * drho;
-        F = F_last + slope * excess_rho;
-        Fp = slope;
-      }
-    }
+    interpolate_adp(F_rho_a, F_rho_b, F_rho_c, F_rho_d,
+                   F_base + irho, frac, drho, F, Fp);
     
     // Calculate ADP energy contributions following LAMMPS exactly
     // LAMMPS pair_adp.cpp line 263-269:
@@ -617,6 +760,8 @@ static __global__ void find_force_adp_step1(
     double adp_energy = 0.5 * mu_squared + 0.5 * lambda_diagonal + 1.0 * lambda_offdiag - (nu * nu) / 6.0;
     
     g_pe[n1] += F + adp_energy;
+    if (g_dbg_F) g_dbg_F[n1] += F;
+    if (g_dbg_ADP) g_dbg_ADP[n1] += adp_energy;
     g_Fp[n1] = Fp;
     
     // Store dipole and quadruple terms - LAMMPS ordering: [xx, yy, zz, yz, xz, xy]
@@ -672,7 +817,8 @@ static __global__ void find_force_adp_step2(
   double* g_fy,
   double* g_fz,
   double* g_virial,
-  double* g_pe)
+  double* g_pe,
+  double* g_dbg_PAIR)
 {
   int n1 = blockIdx.x * blockDim.x + threadIdx.x + N1;
   
@@ -718,35 +864,43 @@ static __global__ void find_force_adp_step2(
       if (d12 < rc && d12 > 1e-12) {
         double d12_inv = 1.0 / d12;
         
-        double r_index = d12 / dr;
-        int ir = (int)r_index;
+        double pp = d12 / dr + 1.0;
+        int m = (int)pp; if (m < 1) m = 1; if (m > nr - 1) m = nr - 1;
+        double frac = pp - m; if (frac > 1.0) frac = 1.0;
+        int ir = m - 1;
         
-        if (ir < nr - 1) {
-          int rho1_base = type1 * nr;
-          int rho2_base = type2 * nr;
-          int pair_base = get_pair_index(type1, type2, Nelements) * nr;
+        int rho1_base = type1 * nr;
+        int rho2_base = type2 * nr;
+        int pair_base = get_pair_index(type1, type2, Nelements) * nr;
+        
+        // Get interpolated values and derivatives
+        double rho1_val, rho1_deriv, rho2_val, rho2_deriv;
+        double phi_rphi_val, phi_rphi_deriv, u2r_val, u2r_deriv, w2r_val, w2r_deriv;
+        
+        // rho1_*: density at atom i due to j (uses rho of type j)
+        interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d,
+                       rho2_base + ir, frac, dr, rho1_val, rho1_deriv);
+        // rho2_*: density at atom j due to i (uses rho of type i)
+        interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d,
+                       rho1_base + ir, frac, dr, rho2_val, rho2_deriv);
+        interpolate_adp(phi_r_a, phi_r_b, phi_r_c, phi_r_d,
+                       pair_base + ir, frac, dr, phi_rphi_val, phi_rphi_deriv);
+        interpolate_adp(u_r_a, u_r_b, u_r_c, u_r_d,
+                       pair_base + ir, frac, dr, u2r_val, u2r_deriv);
+        interpolate_adp(w_r_a, w_r_b, w_r_c, w_r_d,
+                       pair_base + ir, frac, dr, w2r_val, w2r_deriv);
+          // Convert r*phi(r) back to phi(r) and calculate z2r' - z2r/r which equals r*phi'(r)
+          // phi_rphi_val is z2r = r*phi(r) from the table
+          // phi_rphi_deriv is dz2r/dr from interpolation
+          double rinv = 1.0 / d12;
+          double phi_val = phi_rphi_val * rinv;  // phi(r) = z2r / r
           
-          // Get interpolated values and derivatives
-          double rho1_val, rho1_deriv, rho2_val, rho2_deriv;
-          double phi_rphi_val, phi_rphi_deriv, u_val, u_deriv, w_val, w_deriv;
-          
-          // rho1_*: density at atom i due to j (uses rho of type j)
-          interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d,
-                         rho2_base + ir, r_index - ir, dr, rho1_val, rho1_deriv);
-          // rho2_*: density at atom j due to i (uses rho of type i)
-          interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d,
-                         rho1_base + ir, r_index - ir, dr, rho2_val, rho2_deriv);
-          interpolate_adp(phi_r_a, phi_r_b, phi_r_c, phi_r_d,
-                         pair_base + ir, r_index - ir, dr, phi_rphi_val, phi_rphi_deriv);
-          interpolate_adp(u_r_a, u_r_b, u_r_c, u_r_d,
-                         pair_base + ir, r_index - ir, dr, u_val, u_deriv);
-          interpolate_adp(w_r_a, w_r_b, w_r_c, w_r_d,
-                         pair_base + ir, r_index - ir, dr, w_val, w_deriv);
-          // Convert r*phi(r) back to phi(r) and calculate phi'(r)
-          // phi_rphi_val is r*phi(r) from the table
-          // phi_rphi_deriv is d(r*phi)/dr from interpolation
-          double phi_val = phi_rphi_val / d12;  // phi(r) = r*phi(r) / r
-          double phi_deriv = phi_rphi_deriv / d12 - phi_rphi_val / (d12 * d12);  // phi'(r) = d(r*phi)/dr / r - r*phi(r) / r^2
+          // For ADP setfl, u2r and w2r are already u(r) and w(r): use directly
+          // ADP setfl convention: u2r = u(r), w2r = w(r)
+          double u_val   = u2r_val;
+          double u_deriv = u2r_deriv;
+          double w_val   = w2r_val;
+          double w_deriv = w2r_deriv;
           
           double mu2_x = g_mu[n2];
           double mu2_y = g_mu[n2 + N];
@@ -760,12 +914,12 @@ static __global__ void find_force_adp_step2(
           double lambda2_xy = g_lambda[n2 + 5 * N];  // index 5: xy
           
           // Calculate force components
-          // 1. Pair potential force
-          double force_pair = phi_deriv;
-          
-          // 2. Embedding density force (EAM-like), psip = Fp[i]*rhojp + Fp[j]*rhoip
-          // here rhojp == rho1_deriv (density at i due to j), rhoip == rho2_deriv (density at j due to i)
-          double force_density = g_Fp[n1] * rho1_deriv + g_Fp[n2] * rho2_deriv;
+          // 1+2. Central force contribution (pair + embedding density) in EAM/ADP form
+          // phi'(r) = d(r*phi)/dr / r - (r*phi)/r^2
+          double phi_deriv = phi_rphi_deriv * rinv - phi_rphi_val * (rinv * rinv);
+          // Embedding density force: psip = Fp[i]*rhojp + Fp[j]*rhoip
+          double psip = g_Fp[n1] * rho1_deriv + g_Fp[n2] * rho2_deriv;
+          double scalar = -(phi_deriv + psip); // multiply by (del/r) below
           
           // 3. Calculate ADP force components following LAMMPS exactly
           // Based on LAMMPS pair_adp.cpp formulation
@@ -808,8 +962,7 @@ static __global__ void find_force_adp_step2(
           adpy *= -1.0;
           adpz *= -1.0;
           
-          // Total force components: fpair scalar = -(phi' + Fp[i]*rho_j' + Fp[j]*rho_i')
-          double scalar = -(force_pair + force_density);
+          // Total force components: central (scalar * del/r) + ADP
           double force_total_x = scalar * delx * d12_inv + adpx;
           double force_total_y = scalar * dely * d12_inv + adpy;
           double force_total_z = scalar * delz * d12_inv + adpz;
@@ -847,7 +1000,6 @@ static __global__ void find_force_adp_step2(
           s_szy += syz; // zy mirrors yz
         }
       }
-    }
     
     g_fx[n1] += fx;
     g_fy[n1] += fy;
@@ -863,6 +1015,7 @@ static __global__ void find_force_adp_step2(
   g_virial[n1 + 7 * N] -= s_szx; // zx
   g_virial[n1 + 8 * N] -= s_szy; // zy
     g_pe[n1] += pe;
+    if (g_dbg_PAIR) g_dbg_PAIR[n1] += pe;
   }
 }
 
@@ -918,6 +1071,12 @@ void ADP::compute(
   adp_data.mu.fill(0.0);      // size 3N
   adp_data.lambda.fill(0.0);  // size 6N
   adp_data.Fp.fill(0.0);      // size N
+  // Zero debug accumulators per compute call to avoid double counting across pre-run and run
+#if ADP_DEBUG_PRINT
+  adp_data.dbg_F.fill(0.0);
+  adp_data.dbg_ADP.fill(0.0);
+  adp_data.dbg_PAIR.fill(0.0);
+#endif
   
   // Step 1: Calculate density, embedding energy, and angular terms
   find_force_adp_step1<<<grid_size, BLOCK_SIZE_FORCE>>>(
@@ -956,7 +1115,9 @@ void ADP::compute(
     adp_data.Fp.data(),
     adp_data.mu.data(),
     adp_data.lambda.data(),
-    potential_per_atom.data());
+    potential_per_atom.data(),
+    adp_data.dbg_F.data(),
+    adp_data.dbg_ADP.data());
   GPU_CHECK_KERNEL
   
   // Step 2: Calculate forces
@@ -998,6 +1159,30 @@ void ADP::compute(
     force_per_atom.data() + number_of_atoms,
     force_per_atom.data() + 2 * number_of_atoms,
     virial_per_atom.data(),
-    potential_per_atom.data());
+    potential_per_atom.data(),
+    adp_data.dbg_PAIR.data());
   GPU_CHECK_KERNEL
+
+#if ADP_DEBUG_PRINT
+  // Reduce and print energy breakdown for quick diagnostics
+  std::vector<double> hF(number_of_atoms), hA(number_of_atoms), hP(number_of_atoms);
+  adp_data.dbg_F.copy_to_host(hF.data());
+  adp_data.dbg_ADP.copy_to_host(hA.data());
+  adp_data.dbg_PAIR.copy_to_host(hP.data());
+  double sF=0, sA=0, sP=0, sT=0;
+  for (int i=0;i<number_of_atoms;++i){ sF+=hF[i]; sA+=hA[i]; sP+=hP[i]; }
+  std::vector<double> hE(number_of_atoms);
+  potential_per_atom.copy_to_host(hE.data());
+  for (int i=0;i<number_of_atoms;++i) sT+=hE[i];
+  FILE* fpb=fopen("adp_energy_breakdown.txt","w");
+  if(fpb){ fprintf(fpb,"EF=%.12g EADP=%.12g EPAIR=%.12g ETOT=%.12g\n", sF, sA, sP, sT); fclose(fpb);} 
+  // Also dump per-atom contributions for detailed comparison (F, ADP, PAIR, TOTAL)
+  FILE* fpp = fopen("adp_energy_per_atom.txt","w");
+  if (fpp) {
+    for (int i = 0; i < number_of_atoms; ++i) {
+      fprintf(fpp, "% .15e % .15e % .15e % .15e\n", hF[i], hA[i], hP[i], hE[i]);
+    }
+    fclose(fpp);
+  }
+#endif
 }

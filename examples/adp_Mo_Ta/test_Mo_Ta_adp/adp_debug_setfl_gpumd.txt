@@ -1,4 +1,4 @@
-file: ../../adp_U_Mo/U_Mo.alloy.adp_cor.txt
+file: U_Mo.alloy.adp_cor.txt
 nelements=2 nrho=974 drho=0.00102775 nr=1408 dr=0.0044044 cut=6.197
 element[0]=U mass=238.03
 frho first5: 0 -0.02675654 -0.05900841 -0.09116678 -0.1232283

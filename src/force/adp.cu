@@ -115,12 +115,23 @@ ADP::~ADP(void)
 void ADP::initialize_adp(const char* file_potential, const int number_of_atoms)
 {
   read_adp_file(file_potential);
+  
+  // Build element mapping: from user-specified elements to ADP file elements
+  setup_element_mapping();
+  
+  // Copy element mapping to GPU if needed
+  if (!element_mapping.empty()) {
+    adp_data.element_mapping_gpu.resize(element_mapping.size());
+    adp_data.element_mapping_gpu.copy_from_host(element_mapping.data());
+  }
+  
   setup_spline_interpolation();
   
   // Resize GPU vectors
   adp_data.Fp.resize(number_of_atoms);
   adp_data.mu.resize(number_of_atoms * 3);       // 3 components (x,y,z) per atom
   adp_data.lambda.resize(number_of_atoms * 6);   // 6 components (xx,yy,zz,xy,xz,yz) per atom
+  adp_data.mapped_type.resize(number_of_atoms);  // Type array for element mapping
   adp_data.NN.resize(number_of_atoms);
   adp_data.NL.resize(number_of_atoms * 400);     // consistent with EAM, sufficient for ADP
   adp_data.cell_count.resize(number_of_atoms);
@@ -188,22 +199,40 @@ void ADP::initialize_adp(const char* file_potential, const int number_of_atoms)
   
   printf("Use %d-element ADP potential, rc = %.6f.\n", adp_data.Nelements, adp_data.rc);
   printf("ADP spline mode: %s.\n", use_lammps_spline_ ? "LAMMPS" : "natural");
+  printf("ADP neighbor mode: %s.\n", use_linear_neighbor_ ? "O(N) cell list" : "O(N^2) brute force");
 }
 
 void ADP::parse_options(const std::vector<std::string>& options)
 {
-  // Default: LAMMPS-compatible spline
+  // Default: LAMMPS-compatible spline and linear neighbor list
   use_lammps_spline_ = true;
+  use_linear_neighbor_ = true;
+  user_elements.clear();
+  
   auto to_lower = [](std::string s){ for (auto& c : s) c = std::tolower(static_cast<unsigned char>(c)); return s; };
+  
+  // First pass: collect elements (tokens without '=')
+  for (const auto& opt : options) {
+    if (opt.find('=') == std::string::npos) {
+      // This is likely an element name
+      user_elements.push_back(opt);
+    }
+  }
+  
+  // Second pass: process key=value options
   for (auto opt : options) {
-    opt = to_lower(opt);
     size_t eq = opt.find('=');
-    if (eq == std::string::npos) continue; // ignore tokens like element symbols
-    std::string key = opt.substr(0, eq);
-    std::string val = opt.substr(eq + 1);
+    if (eq == std::string::npos) continue; // skip element names
+    
+    std::string key = to_lower(opt.substr(0, eq));
+    std::string val = to_lower(opt.substr(eq + 1));
+    
     if (key == "adp_spline" || key == "spline") {
       if (val == "natural") use_lammps_spline_ = false;
       else if (val == "lammps") use_lammps_spline_ = true;
+    } else if (key == "neighbor" || key == "neighbor_list") {
+      if (val == "on2" || val == "n2" || val == "brute") use_linear_neighbor_ = false;
+      else if (val == "on1" || val == "linear" || val == "cell") use_linear_neighbor_ = true;
     }
   }
 }
@@ -406,6 +435,77 @@ void ADP::read_adp_file(const char* file_potential)
 #endif
 }
 
+void ADP::setup_element_mapping()
+{
+  // If no user elements specified, use default mapping (all types map to first ADP element)
+  if (user_elements.empty()) {
+    // Default behavior: assume single element system
+    element_mapping.clear();
+    element_mapping.push_back(0);  // All atoms map to first element in ADP file
+    printf("ADP element mapping: using default (all atoms -> %s)\n", 
+           adp_data.elements_list.empty() ? "element_0" : adp_data.elements_list[0].c_str());
+    return;
+  }
+  
+  // Build mapping from user elements to ADP file elements
+  element_mapping.resize(user_elements.size());
+  printf("ADP element mapping: ");
+  
+  for (size_t i = 0; i < user_elements.size(); i++) {
+    element_mapping[i] = -1;  // Invalid initially
+    
+    // Find matching element in ADP file
+    for (int j = 0; j < adp_data.Nelements; j++) {
+      if (user_elements[i] == adp_data.elements_list[j]) {
+        element_mapping[i] = j;
+        break;
+      }
+    }
+    
+    if (element_mapping[i] == -1) {
+      printf("\nError: User element '%s' not found in ADP file.\n", user_elements[i].c_str());
+      printf("Available elements in ADP file: ");
+      for (int j = 0; j < adp_data.Nelements; j++) {
+        printf("%s ", adp_data.elements_list[j].c_str());
+      }
+      printf("\n");
+      PRINT_INPUT_ERROR("Element mapping failed.");
+    }
+    
+    printf("%s->%s ", user_elements[i].c_str(), adp_data.elements_list[element_mapping[i]].c_str());
+  }
+  printf("\n");
+  
+  // Debug: Print some function values to verify correct reading
+  if (adp_data.Nelements == 2) {
+    printf("Debug: ADP file has 2 elements, checking Mo values...\n");
+    int mo_idx = -1;
+    for (int i = 0; i < adp_data.Nelements; i++) {
+      if (adp_data.elements_list[i] == "Mo") {
+        mo_idx = i;
+        break;
+      }
+    }
+    if (mo_idx >= 0) {
+      printf("Debug: Mo element index in ADP file: %d\n", mo_idx);
+      printf("Debug: Mo F[0-2]: %.6f %.6f %.6f\n", 
+             adp_data.F_rho[mo_idx * adp_data.nrho],
+             adp_data.F_rho[mo_idx * adp_data.nrho + 1],
+             adp_data.F_rho[mo_idx * adp_data.nrho + 2]);
+      printf("Debug: Mo rho[0-2]: %.6f %.6f %.6f\n",
+             adp_data.rho_r[mo_idx * adp_data.nr],
+             adp_data.rho_r[mo_idx * adp_data.nr + 1], 
+             adp_data.rho_r[mo_idx * adp_data.nr + 2]);
+      // Mo-Mo pair should be at index 2 (U-U=0, Mo-U=1, Mo-Mo=2)
+      int mo_mo_pair_idx = 2;
+      printf("Debug: Mo-Mo phi[0-2]: %.6f %.6f %.6f\n",
+             adp_data.phi_r[mo_mo_pair_idx * adp_data.nr],
+             adp_data.phi_r[mo_mo_pair_idx * adp_data.nr + 1],
+             adp_data.phi_r[mo_mo_pair_idx * adp_data.nr + 2]);
+    }
+  }
+}
+
 void ADP::setup_spline_interpolation()
 {
   // Calculate cubic spline coefficients for all tabulated functions
@@ -604,6 +704,25 @@ void ADP::calculate_lammps_like_coefficients(
   }
 }
 
+// GPU kernel to map user element types to ADP file element indices
+__global__ void map_element_types(
+  const int N,
+  const int* g_type_user,
+  int* g_type_mapped,
+  const int* g_element_mapping,
+  const int num_user_elements)
+{
+  const int i = blockIdx.x * blockDim.x + threadIdx.x;
+  if (i < N) {
+    int user_type = g_type_user[i] - 1;  // Convert from 1-based to 0-based
+    if (user_type >= 0 && user_type < num_user_elements) {
+      g_type_mapped[i] = g_element_mapping[user_type];
+    } else {
+      g_type_mapped[i] = 0;  // Default to first element if invalid type
+    }
+  }
+}
+
 // Get pair index for element types (0-based) consistent with reading order (i loop outer, j<=i)
 __device__ static int get_pair_index(int type1, int type2, int /*Nelements*/)
 {
@@ -763,6 +882,15 @@ static __global__ void find_force_adp_step1(
     if (g_dbg_F) g_dbg_F[n1] += F;
     if (g_dbg_ADP) g_dbg_ADP[n1] += adp_energy;
     g_Fp[n1] = Fp;
+    
+    // Debug: Print detailed values for first few atoms
+    if (n1 < 3) {
+      printf("Atom %d: type=%d, rho=%.6f, F=%.6f, adp_energy=%.6f, total_E=%.6f\n",
+             n1, type1, rho, F, adp_energy, F + adp_energy);
+      printf("  mu: %.6f %.6f %.6f, mu_squared=%.6f\n", mu_x, mu_y, mu_z, mu_squared);
+      printf("  lambda_diag: %.6f %.6f %.6f, lambda_offdiag: %.6f %.6f %.6f\n",
+             lambda_xx, lambda_yy, lambda_zz, lambda_xy, lambda_xz, lambda_yz);
+    }
     
     // Store dipole and quadruple terms - LAMMPS ordering: [xx, yy, zz, yz, xz, xy]
     g_mu[n1] = mu_x;
@@ -973,6 +1101,12 @@ static __global__ void find_force_adp_step2(
           
           // Add pair potential energy with 0.5 factor to avoid double counting (as in EAM)
           pe += 0.5 * phi_val;
+          
+          // Debug: Print pair energy for first atom
+          if (n1 == 0) {
+            printf("  Pair %d-%d: r=%.4f, phi=%.6f, pair_E=%.6f\n",
+                   n1, n2, d12, phi_val, 0.5 * phi_val);
+          }
 
           // Per-atom virial using the same convention as EAM:
           // s = -0.5 * r_ij \otimes f_i (force on i due to j), where r_ij = r_j - r_i
@@ -1030,11 +1164,35 @@ void ADP::compute(
   const int number_of_atoms = type.size();
   int grid_size = (N2 - N1 - 1) / BLOCK_SIZE_FORCE + 1;
   
-  // Build neighbor list with small-box fallback to avoid duplicates
+  // Map user element types to ADP file element indices
+  const int* type_ptr;
+  if (element_mapping.empty()) {
+    // Use original type array directly
+    type_ptr = type.data();
+  } else {
+    // Map types using element mapping
+    const int block_size = 256;
+    const int grid_map = (number_of_atoms - 1) / block_size + 1;
+    map_element_types<<<grid_map, block_size>>>(
+      number_of_atoms,
+      type.data(),
+      adp_data.mapped_type.data(),
+      adp_data.element_mapping_gpu.data(),
+      static_cast<int>(element_mapping.size()));
+    GPU_CHECK_KERNEL
+    type_ptr = adp_data.mapped_type.data();
+  }
+  
+  // Build neighbor list with configurable algorithm selection
   {
     int nbins[3];
     bool small_box = box.get_num_bins(0.5 * adp_data.rc, nbins);
-    if (!small_box) {
+    
+    // Choose neighbor algorithm based on user preference and box size
+    bool use_brute_force = !use_linear_neighbor_ || small_box;
+    
+    if (!use_brute_force) {
+      // Use O(N) linear complexity cell list algorithm
       find_neighbor(
         N1,
         N2,
@@ -1048,6 +1206,7 @@ void ADP::compute(
         adp_data.NN,
         adp_data.NL);
     } else {
+      // Use O(N^2) brute force algorithm for small boxes or when explicitly requested
       const double* gx = position_per_atom.data();
       const double* gy = position_per_atom.data() + number_of_atoms;
       const double* gz = position_per_atom.data() + number_of_atoms * 2;
@@ -1092,7 +1251,7 @@ void ADP::compute(
     box,
     adp_data.NN.data(),
     adp_data.NL.data(),
-    type.data(),
+    type_ptr,
     position_per_atom.data(),
     position_per_atom.data() + number_of_atoms,
     position_per_atom.data() + number_of_atoms * 2,
@@ -1132,7 +1291,7 @@ void ADP::compute(
     box,
     adp_data.NN.data(),
     adp_data.NL.data(),
-    type.data(),
+    type_ptr,
     adp_data.Fp.data(),
     adp_data.mu.data(),
     adp_data.lambda.data(),

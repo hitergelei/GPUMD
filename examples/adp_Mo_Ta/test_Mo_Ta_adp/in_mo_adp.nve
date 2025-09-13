@@ -11,8 +11,8 @@ read_data  Mo_structs_0.dat
 
 # Use the same ADP potential
 pair_style adp
-#pair_coeff * * Mo.adp Mo
-pair_coeff * *  U_Mo.alloy.adp_cor.txt  Mo
+pair_coeff * * Mo.adp Mo
+#pair_coeff * *  U_Mo.alloy.adp_cor.txt  Mo
 
 # Set same temperature as GPUMD test
 #velocity all create 300.0 12345
@@ -35,7 +35,7 @@ thermo 1
 thermo_style custom step etotal pe lx ly lz press pxx pyy pzz c_eatoms
 
 # Dump forces, energies for first step
-dump 1 all custom 1 lammps_adp_reference.dump id element type x y z fx fy fz c_pe
+dump 1 all custom 1 lammps_mo_adp_reference.dump id element type x y z fx fy fz c_pe
 dump_modify  1 element Mo sort id
 # Run for 1 step to match GPUMD test
 run 0
@@ -45,4 +45,3 @@ print "LAMMPS ADP reference data generated"
 print "Total energy: $(etotal)"
 print "Potential energy: $(pe)"
 print "Kinetic energy: $(ke)"
-

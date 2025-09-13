@@ -30,6 +30,10 @@ struct ADP_Data {
   GPU_Vector<double> mu;          // dipole distortion terms (3 components per atom)
   GPU_Vector<double> lambda;      // quadruple distortion terms (6 components per atom: xx,yy,zz,yz,xz,xy)
   
+  // Element mapping for multi-element systems
+  GPU_Vector<int> mapped_type;    // Type array mapped from user types to ADP file element indices
+  GPU_Vector<int> element_mapping_gpu;  // Element mapping array on GPU
+  
   // Tabulated functions from ADP file
   int Nelements;
   std::vector<std::string> elements_list;
@@ -95,6 +99,12 @@ protected:
   // Option parsing and spline configuration
   void parse_options(const std::vector<std::string>& options);
   bool use_lammps_spline_ = true; // true: LAMMPS-like spline; false: natural cubic
+  bool use_linear_neighbor_ = true; // true: O(N) cell list; false: O(N^2) for small boxes
+  
+  // Element mapping: user-specified elements to ADP file elements
+  std::vector<std::string> user_elements;  // Elements specified by user in potential line
+  std::vector<int> element_mapping;        // Mapping from user element index to ADP file element index
+  void setup_element_mapping();           // Build mapping between user and ADP file elements
   void read_adp_file(const char* file_potential);
   void setup_spline_interpolation();
   void calculate_cubic_spline_coefficients(

@@ -2,7 +2,8 @@
 
 #potential  adp ../../adp_U_Mo/U_Mo.alloy.adp_cor.txt  Mo
 #potential adp ../../adp_U_Mo/U_Mo.alloy.adp_cor.txt Mo adp_spline=natural
-potential adp ../../adp_U_Mo/U_Mo.alloy.adp_cor_nowuw.txt Mo adp_spline=lammps
+potential adp ../../adp_U_Mo/U_Mo.alloy.adp_cor.txt Mo
+#potential adp ../../adp_U_Mo/U_Mo.alloy.adp_cor_nowuw.txt Mo adp_spline=lammps
 #potential adp ../../adp_U_Mo/U_Mo.alloy.adp_cor_noz2r.txt Mo
 velocity 0.0001
 ensemble nve

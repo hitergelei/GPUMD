@@ -48,14 +48,44 @@ IMPORTANT NOTES BASED ON LAMMPS IMPLEMENTATION:
 #include "utilities/gpu_macro.cuh"
 #include <cstring>
 #include <algorithm>
+#include <cstdio>
 #include <fstream>
 #include <sstream>
 #include <vector>
 #include <cctype>
+#include <cmath>
 
 // Use the standard GPUMD neighbor list implementation from neighbor.cu
 
 #define BLOCK_SIZE_FORCE 64
+
+// Periodic image encoding helper for neighbor shifts (supports offsets in [-15,15])
+constexpr int PBC_SHIFT_BIAS = 15;
+constexpr int PBC_SHIFT_PAYLOAD_MASK = 0x7FFF;
+constexpr int PBC_SHIFT_FLAG = 1 << 15;
+
+__host__ __device__ inline int encode_neighbor_shift(int sx, int sy, int sz)
+{
+  if (sx == 0 && sy == 0 && sz == 0) {
+    return 0;
+  }
+  const int bx = sx + PBC_SHIFT_BIAS;
+  const int by = sy + PBC_SHIFT_BIAS;
+  const int bz = sz + PBC_SHIFT_BIAS;
+  return ((bx & 0x1F) | ((by & 0x1F) << 5) | ((bz & 0x1F) << 10)) | PBC_SHIFT_FLAG;
+}
+
+__host__ __device__ inline void decode_neighbor_shift(int code, int& sx, int& sy, int& sz)
+{
+  if (code == 0) {
+    sx = sy = sz = 0;
+    return;
+  }
+  int payload = code & PBC_SHIFT_PAYLOAD_MASK;
+  sx = ((payload & 0x1F) - PBC_SHIFT_BIAS);
+  sy = (((payload >> 5) & 0x1F) - PBC_SHIFT_BIAS);
+  sz = (((payload >> 10) & 0x1F) - PBC_SHIFT_BIAS);
+}
 
 // Debug dump switch for comparing with LAMMPS setfl parsing
 #ifndef ADP_DEBUG_PRINT
@@ -73,26 +103,79 @@ static __global__ void build_neighbor_ON2(
   const double* __restrict__ y,
   const double* __restrict__ z,
   int* __restrict__ NN,
-  int* __restrict__ NL)
+  int* __restrict__ NL,
+  int* __restrict__ shift_codes,
+  const int max_neighbors)
 {
-  int n1 = blockIdx.x * blockDim.x + threadIdx.x + N1;
+  const int n1 = blockIdx.x * blockDim.x + threadIdx.x + N1;
   if (n1 >= N2) return;
-  double x1 = x[n1];
-  double y1 = y[n1];
-  double z1 = z[n1];
-  int count = 0;
-  for (int n2 = 0; n2 < N; ++n2) {
-    if (n2 == n1) continue;
-    double dx = x[n2] - x1;
-    double dy = y[n2] - y1;
-    double dz = z[n2] - z1;
-    apply_mic(box, dx, dy, dz);
-    double d2 = dx * dx + dy * dy + dz * dz;
-    if (d2 < rc2) {
-      NL[count * N + n1] = n2;
-      ++count;
+
+  const double x1 = x[n1];
+  const double y1 = y[n1];
+  const double z1 = z[n1];
+
+  const double rc = sqrt(rc2);
+  const double hx0 = box.cpu_h[0];
+  const double hx1 = box.cpu_h[1];
+  const double hx2 = box.cpu_h[2];
+  const double hy0 = box.cpu_h[3];
+  const double hy1 = box.cpu_h[4];
+  const double hy2 = box.cpu_h[5];
+  const double hz0 = box.cpu_h[6];
+  const double hz1 = box.cpu_h[7];
+  const double hz2 = box.cpu_h[8];
+
+  int px = 0;
+  if (box.pbc_x && box.thickness_x > 0.0) {
+    double needed = rc / box.thickness_x - 0.5;
+    if (needed > 0.0) {
+      px = static_cast<int>(ceil(needed));
     }
   }
+  int py = 0;
+  if (box.pbc_y && box.thickness_y > 0.0) {
+    double needed = rc / box.thickness_y - 0.5;
+    if (needed > 0.0) {
+      py = static_cast<int>(ceil(needed));
+    }
+  }
+  int pz = 0;
+  if (box.pbc_z && box.thickness_z > 0.0) {
+    double needed = rc / box.thickness_z - 0.5;
+    if (needed > 0.0) {
+      pz = static_cast<int>(ceil(needed));
+    }
+  }
+
+  int count = 0;
+
+  for (int n2 = 0; n2 < N; ++n2) {
+    for (int iz = -pz; iz <= pz; ++iz) {
+      for (int iy = -py; iy <= py; ++iy) {
+        for (int ix = -px; ix <= px; ++ix) {
+          if (ix == 0 && iy == 0 && iz == 0 && n2 == n1) continue;
+
+          const double shift_x = ix * hx0 + iy * hx1 + iz * hx2;
+          const double shift_y = ix * hy0 + iy * hy1 + iz * hy2;
+          const double shift_z = ix * hz0 + iy * hz1 + iz * hz2;
+
+          const double dx = (x[n2] + shift_x) - x1;
+          const double dy = (y[n2] + shift_y) - y1;
+          const double dz = (z[n2] + shift_z) - z1;
+          const double d2 = dx * dx + dy * dy + dz * dz;
+
+          if (d2 < rc2 && d2 > 1.0e-12) {
+            if (count < max_neighbors) {
+              NL[count * N + n1] = n2;
+              shift_codes[count * N + n1] = encode_neighbor_shift(ix, iy, iz);
+              ++count;
+            }
+          }
+        }
+      }
+    }
+  }
+
   NN[n1] = count;
 }
 
@@ -134,6 +217,7 @@ void ADP::initialize_adp(const char* file_potential, const int number_of_atoms)
   adp_data.mapped_type.resize(number_of_atoms);  // Type array for element mapping
   adp_data.NN.resize(number_of_atoms);
   adp_data.NL.resize(number_of_atoms * 400);     // consistent with EAM, sufficient for ADP
+  adp_data.NL_shift.resize(number_of_atoms * 400);
   adp_data.cell_count.resize(number_of_atoms);
   adp_data.cell_count_sum.resize(number_of_atoms);
   adp_data.cell_contents.resize(number_of_atoms);
@@ -586,6 +670,9 @@ void ADP::setup_spline_interpolation()
       adp_data.w_r_a.data(), adp_data.w_r_b.data(), adp_data.w_r_c.data(), adp_data.w_r_d.data(),
       adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
   }
+  
+  // Output spline coefficients for comparison with LAMMPS
+  output_spline_coefficients();
 }
 
 // Calculate cubic spline coefficients for tabulated functions
@@ -704,6 +791,103 @@ void ADP::calculate_lammps_like_coefficients(
   }
 }
 
+// Output spline coefficients for comparison with LAMMPS
+void ADP::output_spline_coefficients()
+{
+  printf("Writing GPUMD ADP spline coefficients to adp_spline_coeffs_gpumd.txt\n");
+  
+  FILE* fp = fopen("adp_spline_coeffs_gpumd.txt", "w");
+  if (!fp) {
+    printf("Warning: Cannot create adp_spline_coeffs_gpumd.txt\n");
+    return;
+  }
+  
+  // Output F_rho coefficients
+  fprintf(fp, "--- F_rho ---\n");
+  for (int elem = 0; elem < adp_data.Nelements; ++elem) {
+    fprintf(fp, "Function %d:\n", elem);
+    int offset = elem * adp_data.nrho;
+    for (int i = 0; i < adp_data.nrho && i < 50; ++i) { // Limit output for readability
+      double a = adp_data.F_rho_a[offset + i];
+      double b = adp_data.F_rho_b[offset + i];
+      double c = adp_data.F_rho_c[offset + i];
+      double d = adp_data.F_rho_d[offset + i];
+      fprintf(fp, "  pt %d: a=%.15e, b=%.15e, c=%.15e, d=%.15e\n", i, a, b, c, d);
+    }
+  }
+  
+  // Output rho_r coefficients  
+  fprintf(fp, "\n--- rho_r ---\n");
+  for (int elem = 0; elem < adp_data.Nelements; ++elem) {
+    fprintf(fp, "Function %d:\n", elem);
+    int offset = elem * adp_data.nr;
+    for (int i = 0; i < adp_data.nr && i < 50; ++i) { // Limit output for readability
+      double a = adp_data.rho_r_a[offset + i];
+      double b = adp_data.rho_r_b[offset + i];
+      double c = adp_data.rho_r_c[offset + i];
+      double d = adp_data.rho_r_d[offset + i];
+      fprintf(fp, "  pt %d: a=%.15e, b=%.15e, c=%.15e, d=%.15e\n", i, a, b, c, d);
+    }
+  }
+  
+  // Output phi_r coefficients
+  fprintf(fp, "\n--- phi_r ---\n");
+  int pair_idx = 0;
+  for (int i = 0; i < adp_data.Nelements; ++i) {
+    for (int j = 0; j <= i; ++j) {
+      fprintf(fp, "Function %d (pair %d-%d):\n", pair_idx, i, j);
+      int offset = pair_idx * adp_data.nr;
+      for (int k = 0; k < adp_data.nr && k < 50; ++k) { // Limit output for readability
+        double a = adp_data.phi_r_a[offset + k];
+        double b = adp_data.phi_r_b[offset + k];
+        double c = adp_data.phi_r_c[offset + k];
+        double d = adp_data.phi_r_d[offset + k];
+        fprintf(fp, "  pt %d: a=%.15e, b=%.15e, c=%.15e, d=%.15e\n", k, a, b, c, d);
+      }
+      pair_idx++;
+    }
+  }
+  
+  // Output u_r coefficients
+  fprintf(fp, "\n--- u_r ---\n");
+  pair_idx = 0;
+  for (int i = 0; i < adp_data.Nelements; ++i) {
+    for (int j = 0; j <= i; ++j) {
+      fprintf(fp, "Function %d (pair %d-%d):\n", pair_idx, i, j);
+      int offset = pair_idx * adp_data.nr;
+      for (int k = 0; k < adp_data.nr && k < 50; ++k) { // Limit output for readability
+        double a = adp_data.u_r_a[offset + k];
+        double b = adp_data.u_r_b[offset + k];
+        double c = adp_data.u_r_c[offset + k];
+        double d = adp_data.u_r_d[offset + k];
+        fprintf(fp, "  pt %d: a=%.15e, b=%.15e, c=%.15e, d=%.15e\n", k, a, b, c, d);
+      }
+      pair_idx++;
+    }
+  }
+  
+  // Output w_r coefficients
+  fprintf(fp, "\n--- w_r ---\n");
+  pair_idx = 0;
+  for (int i = 0; i < adp_data.Nelements; ++i) {
+    for (int j = 0; j <= i; ++j) {
+      fprintf(fp, "Function %d (pair %d-%d):\n", pair_idx, i, j);
+      int offset = pair_idx * adp_data.nr;
+      for (int k = 0; k < adp_data.nr && k < 50; ++k) { // Limit output for readability
+        double a = adp_data.w_r_a[offset + k];
+        double b = adp_data.w_r_b[offset + k];
+        double c = adp_data.w_r_c[offset + k];
+        double d = adp_data.w_r_d[offset + k];
+        fprintf(fp, "  pt %d: a=%.15e, b=%.15e, c=%.15e, d=%.15e\n", k, a, b, c, d);
+      }
+      pair_idx++;
+    }
+  }
+  
+  fclose(fp);
+  printf("GPUMD spline coefficients written successfully.\n");
+}
+
 // GPU kernel to map user element types to ADP file element indices
 __global__ void map_element_types(
   const int N,
@@ -747,6 +931,7 @@ static __global__ void find_force_adp_step1(
   const Box box,
   const int* g_NN,
   const int* g_NL,
+  const int* g_shift,
   const int* g_type,
   const double* __restrict__ g_x,
   const double* __restrict__ g_y,
@@ -802,7 +987,21 @@ static __global__ void find_force_adp_step1(
       double delx = x1 - g_x[n2];
       double dely = y1 - g_y[n2];
       double delz = z1 - g_z[n2];
-      apply_mic(box, delx, dely, delz);
+      if (g_shift != nullptr) {
+        int sx, sy, sz;
+        const int code = g_shift[n1 + N * i1];
+        decode_neighbor_shift(code, sx, sy, sz);
+        if (code != 0) {
+          const double shift_x = sx * box.cpu_h[0] + sy * box.cpu_h[1] + sz * box.cpu_h[2];
+          const double shift_y = sx * box.cpu_h[3] + sy * box.cpu_h[4] + sz * box.cpu_h[5];
+          const double shift_z = sx * box.cpu_h[6] + sy * box.cpu_h[7] + sz * box.cpu_h[8];
+          delx -= shift_x;
+          dely -= shift_y;
+          delz -= shift_z;
+        }
+      } else {
+        apply_mic(box, delx, dely, delz);
+      }
       double d12 = sqrt(delx * delx + dely * dely + delz * delz);
       
       if (d12 < rc && d12 > 1e-12) {
@@ -821,18 +1020,20 @@ static __global__ void find_force_adp_step1(
                        rho_base + ir, frac, dr, rho_val, rho_deriv);
         rho += rho_val;
         
-        // Calculate u and w values for dipole and quadruple terms
-        // The ADP setfl format in LAMMPS tabulates u2r = r*u(r) and w2r = r^2*w(r).
-        // Convert interpolated values to the physical u(r) and w(r) here.
+        // Calculate u and w values for dipole and quadruple terms.
+        // In the ADP setfl format, the tabulated u2r and w2r arrays already
+        // correspond to u(r) and w(r) directly (only the z2 array is scaled by r).
         double u2r_val, u2r_deriv, w2r_val, w2r_deriv;
         interpolate_adp(u_r_a, u_r_b, u_r_c, u_r_d,
                        pair_base + ir, frac, dr, u2r_val, u2r_deriv);
         interpolate_adp(w_r_a, w_r_b, w_r_c, w_r_d,
                        pair_base + ir, frac, dr, w2r_val, w2r_deriv);
+        (void)u2r_deriv;
+        (void)w2r_deriv;
 
-          // ADP setfl convention: u2r = u(r), w2r = w(r)
-          double u_val = u2r_val;
-          double w_val = w2r_val;
+          // ADP setfl convention: u(r) and w(r) are stored directly
+          const double u_val = u2r_val;
+          const double w_val = w2r_val;
           
           // Dipole terms: mu_i += u(r)*del (del = x_i - x_j)
           mu_x += u_val * delx;
@@ -918,6 +1119,7 @@ static __global__ void find_force_adp_step2(
   const Box box,
   const int* g_NN,
   const int* g_NL,
+  const int* g_shift,
   const int* g_type,
   const double* __restrict__ g_Fp,
   const double* __restrict__ g_mu,
@@ -986,7 +1188,21 @@ static __global__ void find_force_adp_step2(
   double delx = x1 - g_x[n2];
   double dely = y1 - g_y[n2];
   double delz = z1 - g_z[n2];
-  apply_mic(box, delx, dely, delz);
+  if (g_shift != nullptr) {
+    int sx, sy, sz;
+    const int code = g_shift[n1 + N * i1];
+    decode_neighbor_shift(code, sx, sy, sz);
+    if (code != 0) {
+      const double shift_x = sx * box.cpu_h[0] + sy * box.cpu_h[1] + sz * box.cpu_h[2];
+      const double shift_y = sx * box.cpu_h[3] + sy * box.cpu_h[4] + sz * box.cpu_h[5];
+      const double shift_z = sx * box.cpu_h[6] + sy * box.cpu_h[7] + sz * box.cpu_h[8];
+      delx -= shift_x;
+      dely -= shift_y;
+      delz -= shift_z;
+    }
+  } else {
+    apply_mic(box, delx, dely, delz);
+  }
   double d12 = sqrt(delx * delx + dely * dely + delz * delz);
       
       if (d12 < rc && d12 > 1e-12) {
@@ -1003,7 +1219,7 @@ static __global__ void find_force_adp_step2(
         
         // Get interpolated values and derivatives
         double rho1_val, rho1_deriv, rho2_val, rho2_deriv;
-        double phi_rphi_val, phi_rphi_deriv, u2r_val, u2r_deriv, w2r_val, w2r_deriv;
+  double phi_rphi_val, phi_rphi_deriv, u2r_val, u2r_deriv, w2r_val, w2r_deriv;
         
         // rho1_*: density at atom i due to j (uses rho of type j)
         interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d,
@@ -1023,8 +1239,7 @@ static __global__ void find_force_adp_step2(
           double rinv = 1.0 / d12;
           double phi_val = phi_rphi_val * rinv;  // phi(r) = z2r / r
           
-          // For ADP setfl, u2r and w2r are already u(r) and w(r): use directly
-          // ADP setfl convention: u2r = u(r), w2r = w(r)
+          // ADP setfl stores u(r) and w(r) directly
           double u_val   = u2r_val;
           double u_deriv = u2r_deriv;
           double w_val   = w2r_val;
@@ -1108,46 +1323,43 @@ static __global__ void find_force_adp_step2(
                    n1, n2, d12, phi_val, 0.5 * phi_val);
           }
 
-          // Per-atom virial using the same convention as EAM:
-          // s = -0.5 * r_ij \otimes f_i (force on i due to j), where r_ij = r_j - r_i
-          const double xij = -delx;
-          const double yij = -dely;
-          const double zij = -delz;
-          const double fxi = force_total_x;
-          const double fyi = force_total_y;
-          const double fzi = force_total_z;
+          // Per-atom virial following LAMMPS ev_tally_xyz convention:
+          // v = del \otimes f, where del = x_i - x_j (consistent with force calculation)
+          const double v0 = delx * force_total_x;  // xx component
+          const double v1 = dely * force_total_y;  // yy component  
+          const double v2 = delz * force_total_z;  // zz component
+          const double v3 = delx * force_total_y;  // xy component
+          const double v4 = delx * force_total_z;  // xz component
+          const double v5 = dely * force_total_z;  // yz component
+          
+          // GPUMD uses bidirectional neighbor lists (each pair appears in both atoms' lists)
+          // Therefore, we need 0.5 factor to avoid double counting in stress calculation
           const double half = 0.5;
-          const double sxx = fxi * xij * half;
-          const double syy = fyi * yij * half;
-          const double szz = fzi * zij * half;
-          const double sxy = fxi * yij * half;
-          const double sxz = fxi * zij * half;
-          const double syz = fyi * zij * half;
-          s_sxx += sxx;
-          s_syy += syy;
-          s_szz += szz;
-          s_sxy += sxy;
-          s_sxz += sxz;
-          s_syz += syz;
-          s_syx += sxy; // yx mirrors xy
-          s_szx += sxz; // zx mirrors xz
-          s_szy += syz; // zy mirrors yz
+          s_sxx += half * v0;
+          s_syy += half * v1;
+          s_szz += half * v2;
+          s_sxy += half * v3;
+          s_sxz += half * v4;
+          s_syz += half * v5; 
+          s_syx += half * v3; // yx mirrors xy
+          s_szx += half * v4; // zx mirrors xz
+          s_szy += half * v5; // zy mirrors yz
         }
       }
     
     g_fx[n1] += fx;
     g_fy[n1] += fy;
     g_fz[n1] += fz;
-  // Save virial tensor components to global array (EAM convention: subtract accumulated s)
-  g_virial[n1 + 0 * N] -= s_sxx; // xx
-  g_virial[n1 + 1 * N] -= s_syy; // yy
-  g_virial[n1 + 2 * N] -= s_szz; // zz
-  g_virial[n1 + 3 * N] -= s_sxy; // xy
-  g_virial[n1 + 4 * N] -= s_sxz; // xz
-  g_virial[n1 + 5 * N] -= s_syz; // yz
-  g_virial[n1 + 6 * N] -= s_syx; // yx
-  g_virial[n1 + 7 * N] -= s_szx; // zx
-  g_virial[n1 + 8 * N] -= s_szy; // zy
+  // Save virial tensor components to global array (consistent with EAM/NEP convention)
+  g_virial[n1 + 0 * N] += s_sxx; // xx
+  g_virial[n1 + 1 * N] += s_syy; // yy
+  g_virial[n1 + 2 * N] += s_szz; // zz
+  g_virial[n1 + 3 * N] += s_sxy; // xy
+  g_virial[n1 + 4 * N] += s_sxz; // xz
+  g_virial[n1 + 5 * N] += s_syz; // yz
+  g_virial[n1 + 6 * N] += s_syx; // yx
+  g_virial[n1 + 7 * N] += s_szx; // zx
+  g_virial[n1 + 8 * N] += s_szy; // zy
     g_pe[n1] += pe;
     if (g_dbg_PAIR) g_dbg_PAIR[n1] += pe;
   }
@@ -1163,6 +1375,7 @@ void ADP::compute(
 {
   const int number_of_atoms = type.size();
   int grid_size = (N2 - N1 - 1) / BLOCK_SIZE_FORCE + 1;
+  const int* neighbor_shift_ptr = nullptr;
   
   // Map user element types to ADP file element indices
   const int* type_ptr;
@@ -1187,9 +1400,15 @@ void ADP::compute(
   {
     int nbins[3];
     bool small_box = box.get_num_bins(0.5 * adp_data.rc, nbins);
-    
+    const bool extended_x = box.pbc_x && box.thickness_x > 0.0 && adp_data.rc > 0.5 * box.thickness_x;
+    const bool extended_y = box.pbc_y && box.thickness_y > 0.0 && adp_data.rc > 0.5 * box.thickness_y;
+    const bool extended_z = box.pbc_z && box.thickness_z > 0.0 && adp_data.rc > 0.5 * box.thickness_z;
+    const bool requires_extended_images = extended_x || extended_y || extended_z;
+
     // Choose neighbor algorithm based on user preference and box size
-    bool use_brute_force = !use_linear_neighbor_ || small_box;
+    bool use_brute_force = !use_linear_neighbor_ || small_box || requires_extended_images;
+    const int max_neighbors = adp_data.NL.size() / number_of_atoms;
+    neighbor_shift_ptr = nullptr;
     
     if (!use_brute_force) {
       // Use O(N) linear complexity cell list algorithm
@@ -1220,8 +1439,11 @@ void ADP::compute(
         adp_data.rc * adp_data.rc,
         gx, gy, gz,
         adp_data.NN.data(),
-        adp_data.NL.data());
+        adp_data.NL.data(),
+        adp_data.NL_shift.data(),
+        max_neighbors);
       GPU_CHECK_KERNEL
+      neighbor_shift_ptr = adp_data.NL_shift.data();
     }
   }
 
@@ -1250,7 +1472,8 @@ void ADP::compute(
     adp_data.rc,
     box,
     adp_data.NN.data(),
-    adp_data.NL.data(),
+  adp_data.NL.data(),
+  neighbor_shift_ptr,
     type_ptr,
     position_per_atom.data(),
     position_per_atom.data() + number_of_atoms,
@@ -1290,7 +1513,8 @@ void ADP::compute(
     adp_data.rc,
     box,
     adp_data.NN.data(),
-    adp_data.NL.data(),
+  adp_data.NL.data(),
+  neighbor_shift_ptr,
     type_ptr,
     adp_data.Fp.data(),
     adp_data.mu.data(),
@@ -1333,6 +1557,35 @@ void ADP::compute(
   std::vector<double> hE(number_of_atoms);
   potential_per_atom.copy_to_host(hE.data());
   for (int i=0;i<number_of_atoms;++i) sT+=hE[i];
+
+  std::printf("=== GPUMD ADP energy breakdown ===\n");
+  std::printf("Total energy:      %.12f eV\n", sT);
+  std::printf("  Pair energy:     %.12f eV\n", sP);
+  std::printf("  Embedding energy:%.12f eV\n", sF);
+  std::printf("  ADP energy:      %.12f eV\n", sA);
+
+  std::vector<int> hNN(number_of_atoms);
+  adp_data.NN.copy_to_host(hNN.data());
+  long long total_neighbors = 0;
+  for (int i = 0; i < number_of_atoms; ++i) total_neighbors += hNN[i];
+  double avg_neighbors = number_of_atoms > 0 ? static_cast<double>(total_neighbors) / number_of_atoms : 0.0;
+  std::printf("Average neighbor count: %.6f\n", avg_neighbors);
+  for (int i = 0; i < 3 && i < number_of_atoms; ++i) {
+    std::printf("  NN[%d] = %d\n", i, hNN[i]);
+  }
+
+  std::vector<int> hNL;
+  hNL.resize(adp_data.NL.size());
+  adp_data.NL.copy_to_host(hNL.data());
+  for (int atom = 0; atom < 3 && atom < number_of_atoms; ++atom) {
+    std::printf("  Neighbors of atom %d:", atom);
+    for (int k = 0; k < hNN[atom]; ++k) {
+      int neighbor = hNL[k * number_of_atoms + atom];
+      std::printf(" %d", neighbor);
+    }
+    std::printf("\n");
+  }
+
   FILE* fpb=fopen("adp_energy_breakdown.txt","w");
   if(fpb){ fprintf(fpb,"EF=%.12g EADP=%.12g EPAIR=%.12g ETOT=%.12g\n", sF, sA, sP, sT); fclose(fpb);} 
   // Also dump per-atom contributions for detailed comparison (F, ADP, PAIR, TOTAL)

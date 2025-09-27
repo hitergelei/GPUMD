@@ -1,1 +1,0 @@
-mean_neighbors=203.851852

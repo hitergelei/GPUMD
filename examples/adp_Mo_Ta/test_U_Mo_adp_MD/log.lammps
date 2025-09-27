@@ -1,0 +1,89 @@
+LAMMPS (29 Aug 2024 - Update 3)
+# LAMMPS input for ADP verification
+# Generate reference data for comparison with GPUMD
+
+# Initialize
+units metal
+dimension 3
+boundary p p p
+atom_style atomic
+read_data  Mo_structs_0.dat
+Reading data file ...
+  orthogonal box = (0 0 0) to (9.450121 9.450121 9.450121)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  54 atoms
+  read_data CPU = 0.002 seconds
+
+# Use the same ADP potential
+pair_style adp
+pair_coeff * * Mo.adp Mo
+
+# Set same temperature as GPUMD test
+#velocity all create 300.0 12345
+velocity all create 0.0001 12345
+
+# Run and dump the same configuration
+timestep 0.001
+fix 1 all nve
+
+# Compute per-atom potential energy
+compute pe all pe/atom
+
+# Dump forces, energies for first step
+dump 1 all custom 1 lammps_adp_reference.dump id type x y z fx fy fz c_pe
+
+# Run for 1 step to match GPUMD test
+run 0
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 8.5
+  ghost atom cutoff = 8.5
+  binsize = 4.25, bins = 3 3 3
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair adp, perpetual
+      attributes: half, newton on
+      pair build: half/bin/atomonly/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 5.9 | 5.9 | 5.9 Mbytes
+   Step          Temp          E_pair         E_mol          TotEng         Press     
+         0   0.0001        -580.92169      0             -580.92169      72007.851    
+Loop time of 1.076e-06 on 1 procs for 0 steps with 54 atoms
+
+278.8% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 1.076e-06  |            |       |100.00
+
+Nlocal:             54 ave          54 max          54 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           1187 ave        1187 max        1187 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:           4536 ave        4536 max        4536 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 4536
+Ave neighs/atom = 84
+Neighbor list builds = 0
+Dangerous builds = 0
+
+# Additional information
+print "LAMMPS ADP reference data generated"
+LAMMPS ADP reference data generated
+print "Total energy: $(etotal)"
+Total energy: -580.92169424000496747
+print "Potential energy: $(pe)"
+Potential energy: -580.92169492508378426
+print "Kinetic energy: $(ke)"
+Kinetic energy: 6.8507876849999991762e-07
+
+Total wall time: 0:00:00

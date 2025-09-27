@@ -1,0 +1,124 @@
+# LAMMPS input for ADP verification with stress calculation
+# Generate reference data for comparison with GPUMD
+
+# Initialize
+units metal
+dimension 3
+boundary p p p
+atom_style atomic
+read_data  model_Ta_dump_idx10.dat
+#lattice  bcc  3.31
+#region box block 0 3 0 3 0 3
+#create_box 1 box 
+#create_atoms 1 box
+
+#mass 1 47.867    # titanium
+
+# Use the same ADP potential
+pair_style adp
+#pair_coeff * *  Ta.adp.txt  Ta
+pair_coeff * * CuTa_LJ15_2014.adp.txt Ta
+
+# Set same temperature as GPUMD test
+#velocity all create 300.0 12345
+velocity all create 0.0001 12345
+
+# Compute per-atom potential energy
+compute eng all pe/atom
+compute eatoms all reduce sum c_eng
+compute pe all pe/atom
+
+# Compute stress tensor
+compute stress_tensor all stress/atom NULL virial
+compute global_stress all reduce sum c_stress_tensor[1] c_stress_tensor[2] c_stress_tensor[3] c_stress_tensor[4] c_stress_tensor[5] c_stress_tensor[6]
+
+# Set timestep and ensemble
+timestep 0.001
+fix 1 all nve
+
+neighbor 0 bin
+
+# Output settings
+thermo 1
+thermo_style custom step etotal pe lx ly lz press pxx pyy pzz pxy pxz pyz vol
+
+# Dump forces, energies and stress for first step
+dump 1 all custom 1 lammps_adp_reference.dump id element type x y z fx fy fz c_pe c_stress_tensor[1] c_stress_tensor[2] c_stress_tensor[3] c_stress_tensor[4] c_stress_tensor[5] c_stress_tensor[6]
+dump_modify 1 element Ta sort id
+
+# Run for 0 steps to get initial configuration stress
+run 0
+
+# Print stress tensor components
+# Note: LAMMPS outputs pressure (with positive compression)
+# Virial stress = -pressure, so we need to flip signs
+variable stress_xx equal -pxx
+variable stress_yy equal -pyy  
+variable stress_zz equal -pzz
+variable stress_xy equal -pxy
+variable stress_xz equal -pxz
+variable stress_yz equal -pyz
+
+print "=== LAMMPS ADP Virial Stress Results ==="
+print "Virial stress tensor (bar):"
+print "sigma_xx = ${stress_xx}"
+print "sigma_yy = ${stress_yy}" 
+print "sigma_zz = ${stress_zz}"
+print "sigma_xy = ${stress_xy}"
+print "sigma_xz = ${stress_xz}"
+print "sigma_yz = ${stress_yz}"
+print "Pressure = $(press)"
+print "Volume = $(vol)"
+
+# Convert to GPa 
+# Method 1: From bar to GPa (1 bar = 1e-4 GPa)
+variable stress_xx_gpa equal ${stress_xx}*1e-4
+variable stress_yy_gpa equal ${stress_yy}*1e-4
+variable stress_zz_gpa equal ${stress_zz}*1e-4
+variable stress_xy_gpa equal ${stress_xy}*1e-4
+variable stress_xz_gpa equal ${stress_xz}*1e-4
+variable stress_yz_gpa equal ${stress_yz}*1e-4
+
+# Method 2: Direct virial stress in eV/Å³ units, then convert to GPa
+# 1 eV/Å³ = 160.217662 GPa
+# 1 eV/Å³ = 1,602,177 bar (correct conversion factor)
+# Virial stress = -(1/V) * Σ r_ij ⊗ F_ij (already calculated by LAMMPS)
+# LAMMPS pressure is in bar, so convert bar to eV/Å³
+variable stress_xx_ev_a3 equal ${stress_xx}/1602177.0
+variable stress_yy_ev_a3 equal ${stress_yy}/1602177.0
+variable stress_zz_ev_a3 equal ${stress_zz}/1602177.0
+variable stress_xy_ev_a3 equal ${stress_xy}/1602177.0
+variable stress_xz_ev_a3 equal ${stress_xz}/1602177.0
+variable stress_yz_ev_a3 equal ${stress_yz}/1602177.0
+
+print "Virial stress tensor (GPa from bar):"
+print "sigma_xx = ${stress_xx_gpa}"
+print "sigma_yy = ${stress_yy_gpa}"
+print "sigma_zz = ${stress_zz_gpa}" 
+print "sigma_xy = ${stress_xy_gpa}"
+print "sigma_xz = ${stress_xz_gpa}"
+print "sigma_yz = ${stress_yz_gpa}"
+
+print "Virial stress tensor (eV/A^3):"
+print "sigma_xx = ${stress_xx_ev_a3}"
+print "sigma_yy = ${stress_yy_ev_a3}"
+print "sigma_zz = ${stress_zz_ev_a3}" 
+print "sigma_xy = ${stress_xy_ev_a3}"
+print "sigma_xz = ${stress_xz_ev_a3}"
+print "sigma_yz = ${stress_yz_ev_a3}"
+
+# Print in matrix format for easy comparison
+print "Virial stress matrix (GPa from bar):"
+print "${stress_xx_gpa} ${stress_xy_gpa} ${stress_xz_gpa}"
+print "${stress_xy_gpa} ${stress_yy_gpa} ${stress_yz_gpa}"
+print "${stress_xz_gpa} ${stress_yz_gpa} ${stress_zz_gpa}"
+
+print "Virial stress matrix (eV/A^3):"
+print "${stress_xx_ev_a3} ${stress_xy_ev_a3} ${stress_xz_ev_a3}"
+print "${stress_xy_ev_a3} ${stress_yy_ev_a3} ${stress_yz_ev_a3}"
+print "${stress_xz_ev_a3} ${stress_yz_ev_a3} ${stress_zz_ev_a3}"
+
+print "LAMMPS ADP reference data generated"
+print "Total energy: $(etotal)"
+print "Potential energy: $(pe)"
+

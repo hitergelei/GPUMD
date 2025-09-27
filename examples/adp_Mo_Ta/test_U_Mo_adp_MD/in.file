@@ -1,0 +1,55 @@
+# --------------- INITIALIZATION ------------------
+clear
+units           metal
+dimension                     3
+boundary                      p   p    p
+atom_style      atomic
+boundary        p p p
+
+
+# ------- hcp setting by hjchen-------------------
+read_data  Mo_structs_0.dat
+
+# # ------------------------ FORCE FIELDS -----------------------
+
+# # 用Ta的ADP势
+pair_style      adp
+# pair_coeff      * *  Ta.adp.txt   Ta
+pair_coeff      * *  Mo.adp   Mo
+
+
+neighbor  0  bin
+
+
+compute eng all pe/atom
+compute eatoms all reduce sum c_eng
+
+
+reset_timestep 0
+thermo 10
+thermo_style custom step pe lx ly lz press pxx pyy pzz c_eatoms
+
+neighbor 0.0 bin
+
+# #dump 1 all custom 400 dump.relax.1.* id type xs ys zs c_csym c_eng
+
+dump  myDump_task all custom 100 dump.lammpstrj   id element type x y z 
+dump_modify  myDump_task  element  Mo  sort id
+
+# fix 1 all box/relax iso 0.0 vmax 0.001
+# min_style cg
+# minimize 1e-15 1e-15 5000 5000
+# unfix 1
+run 0
+
+
+
+
+variable N equal count(all)
+variable No equal $N
+
+
+
+variable E equal "c_eatoms"
+variable Ei equal $E
+

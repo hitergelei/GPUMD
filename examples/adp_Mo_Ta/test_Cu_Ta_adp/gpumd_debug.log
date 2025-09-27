@@ -1,0 +1,212 @@
+
+***************************************************************
+*                 Welcome to use GPUMD                        *
+*     (Graphics Processing Units Molecular Dynamics)          *
+*                     version 4.3                             *
+*              This is the gpumd executable                   *
+***************************************************************
+
+
+---------------------------------------------------------------
+Compiling options:
+---------------------------------------------------------------
+
+DEBUG is off: Use different PRNG seeds for different runs.
+
+---------------------------------------------------------------
+GPU information:
+---------------------------------------------------------------
+
+number of GPUs = 1
+Device id:                   0
+    Device name:             NVIDIA GeForce RTX 4060 Laptop GPU
+    Compute capability:      8.9
+    Amount of global memory: 7.99561 GB
+    Number of SMs:           24
+
+---------------------------------------------------------------
+Started running GPUMD.
+---------------------------------------------------------------
+
+
+---------------------------------------------------------------
+Started initializing positions and related parameters.
+---------------------------------------------------------------
+
+Number of atoms is 54.
+Use periodic boundary conditions along x.
+Use periodic boundary conditions along y.
+Use periodic boundary conditions along z.
+Box matrix h = [a, b, c] is
+    9.9300000000e+00    0.0000000000e+00    0.0000000000e+00
+    0.0000000000e+00    9.9300000000e+00    0.0000000000e+00
+    0.0000000000e+00    0.0000000000e+00    9.9300000000e+00
+Inverse box matrix g = inv(h) is
+    1.0070493454e-01    0.0000000000e+00    0.0000000000e+00
+    0.0000000000e+00    1.0070493454e-01    0.0000000000e+00
+    0.0000000000e+00    0.0000000000e+00    1.0070493454e-01
+Do not specify initial velocities here.
+Have no grouping method.
+There is only one atom type.
+    54 atoms of type 0.
+Initialized velocities with default T = 300 K.
+
+---------------------------------------------------------------
+Finished initializing positions and related parameters.
+---------------------------------------------------------------
+
+
+---------------------------------------------------------------
+Started executing the commands in run.in.
+---------------------------------------------------------------
+
+ADP element mapping: Ta->Ta 
+Writing GPUMD ADP spline coefficients to adp_spline_coeffs_gpumd.txt
+GPUMD spline coefficients written successfully.
+Use 1-element ADP potential, rc = 6.150959.
+ADP spline mode: LAMMPS.
+ADP neighbor mode: O(N) cell list.
+Initialized velocities with input T = 0.0001 K.
+Use NVE ensemble for this run.
+Time step for this run is 0 fs.
+Dump thermo every 1 steps.
+Dump force.
+    every 1 steps.
+Dump extended XYZ.
+    every 1 steps.
+    without velocity data.
+    with force data.
+    with potential data.
+Run 1 steps.
+Atom 0: type=0, rho=1.030714, F=-4.758821, adp_energy=0.000926, total_E=-4.757896
+Atom 1: type=0, rho=1.024666, F=-4.758032, adp_energy=0.000027, total_E=-4.758005
+Atom 2: type=0, rho=1.025995, F=-4.758215, adp_energy=0.000995, total_E=-4.757220
+  mu: 0.000000 0.000000 0.000000, mu_squared=0.000000
+  mu: 0.000000 0.000000 0.000000, mu_squared=0.000000
+  mu: 0.000000 0.000000 0.000000, mu_squared=0.000000
+  lambda_diag: 0.123986 0.129216 0.128781, lambda_offdiag: 0.020093 0.015522 0.016507
+  lambda_diag: 0.120268 0.115682 0.115211, lambda_offdiag: -0.000828 0.001519 0.004030
+  lambda_diag: 0.121990 0.118581 0.121263, lambda_offdiag: -0.030052 -0.009373 0.001042
+  Pair 0-1: r=2.8268, phi=-0.364189, pair_E=-0.182094
+  Pair 0-2: r=3.3361, phi=-0.437264, pair_E=-0.218632
+  Pair 0-3: r=5.4501, phi=-0.013916, pair_E=-0.006958
+  Pair 0-4: r=3.3034, phi=-0.446348, pair_E=-0.223174
+  Pair 0-5: r=2.8339, phi=-0.369615, pair_E=-0.184807
+  Pair 0-6: r=3.2840, phi=-0.451067, pair_E=-0.225533
+  Pair 0-7: r=5.4793, phi=-0.012575, pair_E=-0.006287
+  Pair 0-8: r=4.7069, phi=-0.045587, pair_E=-0.022793
+  Pair 0-10: r=4.6449, phi=-0.048337, pair_E=-0.024169
+  Pair 0-11: r=5.4652, phi=-0.013226, pair_E=-0.006613
+  Pair 0-12: r=3.3080, phi=-0.445135, pair_E=-0.222568
+  Pair 0-13: r=2.8618, phi=-0.388970, pair_E=-0.194485
+  Pair 0-14: r=4.7032, phi=-0.045750, pair_E=-0.022875
+  Pair 0-15: r=5.4824, phi=-0.012432, pair_E=-0.006216
+  Pair 0-16: r=4.6763, phi=-0.046936, pair_E=-0.023468
+  Pair 0-17: r=2.8619, phi=-0.389044, pair_E=-0.194522
+  Pair 0-18: r=3.2754, phi=-0.453008, pair_E=-0.226504
+  Pair 0-19: r=5.4770, phi=-0.012682, pair_E=-0.006341
+  Pair 0-20: r=4.6956, phi=-0.046084, pair_E=-0.023042
+  Pair 0-22: r=4.6466, phi=-0.048262, pair_E=-0.024131
+  Pair 0-23: r=5.4529, phi=-0.013790, pair_E=-0.006895
+  Pair 0-24: r=4.6543, phi=-0.047919, pair_E=-0.023959
+  Pair 0-26: r=5.7242, phi=-0.002849, pair_E=-0.001424
+  Pair 0-28: r=5.7153, phi=-0.003092, pair_E=-0.001546
+  Pair 0-30: r=4.6710, phi=-0.047170, pair_E=-0.023585
+  Pair 0-31: r=5.4878, phi=-0.012183, pair_E=-0.006092
+  Pair 0-32: r=5.7377, phi=-0.002500, pair_E=-0.001250
+  Pair 0-34: r=5.7234, phi=-0.002871, pair_E=-0.001435
+  Pair 0-35: r=5.4593, phi=-0.013497, pair_E=-0.006748
+  Pair 0-36: r=3.3108, phi=-0.444402, pair_E=-0.222201
+  Pair 0-37: r=2.8864, phi=-0.403987, pair_E=-0.201994
+  Pair 0-38: r=4.7165, phi=-0.045168, pair_E=-0.022584
+  Pair 0-39: r=5.4787, phi=-0.012603, pair_E=-0.006301
+  Pair 0-40: r=4.7014, phi=-0.045830, pair_E=-0.022915
+  Pair 0-41: r=2.8626, phi=-0.389529, pair_E=-0.194765
+  Pair 0-42: r=4.6991, phi=-0.045932, pair_E=-0.022966
+  Pair 0-43: r=5.4893, phi=-0.012116, pair_E=-0.006058
+  Pair 0-44: r=5.7387, phi=-0.002476, pair_E=-0.001238
+  Pair 0-46: r=5.7135, phi=-0.003143, pair_E=-0.001572
+  Pair 0-47: r=5.4769, phi=-0.012687, pair_E=-0.006344
+  Pair 0-48: r=4.7030, phi=-0.045760, pair_E=-0.022880
+  Pair 0-49: r=2.8922, phi=-0.407257, pair_E=-0.203628
+  Pair 0-50: r=5.7459, phi=-0.002301, pair_E=-0.001151
+  Pair 0-51: r=5.5013, phi=-0.011566, pair_E=-0.005783
+  Pair 0-52: r=5.7513, phi=-0.002176, pair_E=-0.001088
+  Pair 0-53: r=2.8619, phi=-0.389059, pair_E=-0.194529
+Atom 0: type=0, rho=1.030714, F=-4.758821, adp_energy=0.000926, total_E=-4.757896
+Atom 1: type=0, rho=1.024666, F=-4.758032, adp_energy=0.000027, total_E=-4.758005
+Atom 2: type=0, rho=1.025995, F=-4.758215, adp_energy=0.000995, total_E=-4.757220
+  mu: 0.000000 0.000000 0.000000, mu_squared=0.000000
+  mu: 0.000000 0.000000 0.000000, mu_squared=0.000000
+  mu: 0.000000 0.000000 0.000000, mu_squared=0.000000
+  lambda_diag: 0.123986 0.129216 0.128781, lambda_offdiag: 0.020093 0.015522 0.016507
+  lambda_diag: 0.120268 0.115682 0.115211, lambda_offdiag: -0.000828 0.001519 0.004030
+  lambda_diag: 0.121990 0.118581 0.121263, lambda_offdiag: -0.030052 -0.009373 0.001042
+  Pair 0-1: r=2.8268, phi=-0.364189, pair_E=-0.182094
+  Pair 0-2: r=3.3361, phi=-0.437264, pair_E=-0.218632
+  Pair 0-3: r=5.4501, phi=-0.013916, pair_E=-0.006958
+  Pair 0-4: r=3.3034, phi=-0.446348, pair_E=-0.223174
+  Pair 0-5: r=2.8339, phi=-0.369615, pair_E=-0.184807
+  Pair 0-6: r=3.2840, phi=-0.451067, pair_E=-0.225533
+  Pair 0-7: r=5.4793, phi=-0.012575, pair_E=-0.006287
+  Pair 0-8: r=4.7069, phi=-0.045587, pair_E=-0.022793
+  Pair 0-10: r=4.6449, phi=-0.048337, pair_E=-0.024169
+  Pair 0-11: r=5.4652, phi=-0.013226, pair_E=-0.006613
+  Pair 0-12: r=3.3080, phi=-0.445135, pair_E=-0.222568
+  Pair 0-13: r=2.8618, phi=-0.388970, pair_E=-0.194485
+  Pair 0-14: r=4.7032, phi=-0.045750, pair_E=-0.022875
+  Pair 0-15: r=5.4824, phi=-0.012432, pair_E=-0.006216
+  Pair 0-16: r=4.6763, phi=-0.046936, pair_E=-0.023468
+  Pair 0-17: r=2.8619, phi=-0.389044, pair_E=-0.194522
+  Pair 0-18: r=3.2754, phi=-0.453008, pair_E=-0.226504
+  Pair 0-19: r=5.4770, phi=-0.012682, pair_E=-0.006341
+  Pair 0-20: r=4.6956, phi=-0.046084, pair_E=-0.023042
+  Pair 0-22: r=4.6466, phi=-0.048262, pair_E=-0.024131
+  Pair 0-23: r=5.4529, phi=-0.013790, pair_E=-0.006895
+  Pair 0-24: r=4.6543, phi=-0.047919, pair_E=-0.023959
+  Pair 0-26: r=5.7242, phi=-0.002849, pair_E=-0.001424
+  Pair 0-28: r=5.7153, phi=-0.003092, pair_E=-0.001546
+  Pair 0-30: r=4.6710, phi=-0.047170, pair_E=-0.023585
+  Pair 0-31: r=5.4878, phi=-0.012183, pair_E=-0.006092
+  Pair 0-32: r=5.7377, phi=-0.002500, pair_E=-0.001250
+  Pair 0-34: r=5.7234, phi=-0.002871, pair_E=-0.001435
+  Pair 0-35: r=5.4593, phi=-0.013497, pair_E=-0.006748
+  Pair 0-36: r=3.3108, phi=-0.444402, pair_E=-0.222201
+  Pair 0-37: r=2.8864, phi=-0.403987, pair_E=-0.201994
+  Pair 0-38: r=4.7165, phi=-0.045168, pair_E=-0.022584
+  Pair 0-39: r=5.4787, phi=-0.012603, pair_E=-0.006301
+  Pair 0-40: r=4.7014, phi=-0.045830, pair_E=-0.022915
+  Pair 0-41: r=2.8626, phi=-0.389529, pair_E=-0.194765
+  Pair 0-42: r=4.6991, phi=-0.045932, pair_E=-0.022966
+  Pair 0-43: r=5.4893, phi=-0.012116, pair_E=-0.006058
+  Pair 0-44: r=5.7387, phi=-0.002476, pair_E=-0.001238
+  Pair 0-46: r=5.7135, phi=-0.003143, pair_E=-0.001572
+  Pair 0-47: r=5.4769, phi=-0.012687, pair_E=-0.006344
+  Pair 0-48: r=4.7030, phi=-0.045760, pair_E=-0.022880
+  Pair 0-49: r=2.8922, phi=-0.407257, pair_E=-0.203628
+  Pair 0-50: r=5.7459, phi=-0.002301, pair_E=-0.001151
+  Pair 0-51: r=5.5013, phi=-0.011566, pair_E=-0.005783
+  Pair 0-52: r=5.7513, phi=-0.002176, pair_E=-0.001088
+  Pair 0-53: r=2.8619, phi=-0.389059, pair_E=-0.194529
+    1 steps completed.
+
+---------------------------------------------------------------
+Time used for this run = 0.0174393 second.
+Speed of this run = 3096.46 atom*step/second.
+---------------------------------------------------------------
+
+
+---------------------------------------------------------------
+Finished executing the commands in run.in.
+---------------------------------------------------------------
+
+
+---------------------------------------------------------------
+Time used = 0.029389 s.
+---------------------------------------------------------------
+
+
+---------------------------------------------------------------
+Finished running GPUMD.
+---------------------------------------------------------------
+

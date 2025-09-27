@@ -1,0 +1,14 @@
+#potential adp Mo.adp  Mo neighbor=linear  adp_spline=lammps
+
+#potential  adp U_Mo.alloy.adp_cor.txt  Mo  neighbor=linear adp_spline=lammps
+#potential adp U_Mo_generated.adp Mo neighbor=linear adp_spline=lammps
+#potential adp ../../adp_U_Mo/U_Mo.alloy.adp_cor.txt Mo adp_spline=natural
+potential adp ../../adp_U_Mo/U_Mo.alloy.adp_cor.txt Mo  adp_spline=lammps
+
+velocity 0.0001
+ensemble nve
+time_step 0
+dump_thermo 1
+dump_force 1
+dump_exyz 1 0 1 1
+run 1

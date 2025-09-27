@@ -23,6 +23,7 @@
 
 struct ADP_Data {
   GPU_Vector<int> NN, NL;
+  GPU_Vector<int> NL_shift;       // encoded periodic image shifts per neighbor entry
   GPU_Vector<int> cell_count;
   GPU_Vector<int> cell_count_sum;
   GPU_Vector<int> cell_contents;
@@ -115,4 +116,5 @@ protected:
     const double* y, int n_total, double dx,
     double* a, double* b, double* c, double* d,
     int n_functions, int n_points);
+  void output_spline_coefficients();  // Output spline coefficients for comparison with LAMMPS
 };

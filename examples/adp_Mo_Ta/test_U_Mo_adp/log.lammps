@@ -1,0 +1,214 @@
+LAMMPS (29 Aug 2024 - Update 3)
+# LAMMPS input for ADP verification with stress calculation
+# Generate reference data for comparison with GPUMD
+
+# Initialize
+units metal
+dimension 3
+boundary p p p
+atom_style atomic
+read_data  Mo_structs_0.dat
+Reading data file ...
+  orthogonal box = (0 0 0) to (9.450121 9.450121 9.450121)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  54 atoms
+  read_data CPU = 0.002 seconds
+
+# Use the same ADP potential
+pair_style adp
+#pair_coeff * * Mo.adp Mo
+pair_coeff * *  U_Mo.alloy.adp_cor.txt  Mo
+#pair_coeff * * U_Mo_generated.adp Mo
+
+# Set same temperature as GPUMD test
+#velocity all create 300.0 12345
+velocity all create 0.0001 12345
+
+# Compute per-atom potential energy
+compute eng all pe/atom
+compute eatoms all reduce sum c_eng
+compute pe all pe/atom
+
+# Compute stress tensor
+compute stress_tensor all stress/atom NULL virial
+compute global_stress all reduce sum c_stress_tensor[1] c_stress_tensor[2] c_stress_tensor[3] c_stress_tensor[4] c_stress_tensor[5] c_stress_tensor[6]
+
+# Set timestep and ensemble
+timestep 0.001
+fix 1 all nve
+
+neighbor 0 bin
+
+# Output settings
+thermo 1
+thermo_style custom step etotal pe lx ly lz press pxx pyy pzz pxy pxz pyz vol
+
+# Dump forces, energies and stress for first step
+dump 1 all custom 1 lammps_adp_reference.dump id element type x y z fx fy fz c_pe c_stress_tensor[1] c_stress_tensor[2] c_stress_tensor[3] c_stress_tensor[4] c_stress_tensor[5] c_stress_tensor[6]
+dump_modify 1 element Mo sort id
+
+# Run for 0 steps to get initial configuration stress
+run 0
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 6.196997
+  ghost atom cutoff = 6.196997
+  binsize = 3.0984985, bins = 4 4 4
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair adp, perpetual
+      attributes: half, newton on
+      pair build: half/bin/atomonly/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 6.586 | 6.586 | 6.586 Mbytes
+   Step         TotEng         PotEng           Lx             Ly             Lz           Press           Pxx            Pyy            Pzz            Pxy            Pxz            Pyz           Volume    
+         0  -367.99712     -367.99712      9.450121       9.450121       9.450121       26950.861      26398.626      28306.957      26147          572.11383      2141.1766     -365.46976      843.94104    
+Loop time of 5.01e-07 on 1 procs for 0 steps with 54 atoms
+
+399.2% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 5.01e-07   |            |       |100.00
+
+Nlocal:             54 ave          54 max          54 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:            513 ave         513 max         513 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:           1576 ave        1576 max        1576 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 1576
+Ave neighs/atom = 29.185185
+Neighbor list builds = 0
+Dangerous builds = 0
+
+# Print stress tensor components
+# Note: LAMMPS outputs pressure (with positive compression)
+# Virial stress = -pressure, so we need to flip signs
+variable stress_xx equal -pxx
+variable stress_yy equal -pyy
+variable stress_zz equal -pzz
+variable stress_xy equal -pxy
+variable stress_xz equal -pxz
+variable stress_yz equal -pyz
+
+print "=== LAMMPS ADP Virial Stress Results ==="
+=== LAMMPS ADP Virial Stress Results ===
+print "Virial stress tensor (bar):"
+Virial stress tensor (bar):
+print "sigma_xx = ${stress_xx}"
+sigma_xx = -26398.6264203508
+print "sigma_yy = ${stress_yy}"
+sigma_yy = -28306.9565380383
+print "sigma_zz = ${stress_zz}"
+sigma_zz = -26147.0000086323
+print "sigma_xy = ${stress_xy}"
+sigma_xy = -572.113833669526
+print "sigma_xz = ${stress_xz}"
+sigma_xz = -2141.17658672369
+print "sigma_yz = ${stress_yz}"
+sigma_yz = 365.46975913823
+print "Pressure = $(press)"
+Pressure = 26950.860989007152966
+print "Volume = $(vol)"
+Volume = 843.94104222257396941
+
+# Convert to GPa
+# Method 1: From bar to GPa (1 bar = 1e-4 GPa)
+variable stress_xx_gpa equal ${stress_xx}*1e-4
+variable stress_xx_gpa equal -26398.6264203508*1e-4
+variable stress_yy_gpa equal ${stress_yy}*1e-4
+variable stress_yy_gpa equal -28306.9565380383*1e-4
+variable stress_zz_gpa equal ${stress_zz}*1e-4
+variable stress_zz_gpa equal -26147.0000086323*1e-4
+variable stress_xy_gpa equal ${stress_xy}*1e-4
+variable stress_xy_gpa equal -572.113833669526*1e-4
+variable stress_xz_gpa equal ${stress_xz}*1e-4
+variable stress_xz_gpa equal -2141.17658672369*1e-4
+variable stress_yz_gpa equal ${stress_yz}*1e-4
+variable stress_yz_gpa equal 365.46975913823*1e-4
+
+# Method 2: Direct virial stress in eV/Å³ units, then convert to GPa
+# 1 eV/Å³ = 160.217662 GPa
+# 1 eV/Å³ = 1,602,177 bar (correct conversion factor)
+# Virial stress = -(1/V) * Σ r_ij ⊗ F_ij (already calculated by LAMMPS)
+# LAMMPS pressure is in bar, so convert bar to eV/Å³
+variable stress_xx_ev_a3 equal ${stress_xx}/1602177.0
+variable stress_xx_ev_a3 equal -26398.6264203508/1602177.0
+variable stress_yy_ev_a3 equal ${stress_yy}/1602177.0
+variable stress_yy_ev_a3 equal -28306.9565380383/1602177.0
+variable stress_zz_ev_a3 equal ${stress_zz}/1602177.0
+variable stress_zz_ev_a3 equal -26147.0000086323/1602177.0
+variable stress_xy_ev_a3 equal ${stress_xy}/1602177.0
+variable stress_xy_ev_a3 equal -572.113833669526/1602177.0
+variable stress_xz_ev_a3 equal ${stress_xz}/1602177.0
+variable stress_xz_ev_a3 equal -2141.17658672369/1602177.0
+variable stress_yz_ev_a3 equal ${stress_yz}/1602177.0
+variable stress_yz_ev_a3 equal 365.46975913823/1602177.0
+
+print "Virial stress tensor (GPa from bar):"
+Virial stress tensor (GPa from bar):
+print "sigma_xx = ${stress_xx_gpa}"
+sigma_xx = -2.63986264203508
+print "sigma_yy = ${stress_yy_gpa}"
+sigma_yy = -2.83069565380383
+print "sigma_zz = ${stress_zz_gpa}"
+sigma_zz = -2.61470000086323
+print "sigma_xy = ${stress_xy_gpa}"
+sigma_xy = -0.0572113833669526
+print "sigma_xz = ${stress_xz_gpa}"
+sigma_xz = -0.214117658672369
+print "sigma_yz = ${stress_yz_gpa}"
+sigma_yz = 0.036546975913823
+
+print "Virial stress tensor (eV/A^3):"
+Virial stress tensor (eV/A^3):
+print "sigma_xx = ${stress_xx_ev_a3}"
+sigma_xx = -0.016476722871662
+print "sigma_yy = ${stress_yy_ev_a3}"
+sigma_yy = -0.0176678085742326
+print "sigma_zz = ${stress_zz_ev_a3}"
+sigma_zz = -0.0163196700543275
+print "sigma_xy = ${stress_xy_ev_a3}"
+sigma_xy = -0.000357085286874999
+print "sigma_xz = ${stress_xz_ev_a3}"
+sigma_xz = -0.00133641700431581
+print "sigma_yz = ${stress_yz_ev_a3}"
+sigma_yz = 0.000228108229701356
+
+# Print in matrix format for easy comparison
+print "Virial stress matrix (GPa from bar):"
+Virial stress matrix (GPa from bar):
+print "${stress_xx_gpa} ${stress_xy_gpa} ${stress_xz_gpa}"
+-2.63986264203508 -0.0572113833669526 -0.214117658672369
+print "${stress_xy_gpa} ${stress_yy_gpa} ${stress_yz_gpa}"
+-0.0572113833669526 -2.83069565380383 0.036546975913823
+print "${stress_xz_gpa} ${stress_yz_gpa} ${stress_zz_gpa}"
+-0.214117658672369 0.036546975913823 -2.61470000086323
+
+print "Virial stress matrix (eV/A^3):"
+Virial stress matrix (eV/A^3):
+print "${stress_xx_ev_a3} ${stress_xy_ev_a3} ${stress_xz_ev_a3}"
+-0.016476722871662 -0.000357085286874999 -0.00133641700431581
+print "${stress_xy_ev_a3} ${stress_yy_ev_a3} ${stress_yz_ev_a3}"
+-0.000357085286874999 -0.0176678085742326 0.000228108229701356
+print "${stress_xz_ev_a3} ${stress_yz_ev_a3} ${stress_zz_ev_a3}"
+-0.00133641700431581 0.000228108229701356 -0.0163196700543275
+
+print "LAMMPS ADP reference data generated"
+LAMMPS ADP reference data generated
+print "Total energy: $(etotal)"
+Total energy: -367.99712357238604454
+print "Potential energy: $(pe)"
+Potential energy: -367.99712425746480449
+
+Total wall time: 0:00:00

@@ -30,12 +30,12 @@ struct ADP_Data {
   GPU_Vector<double> Fp;          // derivative of embedding function F'(rho)
   GPU_Vector<double> mu;          // dipole distortion terms (3 components per atom)
   GPU_Vector<double> lambda;      // quadruple distortion terms (6 components per atom: xx,yy,zz,yz,xz,xy)
-
+  
   // Element mapping for multi-element systems
   GPU_Vector<int> mapped_type;    // Type array mapped from user types to ADP file element indices
   GPU_Vector<int> element_mapping_gpu;  // Element mapping array on GPU
   GPU_Vector<int> pair_index_map_g;      // Lookup table for pair indices (size Nelements*Nelements)
-
+  
   // Tabulated functions from ADP file
   int Nelements;
   std::vector<std::string> elements_list;
@@ -48,7 +48,7 @@ struct ADP_Data {
   double rc;
   double inv_drho = 0.0;
   double inv_dr = 0.0;
-
+  
   // EAM-like functions
   std::vector<double> F_rho;      // embedding function F(rho)
   std::vector<double> rho_r;      // electron density function rho(r)
@@ -71,13 +71,6 @@ struct ADP_Data {
   GPU_Vector<double> phi_r_a_g, phi_r_b_g, phi_r_c_g, phi_r_d_g;
   GPU_Vector<double> u_r_a_g, u_r_b_g, u_r_c_g, u_r_d_g;
   GPU_Vector<double> w_r_a_g, w_r_b_g, w_r_c_g, w_r_d_g;
-  
-  // Optional per-atom debug accumulators (host reduction, on GPU for convenience)
-  GPU_Vector<double> dbg_F;    // embedding energy contribution per atom
-  GPU_Vector<double> dbg_ADP;  // angular (ADP) energy contribution per atom
-  GPU_Vector<double> dbg_PAIR; // pair energy contribution per atom
-  
-  // (no per-atom host temporaries here)
 };
 
 class ADP : public Potential
@@ -97,6 +90,7 @@ public:
     GPU_Vector<double>& force,
     GPU_Vector<double>& virial);
   void initialize_adp(const char* file_potential, const int number_of_atoms);
+  void ensure_capacity(int number_of_atoms);
 
 protected:
   ADP_Data adp_data;

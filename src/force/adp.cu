@@ -87,9 +87,11 @@ __host__ __device__ inline void decode_neighbor_shift(int code, int& sx, int& sy
   sz = (((payload >> 10) & 0x1F) - PBC_SHIFT_BIAS);
 }
 
+__host__ __device__ __forceinline__ static int get_pair_index(int type1, int type2, int Nelements);
+
 // Debug dump switch for comparing with LAMMPS setfl parsing
 #ifndef ADP_DEBUG_PRINT
-#define ADP_DEBUG_PRINT 1
+#define ADP_DEBUG_PRINT 0
 #endif
 
 // Simple O(N^2) neighbor construction for small boxes (avoids duplicates with coarse cell lists)
@@ -209,6 +211,21 @@ void ADP::initialize_adp(const char* file_potential, const int number_of_atoms)
   }
   
   setup_spline_interpolation();
+
+  adp_data.inv_drho = (adp_data.drho != 0.0) ? 1.0 / adp_data.drho : 0.0;
+  adp_data.inv_dr = (adp_data.dr != 0.0) ? 1.0 / adp_data.dr : 0.0;
+
+  const int pair_table_size = adp_data.Nelements * adp_data.Nelements;
+  if (pair_table_size > 0) {
+    std::vector<int> pair_index_map(pair_table_size, 0);
+    for (int i = 0; i < adp_data.Nelements; ++i) {
+      for (int j = 0; j < adp_data.Nelements; ++j) {
+        pair_index_map[i * adp_data.Nelements + j] = get_pair_index(i, j, adp_data.Nelements);
+      }
+    }
+    adp_data.pair_index_map_g.resize(pair_table_size);
+    adp_data.pair_index_map_g.copy_from_host(pair_index_map.data());
+  }
   
   // Resize GPU vectors
   adp_data.Fp.resize(number_of_atoms);
@@ -560,34 +577,24 @@ void ADP::setup_element_mapping()
   }
   printf("\n");
   
-  // Debug: Print some function values to verify correct reading
-  if (adp_data.Nelements == 2) {
-    printf("Debug: ADP file has 2 elements, checking Mo values...\n");
-    int mo_idx = -1;
-    for (int i = 0; i < adp_data.Nelements; i++) {
-      if (adp_data.elements_list[i] == "Mo") {
-        mo_idx = i;
-        break;
-      }
-    }
-    if (mo_idx >= 0) {
-      printf("Debug: Mo element index in ADP file: %d\n", mo_idx);
-      printf("Debug: Mo F[0-2]: %.6f %.6f %.6f\n", 
-             adp_data.F_rho[mo_idx * adp_data.nrho],
-             adp_data.F_rho[mo_idx * adp_data.nrho + 1],
-             adp_data.F_rho[mo_idx * adp_data.nrho + 2]);
-      printf("Debug: Mo rho[0-2]: %.6f %.6f %.6f\n",
-             adp_data.rho_r[mo_idx * adp_data.nr],
-             adp_data.rho_r[mo_idx * adp_data.nr + 1], 
-             adp_data.rho_r[mo_idx * adp_data.nr + 2]);
-      // Mo-Mo pair should be at index 2 (U-U=0, Mo-U=1, Mo-Mo=2)
-      int mo_mo_pair_idx = 2;
-      printf("Debug: Mo-Mo phi[0-2]: %.6f %.6f %.6f\n",
-             adp_data.phi_r[mo_mo_pair_idx * adp_data.nr],
-             adp_data.phi_r[mo_mo_pair_idx * adp_data.nr + 1],
-             adp_data.phi_r[mo_mo_pair_idx * adp_data.nr + 2]);
-    }
+#if ADP_DEBUG_PRINT
+  // Optional: print example values for the first element in the table to sanity-check parsing.
+  if (!adp_data.elements_list.empty()) {
+    const int elem_idx = 0;
+    const char* label = adp_data.elements_list[elem_idx].c_str();
+    printf("Debug: sample element '%s' (index %d) F[0-2]: %.6f %.6f %.6f\n",
+           label,
+           elem_idx,
+           adp_data.F_rho[elem_idx * adp_data.nrho],
+           adp_data.F_rho[elem_idx * adp_data.nrho + 1],
+           adp_data.F_rho[elem_idx * adp_data.nrho + 2]);
+    printf("Debug: sample element '%s' rho[0-2]: %.6f %.6f %.6f\n",
+           label,
+           adp_data.rho_r[elem_idx * adp_data.nr],
+           adp_data.rho_r[elem_idx * adp_data.nr + 1],
+           adp_data.rho_r[elem_idx * adp_data.nr + 2]);
   }
+#endif
 }
 
 void ADP::setup_spline_interpolation()
@@ -734,7 +741,7 @@ void ADP::calculate_cubic_spline_coefficients(
 }
 
 // GPU utility functions for interpolation
-__device__ static void interpolate_adp(
+__device__ __forceinline__ static void interpolate_adp(
   const double* a, const double* b, const double* c, const double* d,
   int index, double x_frac, double dx, double& y, double& yp)
 {
@@ -908,7 +915,7 @@ __global__ void map_element_types(
 }
 
 // Get pair index for element types (0-based) consistent with reading order (i loop outer, j<=i)
-__device__ static int get_pair_index(int type1, int type2, int /*Nelements*/)
+__host__ __device__ __forceinline__ static int get_pair_index(int type1, int type2, int /*Nelements*/)
 {
   // Avoid relying on std::max/min inside device; implement explicitly
   int a = (type1 >= type2) ? type1 : type2; // ensure a >= b
@@ -925,186 +932,179 @@ static __global__ void find_force_adp_step1(
   const int Nelements,
   const int nrho,
   const double drho,
+  const double inv_drho,
   const int nr,
   const double dr,
+  const double inv_dr,
   const double rc,
   const Box box,
-  const int* g_NN,
-  const int* g_NL,
-  const int* g_shift,
-  const int* g_type,
+  const int* __restrict__ g_NN,
+  const int* __restrict__ g_NL,
+  const int* __restrict__ g_shift,
+  const int* __restrict__ g_type,
+  const int* __restrict__ pair_index_map,
   const double* __restrict__ g_x,
   const double* __restrict__ g_y,
   const double* __restrict__ g_z,
-  const double* F_rho_a,
-  const double* F_rho_b,
-  const double* F_rho_c,
-  const double* F_rho_d,
-  const double* rho_r_a,
-  const double* rho_r_b,
-  const double* rho_r_c,
-  const double* rho_r_d,
-  const double* u_r_a,
-  const double* u_r_b,
-  const double* u_r_c,
-  const double* u_r_d,
-  const double* w_r_a,
-  const double* w_r_b,
-  const double* w_r_c,
-  const double* w_r_d,
-  double* g_Fp,
-  double* g_mu,
-  double* g_lambda,
-  double* g_pe,
-  double* g_dbg_F,
-  double* g_dbg_ADP)
+  const double* __restrict__ F_rho_a,
+  const double* __restrict__ F_rho_b,
+  const double* __restrict__ F_rho_c,
+  const double* __restrict__ F_rho_d,
+  const double* __restrict__ rho_r_a,
+  const double* __restrict__ rho_r_b,
+  const double* __restrict__ rho_r_c,
+  const double* __restrict__ rho_r_d,
+  const double* __restrict__ u_r_a,
+  const double* __restrict__ u_r_b,
+  const double* __restrict__ u_r_c,
+  const double* __restrict__ u_r_d,
+  const double* __restrict__ w_r_a,
+  const double* __restrict__ w_r_b,
+  const double* __restrict__ w_r_c,
+  const double* __restrict__ w_r_d,
+  double* __restrict__ g_Fp,
+  double* __restrict__ g_mu,
+  double* __restrict__ g_lambda,
+  double* __restrict__ g_pe,
+  double* __restrict__ g_dbg_F,
+  double* __restrict__ g_dbg_ADP)
 {
   int n1 = blockIdx.x * blockDim.x + threadIdx.x + N1;
-  
-  if (n1 < N2) {
-    int NN = g_NN[n1];
-    int type1 = g_type[n1];
-    
-    double x1 = g_x[n1];
-    double y1 = g_y[n1];
-    double z1 = g_z[n1];
-    
-    // Initialize density 
-    double rho = 0.0;
-    
-    // Initialize ADP terms - these will be accumulated from neighbors
-    // For dipole: μ_i = Σ_j u(r_ij) * r_ij   (LAMMPS formula)
-    // For quadruple: λ_i = Σ_j w(r_ij) * r_ij ⊗ r_ij (tensor product)
-    double mu_x = 0.0, mu_y = 0.0, mu_z = 0.0;
-    double lambda_xx = 0.0, lambda_yy = 0.0, lambda_zz = 0.0;
-    double lambda_xy = 0.0, lambda_xz = 0.0, lambda_yz = 0.0;
-    
-    // Loop over neighbors
-    for (int i1 = 0; i1 < NN; ++i1) {
-      int n2 = g_NL[n1 + N * i1];
-      int type2 = g_type[n2];
-      // LAMMPS uses del = x_i - x_j
-      double delx = x1 - g_x[n2];
-      double dely = y1 - g_y[n2];
-      double delz = z1 - g_z[n2];
-      if (g_shift != nullptr) {
-        int sx, sy, sz;
-        const int code = g_shift[n1 + N * i1];
-        decode_neighbor_shift(code, sx, sy, sz);
-        if (code != 0) {
-          const double shift_x = sx * box.cpu_h[0] + sy * box.cpu_h[1] + sz * box.cpu_h[2];
-          const double shift_y = sx * box.cpu_h[3] + sy * box.cpu_h[4] + sz * box.cpu_h[5];
-          const double shift_z = sx * box.cpu_h[6] + sy * box.cpu_h[7] + sz * box.cpu_h[8];
-          delx -= shift_x;
-          dely -= shift_y;
-          delz -= shift_z;
-        }
-      } else {
-        apply_mic(box, delx, dely, delz);
-      }
-      double d12 = sqrt(delx * delx + dely * dely + delz * delz);
-      
-      if (d12 < rc && d12 > 1e-12) {
-        // LAMMPS clamped indexing
-        double pp = d12 / dr + 1.0;
-        int m = (int)pp; if (m < 1) m = 1; if (m > nr - 1) m = nr - 1;
-        double frac = pp - m; if (frac > 1.0) frac = 1.0;
-        int ir = m - 1;
-        // In ADP (LAMMPS setfl), density contribution to atom i uses rho(r) of neighbor j's element type
-        int rho_base = type2 * nr;
-        int pair_base = get_pair_index(type1, type2, Nelements) * nr;
-        
-        // Calculate rho contribution (electron density)
-        double rho_val, rho_deriv;
-        interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d, 
-                       rho_base + ir, frac, dr, rho_val, rho_deriv);
-        rho += rho_val;
-        
-        // Calculate u and w values for dipole and quadruple terms.
-        // In the ADP setfl format, the tabulated u2r and w2r arrays already
-        // correspond to u(r) and w(r) directly (only the z2 array is scaled by r).
-        double u2r_val, u2r_deriv, w2r_val, w2r_deriv;
-        interpolate_adp(u_r_a, u_r_b, u_r_c, u_r_d,
-                       pair_base + ir, frac, dr, u2r_val, u2r_deriv);
-        interpolate_adp(w_r_a, w_r_b, w_r_c, w_r_d,
-                       pair_base + ir, frac, dr, w2r_val, w2r_deriv);
-        (void)u2r_deriv;
-        (void)w2r_deriv;
+  if (n1 >= N2) {
+    return;
+  }
 
-          // ADP setfl convention: u(r) and w(r) are stored directly
-          const double u_val = u2r_val;
-          const double w_val = w2r_val;
-          
-          // Dipole terms: mu_i += u(r)*del (del = x_i - x_j)
-          mu_x += u_val * delx;
-          mu_y += u_val * dely;
-          mu_z += u_val * delz;
-          // Quadruple tensor components (sign invariant to del sign for squares / symmetric products)
-          lambda_xx += w_val * delx * delx;
-          lambda_yy += w_val * dely * dely;
-          lambda_zz += w_val * delz * delz;
-          lambda_xy += w_val * delx * dely;
-          lambda_xz += w_val * delx * delz;
-          lambda_yz += w_val * dely * delz;
+  const int NN = g_NN[n1];
+  const int type1 = g_type[n1];
+  const double x1 = g_x[n1];
+  const double y1 = g_y[n1];
+  const double z1 = g_z[n1];
+  const int rho_base_type1 = type1 * nrho;
+
+  const double hx0 = box.cpu_h[0];
+  const double hx1 = box.cpu_h[1];
+  const double hx2 = box.cpu_h[2];
+  const double hy0 = box.cpu_h[3];
+  const double hy1 = box.cpu_h[4];
+  const double hy2 = box.cpu_h[5];
+  const double hz0 = box.cpu_h[6];
+  const double hz1 = box.cpu_h[7];
+  const double hz2 = box.cpu_h[8];
+
+  double rho = 0.0;
+  double mu_x = 0.0, mu_y = 0.0, mu_z = 0.0;
+  double lambda_xx = 0.0, lambda_yy = 0.0, lambda_zz = 0.0;
+  double lambda_xy = 0.0, lambda_xz = 0.0, lambda_yz = 0.0;
+
+  for (int i1 = 0; i1 < NN; ++i1) {
+    const int idx = i1 * N + n1;
+    const int n2 = g_NL[idx];
+    const int type2 = g_type[n2];
+
+    double delx = x1 - g_x[n2];
+    double dely = y1 - g_y[n2];
+    double delz = z1 - g_z[n2];
+
+    if (g_shift != nullptr) {
+      int sx, sy, sz;
+      const int code = g_shift[idx];
+      decode_neighbor_shift(code, sx, sy, sz);
+      if (code != 0) {
+        delx -= sx * hx0 + sy * hx1 + sz * hx2;
+        dely -= sx * hy0 + sy * hy1 + sz * hy2;
+        delz -= sx * hz0 + sy * hz1 + sz * hz2;
       }
+    } else {
+      apply_mic(box, delx, dely, delz);
     }
-    
-    // Calculate embedding energy F(rho) and its derivative
-    // Follow LAMMPS indexing/clamping exactly:
-    // p = rho*rdrho + 1; m = int(p); m = clamp(m, 1, nrho-1); p -= m; p = min(p,1)
-    int F_base = type1 * nrho;
-    double pp = rho / drho + 1.0;
-    int m = (int)pp;
+
+    const double r2 = delx * delx + dely * dely + delz * delz;
+    const double d12 = sqrt(r2);
+    if (d12 <= 1.0e-12 || d12 > rc) {
+      continue;
+    }
+
+    double pp = d12 * inv_dr + 1.0;
+    int m = static_cast<int>(pp);
     if (m < 1) m = 1;
-    if (m > nrho - 1) m = nrho - 1;
+    if (m > nr - 1) m = nr - 1;
     double frac = pp - m;
     if (frac > 1.0) frac = 1.0;
-    int irho = m - 1; // convert to 0-based interval index
-    double F = 0.0, Fp = 0.0;
-    interpolate_adp(F_rho_a, F_rho_b, F_rho_c, F_rho_d,
-                   F_base + irho, frac, drho, F, Fp);
-    
-    // Calculate ADP energy contributions following LAMMPS exactly
-    // LAMMPS pair_adp.cpp line 263-269:
-    // phi += 0.5*(mu[i][0]*mu[i][0]+mu[i][1]*mu[i][1]+mu[i][2]*mu[i][2]);
-    // phi += 0.5*(lambda[i][0]*lambda[i][0]+lambda[i][1]*lambda[i][1]+lambda[i][2]*lambda[i][2]);
-    // phi += 1.0*(lambda[i][3]*lambda[i][3]+lambda[i][4]*lambda[i][4]+lambda[i][5]*lambda[i][5]);
-    // phi -= 1.0/6.0*(lambda[i][0]+lambda[i][1]+lambda[i][2])*(lambda[i][0]+lambda[i][1]+lambda[i][2]);
-    
-    double mu_squared = mu_x * mu_x + mu_y * mu_y + mu_z * mu_z;
-    double lambda_diagonal = lambda_xx * lambda_xx + lambda_yy * lambda_yy + lambda_zz * lambda_zz;
-    double lambda_offdiag = lambda_xy * lambda_xy + lambda_xz * lambda_xz + lambda_yz * lambda_yz;
-    double nu = lambda_xx + lambda_yy + lambda_zz;
-    
-    // LAMMPS exact formulation:
-    double adp_energy = 0.5 * mu_squared + 0.5 * lambda_diagonal + 1.0 * lambda_offdiag - (nu * nu) / 6.0;
-    
-    g_pe[n1] += F + adp_energy;
-    if (g_dbg_F) g_dbg_F[n1] += F;
-    if (g_dbg_ADP) g_dbg_ADP[n1] += adp_energy;
-    g_Fp[n1] = Fp;
-    
-    // Debug: Print detailed values for first few atoms
-    if (n1 < 3) {
-      printf("Atom %d: type=%d, rho=%.6f, F=%.6f, adp_energy=%.6f, total_E=%.6f\n",
-             n1, type1, rho, F, adp_energy, F + adp_energy);
-      printf("  mu: %.6f %.6f %.6f, mu_squared=%.6f\n", mu_x, mu_y, mu_z, mu_squared);
-      printf("  lambda_diag: %.6f %.6f %.6f, lambda_offdiag: %.6f %.6f %.6f\n",
-             lambda_xx, lambda_yy, lambda_zz, lambda_xy, lambda_xz, lambda_yz);
-    }
-    
-    // Store dipole and quadruple terms - LAMMPS ordering: [xx, yy, zz, yz, xz, xy]
-    g_mu[n1] = mu_x;
-    g_mu[n1 + N] = mu_y;
-    g_mu[n1 + 2 * N] = mu_z;
-    
-    g_lambda[n1] = lambda_xx;          // index 0: xx
-    g_lambda[n1 + N] = lambda_yy;      // index 1: yy  
-    g_lambda[n1 + 2 * N] = lambda_zz;  // index 2: zz
-    g_lambda[n1 + 3 * N] = lambda_yz;  // index 3: yz
-    g_lambda[n1 + 4 * N] = lambda_xz;  // index 4: xz
-    g_lambda[n1 + 5 * N] = lambda_xy;  // index 5: xy
+    const int ir = m - 1;
+
+    const int rho_base = type2 * nr;
+    const int pair_index = pair_index_map[type1 * Nelements + type2];
+    const int pair_base = pair_index * nr;
+
+    double rho_val = 0.0, rho_deriv_unused = 0.0;
+    interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d,
+                    rho_base + ir, frac, dr, rho_val, rho_deriv_unused);
+    rho += rho_val;
+
+    double u_val = 0.0, u_deriv_unused = 0.0;
+    interpolate_adp(u_r_a, u_r_b, u_r_c, u_r_d,
+                    pair_base + ir, frac, dr, u_val, u_deriv_unused);
+    double w_val = 0.0, w_deriv_unused = 0.0;
+    interpolate_adp(w_r_a, w_r_b, w_r_c, w_r_d,
+                    pair_base + ir, frac, dr, w_val, w_deriv_unused);
+    (void)u_deriv_unused;
+    (void)w_deriv_unused;
+
+    mu_x += u_val * delx;
+    mu_y += u_val * dely;
+    mu_z += u_val * delz;
+
+    lambda_xx += w_val * delx * delx;
+    lambda_yy += w_val * dely * dely;
+    lambda_zz += w_val * delz * delz;
+    lambda_xy += w_val * delx * dely;
+    lambda_xz += w_val * delx * delz;
+    lambda_yz += w_val * dely * delz;
   }
+
+  double pp = rho * inv_drho + 1.0;
+  int m = static_cast<int>(pp);
+  if (m < 1) m = 1;
+  if (m > nrho - 1) m = nrho - 1;
+  double frac = pp - m;
+  if (frac > 1.0) frac = 1.0;
+  const int irho = m - 1;
+  double F = 0.0;
+  double Fp = 0.0;
+  interpolate_adp(F_rho_a, F_rho_b, F_rho_c, F_rho_d,
+                  rho_base_type1 + irho, frac, drho, F, Fp);
+
+  const double mu_squared = mu_x * mu_x + mu_y * mu_y + mu_z * mu_z;
+  const double lambda_diagonal = lambda_xx * lambda_xx + lambda_yy * lambda_yy + lambda_zz * lambda_zz;
+  const double lambda_offdiag = lambda_xy * lambda_xy + lambda_xz * lambda_xz + lambda_yz * lambda_yz;
+  const double nu = lambda_xx + lambda_yy + lambda_zz;
+  const double adp_energy = 0.5 * mu_squared + 0.5 * lambda_diagonal + lambda_offdiag - (nu * nu) / 6.0;
+
+  g_pe[n1] += F + adp_energy;
+  if (g_dbg_F) g_dbg_F[n1] += F;
+  if (g_dbg_ADP) g_dbg_ADP[n1] += adp_energy;
+  g_Fp[n1] = Fp;
+
+#if ADP_DEBUG_PRINT
+  if (n1 < 3) {
+    printf("Atom %d: type=%d, rho=%.6f, F=%.6f, adp_energy=%.6f, total_E=%.6f\n",
+           n1, type1, rho, F, adp_energy, F + adp_energy);
+    printf("  mu: %.6f %.6f %.6f, mu_squared=%.6f\n", mu_x, mu_y, mu_z, mu_squared);
+    printf("  lambda_diag: %.6f %.6f %.6f, lambda_offdiag: %.6f %.6f %.6f\n",
+           lambda_xx, lambda_yy, lambda_zz, lambda_xy, lambda_xz, lambda_yz);
+  }
+#endif
+
+  g_mu[n1] = mu_x;
+  g_mu[n1 + N] = mu_y;
+  g_mu[n1 + 2 * N] = mu_z;
+
+  g_lambda[n1] = lambda_xx;
+  g_lambda[n1 + N] = lambda_yy;
+  g_lambda[n1 + 2 * N] = lambda_zz;
+  g_lambda[n1 + 3 * N] = lambda_yz;
+  g_lambda[n1 + 4 * N] = lambda_xz;
+  g_lambda[n1 + 5 * N] = lambda_xy;
 }
 
 // Calculate forces
@@ -1115,254 +1115,249 @@ static __global__ void find_force_adp_step2(
   const int Nelements,
   const int nr,
   const double dr,
+  const double inv_dr,
   const double rc,
   const Box box,
-  const int* g_NN,
-  const int* g_NL,
-  const int* g_shift,
-  const int* g_type,
+  const int* __restrict__ g_NN,
+  const int* __restrict__ g_NL,
+  const int* __restrict__ g_shift,
+  const int* __restrict__ g_type,
+  const int* __restrict__ pair_index_map,
   const double* __restrict__ g_Fp,
   const double* __restrict__ g_mu,
   const double* __restrict__ g_lambda,
   const double* __restrict__ g_x,
   const double* __restrict__ g_y,
   const double* __restrict__ g_z,
-  const double* rho_r_a,
-  const double* rho_r_b,
-  const double* rho_r_c,
-  const double* rho_r_d,
-  const double* phi_r_a,
-  const double* phi_r_b,
-  const double* phi_r_c,
-  const double* phi_r_d,
-  const double* u_r_a,
-  const double* u_r_b,
-  const double* u_r_c,
-  const double* u_r_d,
-  const double* w_r_a,
-  const double* w_r_b,
-  const double* w_r_c,
-  const double* w_r_d,
-  double* g_fx,
-  double* g_fy,
-  double* g_fz,
-  double* g_virial,
-  double* g_pe,
-  double* g_dbg_PAIR)
+  const double* __restrict__ rho_r_a,
+  const double* __restrict__ rho_r_b,
+  const double* __restrict__ rho_r_c,
+  const double* __restrict__ rho_r_d,
+  const double* __restrict__ phi_r_a,
+  const double* __restrict__ phi_r_b,
+  const double* __restrict__ phi_r_c,
+  const double* __restrict__ phi_r_d,
+  const double* __restrict__ u_r_a,
+  const double* __restrict__ u_r_b,
+  const double* __restrict__ u_r_c,
+  const double* __restrict__ u_r_d,
+  const double* __restrict__ w_r_a,
+  const double* __restrict__ w_r_b,
+  const double* __restrict__ w_r_c,
+  const double* __restrict__ w_r_d,
+  double* __restrict__ g_fx,
+  double* __restrict__ g_fy,
+  double* __restrict__ g_fz,
+  double* __restrict__ g_virial,
+  double* __restrict__ g_pe,
+  double* __restrict__ g_dbg_PAIR)
 {
   int n1 = blockIdx.x * blockDim.x + threadIdx.x + N1;
-  
-  if (n1 < N2) {
-    int NN = g_NN[n1];
-    int type1 = g_type[n1];
-    
-    double x1 = g_x[n1];
-    double y1 = g_y[n1];
-    double z1 = g_z[n1];
-    
-  double fx = 0.0, fy = 0.0, fz = 0.0;
+  if (n1 >= N2) {
+    return;
+  }
+
+  const int NN = g_NN[n1];
+  const int type1 = g_type[n1];
+  const double x1 = g_x[n1];
+  const double y1 = g_y[n1];
+  const double z1 = g_z[n1];
+  const int rho1_base = type1 * nr;
+  const double Fp1 = g_Fp[n1];
+
+  const double hx0 = box.cpu_h[0];
+  const double hx1 = box.cpu_h[1];
+  const double hx2 = box.cpu_h[2];
+  const double hy0 = box.cpu_h[3];
+  const double hy1 = box.cpu_h[4];
+  const double hy2 = box.cpu_h[5];
+  const double hz0 = box.cpu_h[6];
+  const double hz1 = box.cpu_h[7];
+  const double hz2 = box.cpu_h[8];
+
+  const double* __restrict__ mu_x = g_mu;
+  const double* __restrict__ mu_y = g_mu + N;
+  const double* __restrict__ mu_z = g_mu + 2 * N;
+  const double* __restrict__ lambda_xx = g_lambda;
+  const double* __restrict__ lambda_yy = g_lambda + N;
+  const double* __restrict__ lambda_zz = g_lambda + 2 * N;
+  const double* __restrict__ lambda_yz = g_lambda + 3 * N;
+  const double* __restrict__ lambda_xz = g_lambda + 4 * N;
+  const double* __restrict__ lambda_xy = g_lambda + 5 * N;
+
+  const double mu1_x = mu_x[n1];
+  const double mu1_y = mu_y[n1];
+  const double mu1_z = mu_z[n1];
+  const double lambda1_xx = lambda_xx[n1];
+  const double lambda1_yy = lambda_yy[n1];
+  const double lambda1_zz = lambda_zz[n1];
+  const double lambda1_yz = lambda_yz[n1];
+  const double lambda1_xz = lambda_xz[n1];
+  const double lambda1_xy = lambda_xy[n1];
+
+  double fx = 0.0;
+  double fy = 0.0;
+  double fz = 0.0;
   double pe = 0.0;
-  // Virial tensor components (consistent ordering with other potentials):
-  // store: xx, yy, zz, xy, xz, yz, yx, zx, zy
   double s_sxx = 0.0, s_syy = 0.0, s_szz = 0.0;
   double s_sxy = 0.0, s_sxz = 0.0, s_syz = 0.0;
   double s_syx = 0.0, s_szx = 0.0, s_szy = 0.0;
-    
-    // Get dipole and quadruple terms for atom n1 - LAMMPS ordering
-    double mu1_x = g_mu[n1];
-    double mu1_y = g_mu[n1 + N];
-    double mu1_z = g_mu[n1 + 2 * N];
-    
-    double lambda1_xx = g_lambda[n1];          // index 0: xx
-    double lambda1_yy = g_lambda[n1 + N];      // index 1: yy
-    double lambda1_zz = g_lambda[n1 + 2 * N];  // index 2: zz
-    double lambda1_yz = g_lambda[n1 + 3 * N];  // index 3: yz
-    double lambda1_xz = g_lambda[n1 + 4 * N];  // index 4: xz
-    double lambda1_xy = g_lambda[n1 + 5 * N];  // index 5: xy
-    
-    // Loop over neighbors to calculate forces
-    for (int i1 = 0; i1 < NN; ++i1) {
-      int n2 = g_NL[n1 + N * i1];
-      int type2 = g_type[n2];
-      
-  double delx = x1 - g_x[n2];
-  double dely = y1 - g_y[n2];
-  double delz = z1 - g_z[n2];
-  if (g_shift != nullptr) {
-    int sx, sy, sz;
-    const int code = g_shift[n1 + N * i1];
-    decode_neighbor_shift(code, sx, sy, sz);
-    if (code != 0) {
-      const double shift_x = sx * box.cpu_h[0] + sy * box.cpu_h[1] + sz * box.cpu_h[2];
-      const double shift_y = sx * box.cpu_h[3] + sy * box.cpu_h[4] + sz * box.cpu_h[5];
-      const double shift_z = sx * box.cpu_h[6] + sy * box.cpu_h[7] + sz * box.cpu_h[8];
-      delx -= shift_x;
-      dely -= shift_y;
-      delz -= shift_z;
+
+  for (int i1 = 0; i1 < NN; ++i1) {
+    const int idx = i1 * N + n1;
+    const int n2 = g_NL[idx];
+    const int type2 = g_type[n2];
+
+    double delx = x1 - g_x[n2];
+    double dely = y1 - g_y[n2];
+    double delz = z1 - g_z[n2];
+
+    if (g_shift != nullptr) {
+      int sx, sy, sz;
+      const int code = g_shift[idx];
+      decode_neighbor_shift(code, sx, sy, sz);
+      if (code != 0) {
+        delx -= sx * hx0 + sy * hx1 + sz * hx2;
+        dely -= sx * hy0 + sy * hy1 + sz * hy2;
+        delz -= sx * hz0 + sy * hz1 + sz * hz2;
+      }
+    } else {
+      apply_mic(box, delx, dely, delz);
     }
-  } else {
-    apply_mic(box, delx, dely, delz);
-  }
-  double d12 = sqrt(delx * delx + dely * dely + delz * delz);
-      
-      if (d12 < rc && d12 > 1e-12) {
-        double d12_inv = 1.0 / d12;
-        
-        double pp = d12 / dr + 1.0;
-        int m = (int)pp; if (m < 1) m = 1; if (m > nr - 1) m = nr - 1;
-        double frac = pp - m; if (frac > 1.0) frac = 1.0;
-        int ir = m - 1;
-        
-        int rho1_base = type1 * nr;
-        int rho2_base = type2 * nr;
-        int pair_base = get_pair_index(type1, type2, Nelements) * nr;
-        
-        // Get interpolated values and derivatives
-        double rho1_val, rho1_deriv, rho2_val, rho2_deriv;
-  double phi_rphi_val, phi_rphi_deriv, u2r_val, u2r_deriv, w2r_val, w2r_deriv;
-        
-        // rho1_*: density at atom i due to j (uses rho of type j)
-        interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d,
-                       rho2_base + ir, frac, dr, rho1_val, rho1_deriv);
-        // rho2_*: density at atom j due to i (uses rho of type i)
-        interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d,
-                       rho1_base + ir, frac, dr, rho2_val, rho2_deriv);
-        interpolate_adp(phi_r_a, phi_r_b, phi_r_c, phi_r_d,
-                       pair_base + ir, frac, dr, phi_rphi_val, phi_rphi_deriv);
-        interpolate_adp(u_r_a, u_r_b, u_r_c, u_r_d,
-                       pair_base + ir, frac, dr, u2r_val, u2r_deriv);
-        interpolate_adp(w_r_a, w_r_b, w_r_c, w_r_d,
-                       pair_base + ir, frac, dr, w2r_val, w2r_deriv);
-          // Convert r*phi(r) back to phi(r) and calculate z2r' - z2r/r which equals r*phi'(r)
-          // phi_rphi_val is z2r = r*phi(r) from the table
-          // phi_rphi_deriv is dz2r/dr from interpolation
-          double rinv = 1.0 / d12;
-          double phi_val = phi_rphi_val * rinv;  // phi(r) = z2r / r
-          
-          // ADP setfl stores u(r) and w(r) directly
-          double u_val   = u2r_val;
-          double u_deriv = u2r_deriv;
-          double w_val   = w2r_val;
-          double w_deriv = w2r_deriv;
-          
-          double mu2_x = g_mu[n2];
-          double mu2_y = g_mu[n2 + N];
-          double mu2_z = g_mu[n2 + 2 * N];
-          
-          double lambda2_xx = g_lambda[n2];          // index 0: xx
-          double lambda2_yy = g_lambda[n2 + N];      // index 1: yy
-          double lambda2_zz = g_lambda[n2 + 2 * N];  // index 2: zz
-          double lambda2_yz = g_lambda[n2 + 3 * N];  // index 3: yz
-          double lambda2_xz = g_lambda[n2 + 4 * N];  // index 4: xz
-          double lambda2_xy = g_lambda[n2 + 5 * N];  // index 5: xy
-          
-          // Calculate force components
-          // 1+2. Central force contribution (pair + embedding density) in EAM/ADP form
-          // phi'(r) = d(r*phi)/dr / r - (r*phi)/r^2
-          double phi_deriv = phi_rphi_deriv * rinv - phi_rphi_val * (rinv * rinv);
-          // Embedding density force: psip = Fp[i]*rhojp + Fp[j]*rhoip
-          double psip = g_Fp[n1] * rho1_deriv + g_Fp[n2] * rho2_deriv;
-          double scalar = -(phi_deriv + psip); // multiply by (del/r) below
-          
-          // 3. Calculate ADP force components following LAMMPS exactly
-          // Based on LAMMPS pair_adp.cpp formulation
-          
-          // LAMMPS uses these exact variable definitions:
-          double delmux = mu1_x - mu2_x;
-          double delmuy = mu1_y - mu2_y; 
-          double delmuz = mu1_z - mu2_z;
-          double trdelmu = delmux * delx + delmuy * dely + delmuz * delz;
-          
-          double sumlamxx = lambda1_xx + lambda2_xx;
-          double sumlamyy = lambda1_yy + lambda2_yy;
-          double sumlamzz = lambda1_zz + lambda2_zz;
-          double sumlamyz = lambda1_yz + lambda2_yz;
-          double sumlamxz = lambda1_xz + lambda2_xz;
-          double sumlamxy = lambda1_xy + lambda2_xy;
-          
-          double tradellam = sumlamxx * delx * delx + sumlamyy * dely * dely + 
+
+    const double r2 = delx * delx + dely * dely + delz * delz;
+    const double d12 = sqrt(r2);
+    if (d12 <= 1.0e-12 || d12 > rc) {
+      continue;
+    }
+
+    const double d12_inv = 1.0 / d12;
+    double pp = d12 * inv_dr + 1.0;
+    int m = static_cast<int>(pp);
+    if (m < 1) m = 1;
+    if (m > nr - 1) m = nr - 1;
+    double frac = pp - m;
+    if (frac > 1.0) frac = 1.0;
+    const int ir = m - 1;
+
+    const int rho2_base = type2 * nr;
+    const int pair_index = pair_index_map[type1 * Nelements + type2];
+    const int pair_base = pair_index * nr;
+
+    double rho1_unused = 0.0, rho1_deriv = 0.0;
+    double rho2_unused = 0.0, rho2_deriv = 0.0;
+    double phi_rphi_val = 0.0, phi_rphi_deriv = 0.0;
+    double u_val = 0.0, u_deriv = 0.0;
+    double w_val = 0.0, w_deriv = 0.0;
+
+    interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d,
+                    rho2_base + ir, frac, dr, rho1_unused, rho1_deriv);
+    interpolate_adp(rho_r_a, rho_r_b, rho_r_c, rho_r_d,
+                    rho1_base + ir, frac, dr, rho2_unused, rho2_deriv);
+    interpolate_adp(phi_r_a, phi_r_b, phi_r_c, phi_r_d,
+                    pair_base + ir, frac, dr, phi_rphi_val, phi_rphi_deriv);
+    interpolate_adp(u_r_a, u_r_b, u_r_c, u_r_d,
+                    pair_base + ir, frac, dr, u_val, u_deriv);
+    interpolate_adp(w_r_a, w_r_b, w_r_c, w_r_d,
+                    pair_base + ir, frac, dr, w_val, w_deriv);
+
+    const double phi_val = phi_rphi_val * d12_inv;
+    const double phi_deriv = phi_rphi_deriv * d12_inv - phi_rphi_val * (d12_inv * d12_inv);
+    const double Fp2 = g_Fp[n2];
+    const double psip = Fp1 * rho1_deriv + Fp2 * rho2_deriv;
+    const double scalar = -(phi_deriv + psip);
+
+    const double mu2_x = mu_x[n2];
+    const double mu2_y = mu_y[n2];
+    const double mu2_z = mu_z[n2];
+    const double lambda2_xx = lambda_xx[n2];
+    const double lambda2_yy = lambda_yy[n2];
+    const double lambda2_zz = lambda_zz[n2];
+    const double lambda2_yz = lambda_yz[n2];
+    const double lambda2_xz = lambda_xz[n2];
+    const double lambda2_xy = lambda_xy[n2];
+
+    const double delmux = mu1_x - mu2_x;
+    const double delmuy = mu1_y - mu2_y;
+    const double delmuz = mu1_z - mu2_z;
+    const double trdelmu = delmux * delx + delmuy * dely + delmuz * delz;
+
+    const double sumlamxx = lambda1_xx + lambda2_xx;
+    const double sumlamyy = lambda1_yy + lambda2_yy;
+    const double sumlamzz = lambda1_zz + lambda2_zz;
+    const double sumlamyz = lambda1_yz + lambda2_yz;
+    const double sumlamxz = lambda1_xz + lambda2_xz;
+    const double sumlamxy = lambda1_xy + lambda2_xy;
+
+    const double tradellam = sumlamxx * delx * delx + sumlamyy * dely * dely +
                             sumlamzz * delz * delz + 2.0 * sumlamxy * delx * dely +
                             2.0 * sumlamxz * delx * delz + 2.0 * sumlamyz * dely * delz;
-          double nu = sumlamxx + sumlamyy + sumlamzz;
-          
-          // LAMMPS ADP force formulation (with del = x_i - x_j)
-          double adpx = delmux * u_val + trdelmu * u_deriv * delx * d12_inv +
-                       2.0 * w_val * (sumlamxx * delx + sumlamxy * dely + sumlamxz * delz) +
-                       w_deriv * delx * d12_inv * tradellam - 
-                       (1.0/3.0) * nu * (w_deriv * d12 + 2.0 * w_val) * delx;
-          double adpy = delmuy * u_val + trdelmu * u_deriv * dely * d12_inv +
-                       2.0 * w_val * (sumlamxy * delx + sumlamyy * dely + sumlamyz * delz) +
-                       w_deriv * dely * d12_inv * tradellam -
-                       (1.0/3.0) * nu * (w_deriv * d12 + 2.0 * w_val) * dely;
-          double adpz = delmuz * u_val + trdelmu * u_deriv * delz * d12_inv +
-                       2.0 * w_val * (sumlamxz * delx + sumlamyz * dely + sumlamzz * delz) +
-                       w_deriv * delz * d12_inv * tradellam -
-                       (1.0/3.0) * nu * (w_deriv * d12 + 2.0 * w_val) * delz;
-          
-          // LAMMPS applies negative sign to ADP forces (line 372)
-          // adpx*=-1.0; adpy*=-1.0; adpz*=-1.0;
-          adpx *= -1.0;
-          adpy *= -1.0;
-          adpz *= -1.0;
-          
-          // Total force components: central (scalar * del/r) + ADP
-          double force_total_x = scalar * delx * d12_inv + adpx;
-          double force_total_y = scalar * dely * d12_inv + adpy;
-          double force_total_z = scalar * delz * d12_inv + adpz;
-          
-          fx += force_total_x;
-          fy += force_total_y;
-          fz += force_total_z;
-          
-          // Add pair potential energy with 0.5 factor to avoid double counting (as in EAM)
-          pe += 0.5 * phi_val;
-          
-          // Debug: Print pair energy for first atom
-          if (n1 == 0) {
-            printf("  Pair %d-%d: r=%.4f, phi=%.6f, pair_E=%.6f\n",
-                   n1, n2, d12, phi_val, 0.5 * phi_val);
-          }
+    const double nu = sumlamxx + sumlamyy + sumlamzz;
+    const double w_scale = w_deriv * d12 + 2.0 * w_val;
 
-          // Per-atom virial following LAMMPS ev_tally_xyz convention:
-          // v = del \otimes f, where del = x_i - x_j (consistent with force calculation)
-          const double v0 = delx * force_total_x;  // xx component
-          const double v1 = dely * force_total_y;  // yy component  
-          const double v2 = delz * force_total_z;  // zz component
-          const double v3 = delx * force_total_y;  // xy component
-          const double v4 = delx * force_total_z;  // xz component
-          const double v5 = dely * force_total_z;  // yz component
-          
-          // GPUMD uses bidirectional neighbor lists (each pair appears in both atoms' lists)
-          // Therefore, we need 0.5 factor to avoid double counting in stress calculation
-          const double half = 0.5;
-          s_sxx += half * v0;
-          s_syy += half * v1;
-          s_szz += half * v2;
-          s_sxy += half * v3;
-          s_sxz += half * v4;
-          s_syz += half * v5; 
-          s_syx += half * v3; // yx mirrors xy
-          s_szx += half * v4; // zx mirrors xz
-          s_szy += half * v5; // zy mirrors yz
-        }
-      }
-    
-    g_fx[n1] += fx;
-    g_fy[n1] += fy;
-    g_fz[n1] += fz;
-  // Save virial tensor components to global array (consistent with EAM/NEP convention)
-  g_virial[n1 + 0 * N] += s_sxx; // xx
-  g_virial[n1 + 1 * N] += s_syy; // yy
-  g_virial[n1 + 2 * N] += s_szz; // zz
-  g_virial[n1 + 3 * N] += s_sxy; // xy
-  g_virial[n1 + 4 * N] += s_sxz; // xz
-  g_virial[n1 + 5 * N] += s_syz; // yz
-  g_virial[n1 + 6 * N] += s_syx; // yx
-  g_virial[n1 + 7 * N] += s_szx; // zx
-  g_virial[n1 + 8 * N] += s_szy; // zy
-    g_pe[n1] += pe;
-    if (g_dbg_PAIR) g_dbg_PAIR[n1] += pe;
+    double adpx = delmux * u_val + trdelmu * u_deriv * delx * d12_inv +
+                  2.0 * w_val * (sumlamxx * delx + sumlamxy * dely + sumlamxz * delz) +
+                  w_deriv * delx * d12_inv * tradellam - (1.0 / 3.0) * nu * w_scale * delx;
+    double adpy = delmuy * u_val + trdelmu * u_deriv * dely * d12_inv +
+                  2.0 * w_val * (sumlamxy * delx + sumlamyy * dely + sumlamyz * delz) +
+                  w_deriv * dely * d12_inv * tradellam - (1.0 / 3.0) * nu * w_scale * dely;
+    double adpz = delmuz * u_val + trdelmu * u_deriv * delz * d12_inv +
+                  2.0 * w_val * (sumlamxz * delx + sumlamyz * dely + sumlamzz * delz) +
+                  w_deriv * delz * d12_inv * tradellam - (1.0 / 3.0) * nu * w_scale * delz;
+
+    adpx *= -1.0;
+    adpy *= -1.0;
+    adpz *= -1.0;
+
+    const double force_total_x = scalar * delx * d12_inv + adpx;
+    const double force_total_y = scalar * dely * d12_inv + adpy;
+    const double force_total_z = scalar * delz * d12_inv + adpz;
+
+    fx += force_total_x;
+    fy += force_total_y;
+    fz += force_total_z;
+    pe += 0.5 * phi_val;
+
+#if ADP_DEBUG_PRINT
+    if (n1 == 0) {
+      printf("  Pair %d-%d: r=%.4f, phi=%.6f, pair_E=%.6f\n",
+             n1, n2, d12, phi_val, 0.5 * phi_val);
+    }
+#endif
+
+    const double v0 = delx * force_total_x;
+    const double v1 = dely * force_total_y;
+    const double v2 = delz * force_total_z;
+    const double v3 = delx * force_total_y;
+    const double v4 = delx * force_total_z;
+    const double v5 = dely * force_total_z;
+
+    const double half = 0.5;
+    s_sxx += half * v0;
+    s_syy += half * v1;
+    s_szz += half * v2;
+    s_sxy += half * v3;
+    s_sxz += half * v4;
+    s_syz += half * v5;
+    s_syx += half * v3;
+    s_szx += half * v4;
+    s_szy += half * v5;
   }
+
+  g_fx[n1] += fx;
+  g_fy[n1] += fy;
+  g_fz[n1] += fz;
+  g_virial[n1 + 0 * N] += s_sxx;
+  g_virial[n1 + 1 * N] += s_syy;
+  g_virial[n1 + 2 * N] += s_szz;
+  g_virial[n1 + 3 * N] += s_sxy;
+  g_virial[n1 + 4 * N] += s_sxz;
+  g_virial[n1 + 5 * N] += s_syz;
+  g_virial[n1 + 6 * N] += s_syx;
+  g_virial[n1 + 7 * N] += s_szx;
+  g_virial[n1 + 8 * N] += s_szy;
+  g_pe[n1] += pe;
+  if (g_dbg_PAIR) g_dbg_PAIR[n1] += pe;
 }
 
 void ADP::compute(
@@ -1467,14 +1462,17 @@ void ADP::compute(
     adp_data.Nelements,
     adp_data.nrho,
     adp_data.drho,
+    adp_data.inv_drho,
     adp_data.nr,
     adp_data.dr,
+    adp_data.inv_dr,
     adp_data.rc,
     box,
     adp_data.NN.data(),
-  adp_data.NL.data(),
-  neighbor_shift_ptr,
+    adp_data.NL.data(),
+    neighbor_shift_ptr,
     type_ptr,
+    adp_data.pair_index_map_g.data(),
     position_per_atom.data(),
     position_per_atom.data() + number_of_atoms,
     position_per_atom.data() + number_of_atoms * 2,
@@ -1510,12 +1508,14 @@ void ADP::compute(
     adp_data.Nelements,
     adp_data.nr,
     adp_data.dr,
+    adp_data.inv_dr,
     adp_data.rc,
     box,
     adp_data.NN.data(),
-  adp_data.NL.data(),
-  neighbor_shift_ptr,
+    adp_data.NL.data(),
+    neighbor_shift_ptr,
     type_ptr,
+    adp_data.pair_index_map_g.data(),
     adp_data.Fp.data(),
     adp_data.mu.data(),
     adp_data.lambda.data(),

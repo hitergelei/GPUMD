@@ -30,11 +30,12 @@ struct ADP_Data {
   GPU_Vector<double> Fp;          // derivative of embedding function F'(rho)
   GPU_Vector<double> mu;          // dipole distortion terms (3 components per atom)
   GPU_Vector<double> lambda;      // quadruple distortion terms (6 components per atom: xx,yy,zz,yz,xz,xy)
-  
+
   // Element mapping for multi-element systems
   GPU_Vector<int> mapped_type;    // Type array mapped from user types to ADP file element indices
   GPU_Vector<int> element_mapping_gpu;  // Element mapping array on GPU
-  
+  GPU_Vector<int> pair_index_map_g;      // Lookup table for pair indices (size Nelements*Nelements)
+
   // Tabulated functions from ADP file
   int Nelements;
   std::vector<std::string> elements_list;
@@ -45,7 +46,9 @@ struct ADP_Data {
   int nr;
   double dr;
   double rc;
-  
+  double inv_drho = 0.0;
+  double inv_dr = 0.0;
+
   // EAM-like functions
   std::vector<double> F_rho;      // embedding function F(rho)
   std::vector<double> rho_r;      // electron density function rho(r)

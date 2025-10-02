@@ -1,0 +1,408 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ensembles &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Heat current" href="heat_current.html" />
+    <link rel="prev" title="Forces and stresses" href="forces_and_stresses.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Theoretical background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="forces_and_stresses.html">Forces and stresses</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Ensembles</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#nve-ensemble">NVE ensemble</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nvt-ensemble">NVT ensemble</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#index-3">Berendsen thermostat</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#index-4">Nose-Hoover chain thermostat</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#index-5">Langevin thermostat</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bussi-donadio-parrinello-thermostat">Bussi-Donadio-Parrinello thermostat</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#npt-ensemble">NPT ensemble</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#index-8">Berendsen barostat</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stochastic-cell-rescaling-barostat">Stochastic cell rescaling barostat</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="heat_current.html">Heat current</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heat_transport.html">Heat transport</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../potentials/index.html">Interatomic potentials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../gpumd/index.html">gpumd executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nep/index.html">nep executable</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="index-0">
+<span id="ensembles"></span><span id="id1"></span><h1>Ensembles<a class="headerlink" href="#index-0" title="Link to this heading"></a></h1>
+<p>The aim of the time evolution in <a class="reference internal" href="../glossary.html#term-MD"><span class="xref std std-term">MD</span></a> simulations is to find the phase trajectory</p>
+<div class="math notranslate nohighlight">
+\[\{ \boldsymbol{r}_i(t_1), ~\boldsymbol{v}_{i}(t_1)\}_{i=1}^N,~
+\{ \boldsymbol{r}_i(t_2), ~\boldsymbol{v}_{i}(t_2)\}_{i=1}^N,~
+\cdots\]</div>
+<p>starting from the initial phase point</p>
+<div class="math notranslate nohighlight">
+\[\{ \boldsymbol{r}_i(t_0), ~\boldsymbol{v}_{i}(t_0)\}_{i=1}^N.\]</div>
+<p>The time interval between two time points <span class="math notranslate nohighlight">\(\Delta t=t_1-t_0=t_2-t_1=\cdots\)</span> is called the time step.</p>
+<p>The algorithm for integrating by one step depends on the ensemble type and other external conditions.
+There are many ensembles used in MD simulations, but we only consider the following 3 in the current version:</p>
+<section id="nve-ensemble">
+<span id="index-1"></span><h2>NVE ensemble<a class="headerlink" href="#nve-ensemble" title="Link to this heading"></a></h2>
+<p>The NVE ensmeble is also called the micro-canonical ensemble.
+We use the velocity-Verlet integration method with the following equations:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\boldsymbol{v}_i(t_{m+1}) \approx \boldsymbol{v}_i(t_{m}) +
+\frac{\boldsymbol{F}_i(t_m)+\boldsymbol{F}_i(t_{m+1})}{2m_i}\Delta t
+\\
+\boldsymbol{r}_i(t_{m+1}) \approx \boldsymbol{r}_i(t_{m}) +
+\boldsymbol{v}_i(t_m) \Delta t
++ \frac{1}{2} \frac{\boldsymbol{F}_i(t_m)}{m_i} (\Delta t)^2.\end{split}\]</div>
+<p>Here,
+<span class="math notranslate nohighlight">\(\boldsymbol{v}_i(t_{m})\)</span> is the velocity vector of particle <span class="math notranslate nohighlight">\(i\)</span> at time <span class="math notranslate nohighlight">\(t_{m}\)</span>.
+<span class="math notranslate nohighlight">\(\boldsymbol{r}_i(t_{m})\)</span> is the position vector of particle <span class="math notranslate nohighlight">\(i\)</span> at time <span class="math notranslate nohighlight">\(t_{m}\)</span>.
+<span class="math notranslate nohighlight">\(\boldsymbol{F}_i(t_{m})\)</span> is the force vector of particle <span class="math notranslate nohighlight">\(i\)</span> at time <span class="math notranslate nohighlight">\(t_{m}\)</span>.
+<span class="math notranslate nohighlight">\(m_i\)</span> is the mass of particle <span class="math notranslate nohighlight">\(i\)</span> and
+<span class="math notranslate nohighlight">\(\Delta t\)</span> is the time step for integration.</p>
+</section>
+<section id="nvt-ensemble">
+<span id="index-2"></span><h2>NVT ensemble<a class="headerlink" href="#nvt-ensemble" title="Link to this heading"></a></h2>
+<p>The NVT ensemble is also called the canonical ensemble.
+We have implemented several thermostats for the NVT ensemble.</p>
+<section id="index-3">
+<span id="berendsen-thermostat"></span><span id="id2"></span><h3>Berendsen thermostat<a class="headerlink" href="#index-3" title="Link to this heading"></a></h3>
+<p>The velocities are scaled in the Berendsen thermostat <a class="reference internal" href="../bibliography.html#berendsen1984" id="id3"><span>[Berendsen1984]</span></a> as follows:</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{v}_i^{\text{scaled}}
+= \boldsymbol{v}_i
+\sqrt{1 + \frac{\Delta t}{\tau_T} \left(\frac{T_0}{T} - 1\right)}.\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(\tau_T\)</span> is the coupling time (relaxation time) parameter, <span class="math notranslate nohighlight">\(T_0\)</span> is the target temperature, and <span class="math notranslate nohighlight">\(T\)</span> is the instant temperature calculated from the current velocities.
+We require that <span class="math notranslate nohighlight">\(\tau_T/\Delta t \geq 1\)</span>.</p>
+<p>When <span class="math notranslate nohighlight">\(\tau_T/\Delta t = 1\)</span>, the above formula reduces to the simple velocity-scaling formula:</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{v}_i^{\text{scaled}} = \boldsymbol{v}_i \sqrt{\frac{T_0}{T}}.\]</div>
+<p>A larger value of <span class="math notranslate nohighlight">\(\tau_T/\Delta t\)</span> represents a weaker coupling between the system and the thermostat.
+We recommend a value of <span class="math notranslate nohighlight">\(\tau_T/\Delta t \approx 100\)</span>.
+The above re-scaling is applied at each time step after the velocity-Verlet integration.
+This thermostat is usually used for reaching equilibrium and is <em>not recommended</em> for sampling the canonical ensemble.</p>
+</section>
+<section id="index-4">
+<span id="nose-hoover-chain-thermostat"></span><span id="id4"></span><h3>Nose-Hoover chain thermostat<a class="headerlink" href="#index-4" title="Link to this heading"></a></h3>
+<p>In the Nose-Hoover chain (<a class="reference internal" href="../glossary.html#term-NHC"><span class="xref std std-term">NHC</span></a>) method <a class="reference internal" href="../bibliography.html#tuckerman2010" id="id5"><span>[Tuckerman2010]</span></a>, the equations of motion for the particles in the thermostatted region are (those for the thermostat variables are not presented):</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\frac{d \boldsymbol{r}_i}{dt} = \frac{\boldsymbol{p}_i}{m_i} \\
+\frac{d \boldsymbol{p}_i}{dt} = \boldsymbol{F}_i - \frac{\pi_0}{Q_0} \boldsymbol{p}_i.\end{split}\]</div>
+<p>Here,
+<span class="math notranslate nohighlight">\(\boldsymbol{r}_i\)</span> is the position of atom <span class="math notranslate nohighlight">\(i\)</span>.
+<span class="math notranslate nohighlight">\(\boldsymbol{p}_i\)</span> is the momentum of atom <span class="math notranslate nohighlight">\(i\)</span>.
+<span class="math notranslate nohighlight">\(m_i\)</span> is the mass of atom  <span class="math notranslate nohighlight">\(i\)</span>.
+<span class="math notranslate nohighlight">\(\boldsymbol{F}_i\)</span> is the total force on atom <span class="math notranslate nohighlight">\(i\)</span> resulting from the potential model used.
+<span class="math notranslate nohighlight">\(Q_0=N_{\rm f} k_{\rm B} T_0 \tau_T^2\)</span> is the ‘’mass’’ of the thermostat variable directly coupled to the system and <span class="math notranslate nohighlight">\(\pi_0\)</span> is the corresponding ‘’momentum’’.
+<span class="math notranslate nohighlight">\(N_{\rm f}\)</span> is the degree of freedom in the thermostatted region.
+<span class="math notranslate nohighlight">\(k_{\rm B}\)</span> is Boltzmann’s constant and <span class="math notranslate nohighlight">\(T_0\)</span> is the target temperature.
+<span class="math notranslate nohighlight">\(\tau_T\)</span> is a time parameter, and we suggest a value of <span class="math notranslate nohighlight">\(\tau_T/\Delta t \approx 100\)</span>, where <span class="math notranslate nohighlight">\(\Delta t\)</span> is the time step.</p>
+<p>We use a fixed chain length of 4.</p>
+</section>
+<section id="index-5">
+<span id="langevin-thermostat"></span><span id="id6"></span><h3>Langevin thermostat<a class="headerlink" href="#index-5" title="Link to this heading"></a></h3>
+<p>In the Langevin method, the equations of motion for the particles in the thermostatted region are</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\frac{d \boldsymbol{r}_i}{dt} = \frac{\boldsymbol{p}_i}{m_i} \\
+\frac{d \boldsymbol{p}_i}{dt} = \boldsymbol{F}_i - \frac{\boldsymbol{p}_i}{\tau_T} + \boldsymbol{f}_i,\end{split}\]</div>
+<p>Here,
+<span class="math notranslate nohighlight">\(\boldsymbol{r}_i\)</span> is the position of atom <span class="math notranslate nohighlight">\(i\)</span>.
+<span class="math notranslate nohighlight">\(\boldsymbol{p}_i\)</span> is the momentum of atom <span class="math notranslate nohighlight">\(i\)</span>.
+<span class="math notranslate nohighlight">\(m_i\)</span> is the mass of atom  <span class="math notranslate nohighlight">\(i\)</span>.
+<span class="math notranslate nohighlight">\(\boldsymbol{F}_i\)</span> is the total force on atom <span class="math notranslate nohighlight">\(i\)</span> resulted from the potential model used.
+<span class="math notranslate nohighlight">\(\boldsymbol{f}_i\)</span> is a random force with a variation determined by the fluctuation-dissipation relation to recover the canonical ensemble distribution with the target temperature.
+<span class="math notranslate nohighlight">\(\tau_T\)</span> is a time parameter, and we suggest a value of <span class="math notranslate nohighlight">\(\tau_T/\Delta t \approx 100\)</span>, where <span class="math notranslate nohighlight">\(\Delta t\)</span> is the time step.
+We implemented the integrators proposed in <a class="reference internal" href="../bibliography.html#bussi2007a" id="id7"><span>[Bussi2007a]</span></a> and <a class="reference internal" href="../bibliography.html#leimkuhler2013" id="id8"><span>[Leimkuhler2013]</span></a>.</p>
+</section>
+<section id="bussi-donadio-parrinello-thermostat">
+<span id="index-6"></span><span id="svr-thermostat"></span><span id="bdp-thermostat"></span><h3>Bussi-Donadio-Parrinello thermostat<a class="headerlink" href="#bussi-donadio-parrinello-thermostat" title="Link to this heading"></a></h3>
+<p>The Berendsen thermostat does not generate a true NVT ensemble.
+As an extension of the Berendsen thermostat, the Bussi-Donadio-Parrinello (<a class="reference internal" href="../glossary.html#term-BDP"><span class="xref std std-term">BDP</span></a>) thermostat <a class="reference internal" href="../bibliography.html#bussi2007b" id="id9"><span>[Bussi2007b]</span></a> incorporates a proper randomness into the velocity re-scaling factor and generates a true NVT ensemble.
+It is also called the stochastic velocity rescaling (<a class="reference internal" href="../glossary.html#term-SVR"><span class="xref std std-term">SVR</span></a>) thermostat.</p>
+<p>In the <a class="reference internal" href="../glossary.html#term-BDP"><span class="xref std std-term">BDP</span></a> thermostat, the velocities are scaled in the following way:</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{v}_i^{\text{scaled}} = \alpha \boldsymbol{v}_i\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[\alpha^2=
+e^{-\Delta t/\tau_T} +
+\frac{T_0}{TN_f} \left( 1-e^{-\Delta t/\tau_T} \right) \left( R_1^2 + \sum_{i=2}^{N_f}R_i^2 \right) +
+2e^{-\Delta t/2\tau_T} R_1 \sqrt{\frac{T_0}{TN_f} \left( 1-e^{-\Delta t/\tau_T} \right) }.\]</div>
+<p>Here,
+<span class="math notranslate nohighlight">\(\boldsymbol{v}_i\)</span> is the velocity of atom <span class="math notranslate nohighlight">\(i\)</span> before the re-scaling.
+<span class="math notranslate nohighlight">\(N_{\rm f}\)</span> is the degree of freedom in the thermostatted region.
+<span class="math notranslate nohighlight">\(T\)</span> is instant temperature and <span class="math notranslate nohighlight">\(T_0\)</span> is the target temperature.
+<span class="math notranslate nohighlight">\(\Delta t\)</span> is the time step for integration.
+<span class="math notranslate nohighlight">\(\tau_T\)</span> is a time parameter, and we suggest a value of <span class="math notranslate nohighlight">\(\tau_T/\Delta t \approx 100\)</span>, where <span class="math notranslate nohighlight">\(\Delta t\)</span> is the time step.
+<span class="math notranslate nohighlight">\(\{R_i\}_{i=1}^{N_f}\)</span> are <span class="math notranslate nohighlight">\(N_{\rm f}\)</span> Gaussian distributed random numbers with zero mean and unit variance.</p>
+</section>
+</section>
+<section id="npt-ensemble">
+<span id="index-7"></span><h2>NPT ensemble<a class="headerlink" href="#npt-ensemble" title="Link to this heading"></a></h2>
+<p>The NPT ensemble is also called the isothermal-isobaric ensemble.</p>
+<section id="index-8">
+<span id="berendsen-barostat"></span><span id="id10"></span><h3>Berendsen barostat<a class="headerlink" href="#index-8" title="Link to this heading"></a></h3>
+<p>The Berendsen barostat <a class="reference internal" href="../bibliography.html#berendsen1984" id="id11"><span>[Berendsen1984]</span></a> is used with the Berendsen thermostat discussed above.
+The barostat scales the box and positions as follows:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\left(
+\begin{array}{ccc}
+a_x^{\rm scaled} &amp; b_x^{\rm scaled} &amp; c_x^{\rm scaled} \\
+a_y^{\rm scaled} &amp; b_y^{\rm scaled} &amp; c_y^{\rm scaled} \\
+a_z^{\rm scaled} &amp; b_z^{\rm scaled} &amp; c_z^{\rm scaled}
+\end{array}
+\right)
+=
+\left(
+\begin{array}{ccc}
+\mu_{xx} &amp; \mu_{xy} &amp; \mu_{xz} \\
+\mu_{yx} &amp; \mu_{yy} &amp; \mu_{yz} \\
+\mu_{zx} &amp; \mu_{zy} &amp; \mu_{zz} \\
+\end{array}
+\right)
+\left(
+\begin{array}{ccc}
+a_x &amp; b_x &amp; c_x \\
+a_y &amp; b_y &amp; c_y \\
+a_z &amp; b_z &amp; c_z
+\end{array}
+\right)\end{split}\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\left(
+\begin{array}{c}
+x^{\rm scaled}_i \\
+y^{\rm scaled}_i \\
+z^{\rm scaled}_i
+\end{array}
+\right)
+=
+\left(
+\begin{array}{ccc}
+\mu_{xx} &amp; \mu_{xy} &amp; \mu_{xz} \\
+\mu_{yx} &amp; \mu_{yy} &amp; \mu_{yz} \\
+\mu_{zx} &amp; \mu_{zy} &amp; \mu_{zz} \\
+\end{array}
+\right)
+\left(
+\begin{array}{c}
+x_i \\
+y_i \\
+z_i
+\end{array}
+\right).\end{split}\]</div>
+<p>We consider the following three pressure-controlling conditions:</p>
+<ul>
+<li><p><em>Condition 1</em>:
+The simulation box is <em>orthogonal</em> and only the hydrostatic pressure (trace of the pressure tensor) is controlled.
+The simulation box must be periodic in all three directions.
+The scaling matrix only has nonzero diagonal components and the diagonal components can be written as:</p>
+<div class="math notranslate nohighlight">
+\[\mu_{xx}=\mu_{yy}=\mu_{zz}= 1-\frac{\beta_{\rm hydro} \Delta t}{3 \tau_p} (p^{\rm target}_{\rm hydro} - p^{\rm instant}_{\rm hydro}).\]</div>
+</li>
+<li><p><em>Condition 2</em>:
+The simulation box is <em>orthogonal</em> and the three diagonal pressure components are controlled independently.
+The simulation box can be periodic or non-periodic in any of the three directions.
+Pressure is only controlled for periodic directions.
+The diagonal components of the scaling matrix can be written as:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\mu_{xx}= 1-\frac{\beta_{xx} \Delta t}{3 \tau_p} (p^{\rm target}_{xx} - p^{\rm instant}_{xx}) \\
+\mu_{yy}= 1-\frac{\beta_{yy} \Delta t}{3 \tau_p} (p^{\rm target}_{yy} - p^{\rm instant}_{yy}) \\
+\mu_{zz}= 1-\frac{\beta_{zz} \Delta t}{3 \tau_p} (p^{\rm target}_{zz} - p^{\rm instant}_{zz}).\end{split}\]</div>
+</li>
+<li><p><em>Condition 3</em>:
+The simulation box is <em>triclinic</em> and the 6 nonequivalent pressure components are controlled independently. The
+simulation box must be periodic in all three directions.
+The scaling matrix components are:</p>
+<div class="math notranslate nohighlight">
+\[\mu_{\alpha\beta}= 1-\frac{\beta_{\alpha\beta} \Delta t}{3 \tau_p} (p^{\rm target}_{\alpha\beta} - p^{\rm instant}_{\alpha\beta}).\]</div>
+</li>
+</ul>
+<p>The parameter <span class="math notranslate nohighlight">\(\beta_{\alpha\beta}\)</span> is the isothermal compressibility, which is the inverse of the elastic modulus.
+<span class="math notranslate nohighlight">\(\Delta t\)</span> is the time step and <span class="math notranslate nohighlight">\(\tau_p\)</span> is the pressure coupling time (relaxation time).</p>
+</section>
+<section id="stochastic-cell-rescaling-barostat">
+<span id="index-9"></span><span id="stochastic-cell-rescaling"></span><h3>Stochastic cell rescaling barostat<a class="headerlink" href="#stochastic-cell-rescaling-barostat" title="Link to this heading"></a></h3>
+<p>The Berendsen method does not generate a true NPT ensemble.
+As an extension of the Berendsen method, the stochastic cell rescaling (<a class="reference internal" href="../glossary.html#term-SCR"><span class="xref std std-term">SCR</span></a>) barostat <a class="reference internal" href="../bibliography.html#bernetti2020" id="id12"><span>[Bernetti2020]</span></a>, combined with the <a class="reference internal" href="../glossary.html#term-BDP"><span class="xref std std-term">BDP</span></a> thermostat, incorporates a proper randomness into the box and position rescaling factor and generates a true NPT ensemble.</p>
+<p>In the <a class="reference internal" href="../glossary.html#term-SCR"><span class="xref std std-term">SCR</span></a> barostat, the scaling matrix is a sum of the scaling matrix as in the Berendsen barostat and a stochastic one.
+The stochastic scaling matrix components are</p>
+<div class="math notranslate nohighlight">
+\[\mu^{\rm stochastic}_{\alpha\beta}
+= \sqrt{
+\frac{1}{D_{\rm couple}}}
+\sqrt{
+\frac{\beta_{\alpha\beta} \Delta t}{3\tau_p}
+\frac{2k_{\rm B} T^{\rm target}}{V}
+} R_{\alpha\beta}.\]</div>
+<p>Here,
+<span class="math notranslate nohighlight">\(\beta_{\alpha\beta}\)</span>, <span class="math notranslate nohighlight">\(\Delta t\)</span>, and <span class="math notranslate nohighlight">\(\tau_p\)</span> have the same meanings as in the Berendsen barostat.
+<span class="math notranslate nohighlight">\(k_{\rm B}\)</span> is Boltzmann’s constant.
+<span class="math notranslate nohighlight">\(T^{\rm target}\)</span> is the target temperature.
+<span class="math notranslate nohighlight">\(V\)</span> is the current volume of the system.
+<span class="math notranslate nohighlight">\(R_{\alpha\beta}\)</span> is a Gaussian random number with zero mean and unit variance.
+<span class="math notranslate nohighlight">\(D_{\rm couple}\)</span> is the number of directions that are coupled together.
+It is 3, 1, and 1, respectively, for <em>condition 1</em>, <em>condition 2</em>, and <em>condition 3</em> as discussed above.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="forces_and_stresses.html" class="btn btn-neutral float-left" title="Forces and stresses" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="heat_current.html" class="btn btn-neutral float-right" title="Heat current" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

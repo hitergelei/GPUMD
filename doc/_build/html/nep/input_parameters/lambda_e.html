@@ -1,0 +1,216 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>lambda_e &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../../_static/logo.ico"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="lambda_f" href="lambda_f.html" />
+    <link rel="prev" title="lambda_2" href="lambda_2.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory/index.html">Theoretical background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../potentials/index.html">Interatomic potentials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../gpumd/index.html">gpumd executable</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">nep executable</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../input_files/index.html">Input files</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Input parameters</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="version.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">version</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="prediction.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">prediction</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="model_type.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">model_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="type.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="type_weight.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">type_weight</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="zbl.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">zbl</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="use_typewise_cutoff_zbl.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">use_typewise_cutoff_zbl</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cutoff.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">cutoff</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="use_typewise_cutoff.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">use_typewise_cutoff</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="n_max.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">n_max</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="basis_size.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">basis_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="l_max.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">l_max</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="neuron.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">neuron</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lambda_1.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">lambda_1</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lambda_2.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">lambda_2</span></code></a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="xref py py-attr docutils literal notranslate"><span class="pre">lambda_e</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lambda_f.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">lambda_f</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lambda_v.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">lambda_v</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="atomic_v.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">atomic_v</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lambda_shear.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">lambda_shear</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="force_delta.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">force_delta</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="batch.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">batch</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="population.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">population</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="generation.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">generation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="save_potential.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">save_potential</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="output_descriptor.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">output_descriptor</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fine_tune.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">fine_tune</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../output_files/index.html">Output files</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="lambda-e">
+<span id="index-0"></span><span id="kw-lambda-e"></span><h1><code class="xref py py-attr docutils literal notranslate"><span class="pre">lambda_e</span></code><a class="headerlink" href="#lambda-e" title="Link to this heading"></a></h1>
+<p>This keyword sets the weight <span class="math notranslate nohighlight">\(\lambda_e\)</span> of the loss term associated with the <strong>energy</strong> in the <a class="reference internal" href="../../potentials/nep.html#nep-loss-function"><span class="std std-ref">loss function</span></a>.
+The syntax is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">lambda_e</span> <span class="o">&lt;</span><span class="n">weight</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Here, <code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;weight&gt;</span></code> represents <span class="math notranslate nohighlight">\(\lambda_e\)</span>, which must satisfy <span class="math notranslate nohighlight">\(\lambda_e \geq 0\)</span> and defaults to <span class="math notranslate nohighlight">\(\lambda_e = 1.0\)</span>.</p>
+<p>It might be beneficial to use a two-step training scheme, where <span class="math notranslate nohighlight">\(\lambda_e\)</span> takes a small value (such as 0.1) in the first training and a large value (such as 10) in the second (restarting from the first).
+During the second training, the energy error might decrease appreciably, while the force and virial errors are not much affected.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="lambda_2.html" class="btn btn-neutral float-left" title="lambda_2" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="lambda_f.html" class="btn btn-neutral float-right" title="lambda_f" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

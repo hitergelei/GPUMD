@@ -1,0 +1,310 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ensemble (TI_RS) &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../../_static/logo.ico"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="ensemble (TI)" href="ensemble_ti.html" />
+    <link rel="prev" title="ensemble (TI_AS)" href="ensemble_ti_as.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory/index.html">Theoretical background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../potentials/index.html">Interatomic potentials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">gpumd executable</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../input_files/index.html">Input files</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Input parameters</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="replicate.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">replicate</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="velocity.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">velocity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="correct_velocity.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">correct_velocity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="potential.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">potential</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_extrapolation.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_extrapolation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dftd3.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dftd3</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="change_box.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">change_box</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="deform.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">deform</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="move.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">move</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (overview)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_standard.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (standard)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_mttk.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (MTTK)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_heat.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (thermal transport)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_pimd.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (PIMD)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_ti_liquid.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (TI_Liquid)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_ti_spring.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (TI_Spring)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_ti_as.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (TI_AS)</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (TI_RS)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#syntax">Syntax</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example">Example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#output-file">Output file</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_ti.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (TI)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_shock_nemd.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (NEMD shock methods)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_msst.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (MSST)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_nphug.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (NPHug)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fix.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">fix</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="time_step.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">time_step</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="plumed.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">plumed</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="mc.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">mc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="electron_stop.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">electron_stop</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="add_force.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">add_force</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="add_efield.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">add_efield</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="minimize.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">minimize</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="run.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">run</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_adf.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_adf</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_cohesive.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_cohesive</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_dos.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_dos</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_elastic.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_elastic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_gkma.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_gkma</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_hac.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_hac</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_hnema.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_hnema</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_hnemd.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_hnemd</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_hnemdec.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_hnemdec</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_orientorder.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_orientorder</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_phonon.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_phonon</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_sdc.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_sdc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_msd.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_msd</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_shc.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_shc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_viscosity.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_viscosity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_lsqt.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_lsqt</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_rdf.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_rdf</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_angular_rdf.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_angular_rdf</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="active.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">active</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_exyz.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_exyz</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_xyz.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_xyz</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_beads.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_beads</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_observer.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_observer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_dipole.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_dipole</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_polarizability.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_polarizability</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_force.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_force</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_netcdf.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_netcdf</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_position.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_position</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_restart.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_restart</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_thermo.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_thermo</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_velocity.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_velocity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_shock_nemd.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_shock_nemd</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../output_files/index.html">Output files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../nep/index.html">nep executable</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ensemble-ti-rs">
+<span id="kw-ensemble-ti-rs"></span><h1><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (TI_RS)<a class="headerlink" href="#ensemble-ti-rs" title="Link to this heading"></a></h1>
+<p>This keyword is used to set up a nonequilibrium thermodynamic integration integrator with Reversible Scaling (RS) path. It calculates Gibbs free energy along an isobaric path. Please check <a class="reference internal" href="../../bibliography.html#koning2001" id="id1"><span>[Koning2001]</span></a> and <a class="reference internal" href="../../bibliography.html#freitas2016" id="id2"><span>[Freitas2016]</span></a> for more details.</p>
+<section id="syntax">
+<h2>Syntax<a class="headerlink" href="#syntax" title="Link to this heading"></a></h2>
+<p>The parameters can be specified as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ensemble</span> <span class="n">ti_rs</span> <span class="n">temp</span> <span class="o">&lt;</span><span class="n">tmin</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">tmax</span><span class="o">&gt;</span> <span class="n">tperiod</span> <span class="o">&lt;</span><span class="n">tau_temperature</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pressure_control</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pressure</span><span class="o">&gt;</span> <span class="n">pperiod</span> <span class="o">&lt;</span><span class="n">tau_pressure</span><span class="o">&gt;</span> <span class="n">tswitch</span> <span class="o">&lt;</span><span class="n">switch_time</span><span class="o">&gt;</span> <span class="n">tequil</span> <span class="o">&lt;</span><span class="n">equilibrium_time</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;tmin&gt;</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;tmax&gt;</span></code>: The temperature range of the RS simulation.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;pressure_control&gt;</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;pressure&gt;</span></code>: The pressure of RS simualtion. Please refer to MTTK ensemble for more information.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;tau_temperature&gt;</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;tau_pressure&gt;</span></code>: These parameters are optional. Please refer to MTTK ensemble for more information.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;equilibrium_time&gt;</span></code>: The number timesteps to equilibrate the system.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;switch_time&gt;</span></code>: The number timesteps to vary lambda.</p></li>
+</ul>
+<p>If you do not specify <code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;equilibrium_time&gt;</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;switch_time&gt;</span></code>, they will be automatically set in a 1:4 ratio.</p>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h2>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>ensemble ti_rs temp 300 3000 aniso 10 tswitch 10000 tequil 1000
+</pre></div>
+</div>
+<p>This command switch lambda for 10000 timesteps.</p>
+</section>
+<section id="output-file">
+<h2>Output file<a class="headerlink" href="#output-file" title="Link to this heading"></a></h2>
+<p>This command will produce a csv file. The columns are lambda, dlambda, and enthalpy (eV/atom).</p>
+<p>The following code can help you calculate the Gibbs free energy:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_csv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.integrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">cumtrapz</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ase.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">kB</span>
+
+<span class="c1"># you need to run a ti_spring simulation at t_min</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;ti_spring_300.yaml&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">y</span> <span class="o">=</span>  <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+<span class="n">T0</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">]</span>
+<span class="n">G0</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="s2">&quot;G&quot;</span><span class="p">]</span>
+
+<span class="n">rs</span> <span class="o">=</span> <span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;ti_rs.csv&quot;</span><span class="p">)</span>
+<span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rs</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">forward</span> <span class="o">=</span> <span class="n">rs</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
+<span class="n">backward</span> <span class="o">=</span> <span class="n">rs</span><span class="p">[</span><span class="n">n</span><span class="p">:][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">backward</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">dl</span> <span class="o">=</span> <span class="n">forward</span><span class="p">[</span><span class="s2">&quot;dlambda&quot;</span><span class="p">]</span>
+<span class="n">l</span> <span class="o">=</span> <span class="n">forward</span><span class="p">[</span><span class="s2">&quot;lambda&quot;</span><span class="p">]</span>
+<span class="n">H1</span> <span class="o">=</span> <span class="n">forward</span><span class="p">[</span><span class="s2">&quot;enthalpy&quot;</span><span class="p">]</span>
+<span class="n">H2</span> <span class="o">=</span> <span class="n">backward</span><span class="p">[</span><span class="s2">&quot;enthalpy&quot;</span><span class="p">]</span>
+<span class="n">T</span> <span class="o">=</span> <span class="n">T0</span><span class="o">/</span><span class="n">l</span>
+
+<span class="n">w</span> <span class="o">=</span> <span class="p">(</span><span class="n">cumtrapz</span><span class="p">(</span><span class="n">H1</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">initial</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">cumtrapz</span><span class="p">(</span><span class="n">H2</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">initial</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span><span class="o">*</span><span class="mf">0.5</span>
+
+<span class="n">G</span> <span class="o">=</span> <span class="p">(</span><span class="n">G0</span> <span class="o">+</span> <span class="mf">1.5</span><span class="o">*</span><span class="n">kB</span><span class="o">*</span><span class="n">T0</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">+</span> <span class="n">w</span><span class="p">)</span><span class="o">/</span><span class="n">l</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;RS&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;T (K)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;G (eV/atom)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ensemble_ti_as.html" class="btn btn-neutral float-left" title="ensemble (TI_AS)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ensemble_ti.html" class="btn btn-neutral float-right" title="ensemble (TI)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

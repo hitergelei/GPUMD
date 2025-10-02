@@ -1,5 +1,7 @@
+#replicate 10 10 10
 #potential adp Mo.adp 
 potential  adp ../../adp_U_Mo/U_Mo.alloy.adp_cor.txt  Mo
+#potential  adp /home/hjchen/projects/GPUMD/examples/adp_Mo_Ta/test_U_Mo_adp_MD/U_Mo.alloy.adp_cor.txt Mo
 velocity 300
 ensemble nve
 time_step 1

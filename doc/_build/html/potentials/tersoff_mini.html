@@ -1,0 +1,266 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tersoff mini-potential &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Lennard-Jones potential" href="lennard_jones.html" />
+    <link rel="prev" title="Tersoff potential (1989)" href="tersoff_1989.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/index.html">Theoretical background</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Interatomic potentials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tersoff_1988.html">Tersoff potential (1988)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tersoff_1989.html">Tersoff potential (1989)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Tersoff mini-potential</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#potential-form">Potential form</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameters">Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#file-format">File format</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lennard_jones.html">Lennard-Jones potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="eam.html">Embedded atom method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adp.html">Angular Dependent Potential (ADP)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fcp.html">Force constant potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nep.html">Neuroevolution potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nep_ilp.html">Hybrid NEP+ILP potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sw_ilp.html">Hybrid SW+ILP potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tersoff_ilp.html">Hybrid Tersoff+ILP potential</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../gpumd/index.html">gpumd executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nep/index.html">nep executable</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tersoff-mini-potential">
+<span id="index-0"></span><span id="tersoff-mini"></span><h1>Tersoff mini-potential<a class="headerlink" href="#tersoff-mini-potential" title="Link to this heading"></a></h1>
+<p>The Tersoff-mini potential is described in <a class="reference internal" href="../bibliography.html#fan2020" id="id1"><span>[Fan2020]</span></a>.
+It currently only applies to systems with a single atom type.
+One can use the <a class="reference external" href="https://github.com/brucefan1983/GPUGA">GPUGA potential</a> to fit this potential for new systems.</p>
+<section id="potential-form">
+<h2>Potential form<a class="headerlink" href="#potential-form" title="Link to this heading"></a></h2>
+<p>The site potential can be written as</p>
+<div class="math notranslate nohighlight">
+\[U_i =  \frac{1}{2} \sum_{j \neq i} f_\mathrm{C}(r_{ij}) \left[ f_\mathrm{R}(r_{ij}) - b_{ij} f_\mathrm{A}(r_{ij}) \right].\]</div>
+<p>The function <span class="math notranslate nohighlight">\(f_\mathrm{C}\)</span> is a cutoff function, which is 1 when <span class="math notranslate nohighlight">\(r_{ij}&lt;R_{IJ}\)</span> and 0 when <span class="math notranslate nohighlight">\(r_{ij}&gt;S_{IJ}\)</span> and takes the following form in the intermediate region:</p>
+<div class="math notranslate nohighlight">
+\[f_\mathrm{C}(r_{ij}) = \frac{1}{2}
+\left[
+1 + \cos \left( \pi \frac{r_{ij} - R}{S - R} \right)
+\right].\]</div>
+<p>The repulsive function <span class="math notranslate nohighlight">\(f_\mathrm{R}\)</span> and the attractive function <span class="math notranslate nohighlight">\(f_\mathrm{A}\)</span> take the following forms:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}f_\mathrm{R}(r_{ij}) &amp;= \frac{D_0}{S-1} \exp\left(\alpha r_0\sqrt{2S} \right) e^{-\alpha\sqrt{2S} r_{ij}} \\
+f_\mathrm{A}(r_{ij}) &amp;= \frac{D_0S}{S-1} \exp\left(\alpha r_0\sqrt{2/S} \right) e^{-\alpha\sqrt{2/S} r_{ij}}.\end{split}\]</div>
+<p>The bond-order function is</p>
+<div class="math notranslate nohighlight">
+\[b_{ij} = \left(1 + \zeta^{n}_{ij}\right)^{-\frac{1}{2n}},\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\zeta_{ij} &amp;= \sum_{k\neq i, j} f_C(r_{ik}) g_{ijk} \\
+g_{ijk} &amp;= \beta \left(h-\cos\theta_{ijk}\right)^2.\end{split}\]</div>
+</section>
+<section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Unit</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(D_0\)</span></p></td>
+<td><p>eV</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\alpha\)</span></p></td>
+<td><p>Å<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(r_0\)</span></p></td>
+<td><p>Å</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(S\)</span></p></td>
+<td><p>dimensionless</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(n\)</span></p></td>
+<td><p>dimensionless</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\beta\)</span></p></td>
+<td><p>dimensionless</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(h\)</span></p></td>
+<td><p>dimensionless</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(R\)</span></p></td>
+<td><p>Å</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(S\)</span></p></td>
+<td><p>Å</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="file-format">
+<h2>File format<a class="headerlink" href="#file-format" title="Link to this heading"></a></h2>
+<p>The potential file reads:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tersoff_mini</span> <span class="mi">1</span> <span class="n">element</span>
+<span class="n">D</span> <span class="n">alpha</span> <span class="n">r0</span> <span class="n">S</span> <span class="n">beta</span> <span class="n">n</span> <span class="n">h</span> <span class="n">R</span> <span class="n">S</span>
+</pre></div>
+</div>
+<p>Here, <code class="xref py py-attr docutils literal notranslate"><span class="pre">element</span></code> is the chemical symbol of the element.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="tersoff_1989.html" class="btn btn-neutral float-left" title="Tersoff potential (1989)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="lennard_jones.html" class="btn btn-neutral float-right" title="Lennard-Jones potential" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

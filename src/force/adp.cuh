@@ -18,7 +18,7 @@
 #include "utilities/gpu_vector.cuh"
 #include <stdio.h>
 
-// ADP (Angular Dependent Potential) implementation based on LAMMPS pair_adp
+// ADP (Angular Dependent Potential) implementation
 // Reference: Y. Mishin et al., Acta Mater. 53, 4029 (2005)
 
 struct ADP_Data {
@@ -77,9 +77,7 @@ class ADP : public Potential
 {
 public:
   using Potential::compute;
-  // Minimal constructor used by Force::parse_potential for "potential adp <file> [..]"
   ADP(const char* file_potential, const int number_of_atoms);
-  // Extended constructor that accepts optional key=value options (e.g., adp_spline=natural)
   ADP(const char* file_potential, const int number_of_atoms, const std::vector<std::string>& options);
   virtual ~ADP(void);
   virtual void compute(
@@ -89,29 +87,22 @@ public:
     GPU_Vector<double>& potential,
     GPU_Vector<double>& force,
     GPU_Vector<double>& virial);
-  void initialize_adp(const char* file_potential, const int number_of_atoms);
+  void initialize(const char* file_potential, const int number_of_atoms);
   void ensure_capacity(int number_of_atoms);
 
 protected:
   ADP_Data adp_data;
-  // Option parsing and spline configuration
+  // Option parsing
   void parse_options(const std::vector<std::string>& options);
-  bool use_lammps_spline_ = true; // true: LAMMPS-like spline; false: natural cubic
-  bool use_linear_neighbor_ = true; // true: O(N) cell list; false: O(N^2) for small boxes
   
   // Element mapping: user-specified elements to ADP file elements
   std::vector<std::string> user_elements;  // Elements specified by user in potential line
   std::vector<int> element_mapping;        // Mapping from user element index to ADP file element index
-  void setup_element_mapping();           // Build mapping between user and ADP file elements
+  void setup_mapping();
   void read_adp_file(const char* file_potential);
-  void setup_spline_interpolation();
-  void calculate_cubic_spline_coefficients(
+  void setup_spline();
+  void calculate_spline(
     const double* y, int n_total, double dx,
     double* a, double* b, double* c, double* d,
     int n_functions, int n_points);
-  void calculate_lammps_like_coefficients(
-    const double* y, int n_total, double dx,
-    double* a, double* b, double* c, double* d,
-    int n_functions, int n_points);
-  void output_spline_coefficients();  // Output spline coefficients for comparison with LAMMPS
 };

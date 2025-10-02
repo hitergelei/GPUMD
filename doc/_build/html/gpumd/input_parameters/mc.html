@@ -1,0 +1,350 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mc &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../../_static/logo.ico"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="electron_stop" href="electron_stop.html" />
+    <link rel="prev" title="plumed" href="plumed.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory/index.html">Theoretical background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../potentials/index.html">Interatomic potentials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">gpumd executable</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../input_files/index.html">Input files</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Input parameters</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="replicate.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">replicate</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="velocity.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">velocity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="correct_velocity.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">correct_velocity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="potential.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">potential</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_extrapolation.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_extrapolation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dftd3.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dftd3</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="change_box.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">change_box</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="deform.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">deform</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="move.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">move</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (overview)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_standard.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (standard)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_mttk.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (MTTK)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_heat.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (thermal transport)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_pimd.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (PIMD)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_ti_liquid.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (TI_Liquid)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_ti_spring.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (TI_Spring)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_ti_as.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (TI_AS)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_ti_rs.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (TI_RS)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_ti.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (TI)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_shock_nemd.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (NEMD shock methods)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_msst.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (MSST)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ensemble_nphug.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ensemble</span></code> (NPHug)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fix.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">fix</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="time_step.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">time_step</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="plumed.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">plumed</span></code></a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="xref py py-attr docutils literal notranslate"><span class="pre">mc</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#syntax">Syntax</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example-1">Example 1</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example-2">Example 2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example-3">Example 3</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="electron_stop.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">electron_stop</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="add_force.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">add_force</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="add_efield.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">add_efield</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="minimize.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">minimize</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="run.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">run</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_adf.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_adf</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_cohesive.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_cohesive</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_dos.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_dos</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_elastic.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_elastic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_gkma.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_gkma</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_hac.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_hac</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_hnema.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_hnema</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_hnemd.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_hnemd</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_hnemdec.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_hnemdec</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_orientorder.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_orientorder</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_phonon.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_phonon</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_sdc.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_sdc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_msd.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_msd</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_shc.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_shc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_viscosity.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_viscosity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_lsqt.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_lsqt</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_rdf.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_rdf</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="compute_angular_rdf.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">compute_angular_rdf</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="active.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">active</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_exyz.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_exyz</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_xyz.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_xyz</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_beads.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_beads</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_observer.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_observer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_dipole.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_dipole</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_polarizability.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_polarizability</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_force.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_force</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_netcdf.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_netcdf</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_position.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_position</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_restart.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_restart</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_thermo.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_thermo</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_velocity.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_velocity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dump_shock_nemd.html"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dump_shock_nemd</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../output_files/index.html">Output files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../nep/index.html">nep executable</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mc">
+<span id="index-0"></span><span id="kw-mc"></span><h1><code class="xref py py-attr docutils literal notranslate"><span class="pre">mc</span></code><a class="headerlink" href="#mc" title="Link to this heading"></a></h1>
+<p>The <code class="xref py py-attr docutils literal notranslate"><span class="pre">mc</span></code> keyword is used to carry out Monte Carlo (<a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a>) trial steps, usually in combination with a <a class="reference internal" href="../../glossary.html#term-MD"><span class="xref std std-term">MD</span></a> simulation.
+Three <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> ensembles are supported, including the canonical, the semi-grand canonical (<a class="reference internal" href="../../glossary.html#term-SGC"><span class="xref std std-term">SGC</span></a>), and the variance-constrained semi-grand canonical (<a class="reference internal" href="../../glossary.html#term-VCSGC"><span class="xref std std-term">VCSGC</span></a>) <a class="reference internal" href="../../bibliography.html#sadigh2012a" id="id1"><span>[Sadigh2012a]</span></a> <a class="reference internal" href="../../bibliography.html#sadigh2012b" id="id2"><span>[Sadigh2012b]</span></a> ensemble.</p>
+<p>This keyword can only be used in combination with <a class="reference internal" href="../../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> models.</p>
+<section id="syntax">
+<h2>Syntax<a class="headerlink" href="#syntax" title="Link to this heading"></a></h2>
+<section id="canonical">
+<h3><code class="xref py py-attr docutils literal notranslate"><span class="pre">canonical</span></code><a class="headerlink" href="#canonical" title="Link to this heading"></a></h3>
+<p>If the first parameter is <code class="xref py py-attr docutils literal notranslate"><span class="pre">canonical</span></code>, the system will be sampled in the canonical <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> ensemble.
+It can be used as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mc</span> <span class="n">canonical</span> <span class="o">&lt;</span><span class="n">md_steps</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">mc_trials</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">T_i</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">T_f</span><span class="o">&gt;</span> <span class="p">[</span><span class="n">group</span> <span class="o">&lt;</span><span class="n">grouping_method</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">group_id</span><span class="o">&gt;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>This means that <code class="xref py py-attr docutils literal notranslate"><span class="pre">mc_trials</span></code> <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> trials are performed every <code class="xref py py-attr docutils literal notranslate"><span class="pre">md_steps</span></code> <a class="reference internal" href="../../glossary.html#term-MD"><span class="xref std std-term">MD</span></a> steps, while the instant temperature for the <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> ensemble changes linearly from <code class="xref py py-attr docutils literal notranslate"><span class="pre">T_i</span></code> to <code class="xref py py-attr docutils literal notranslate"><span class="pre">T_f</span></code>.</p>
+</section>
+<section id="sgc">
+<h3><code class="xref py py-attr docutils literal notranslate"><span class="pre">sgc</span></code><a class="headerlink" href="#sgc" title="Link to this heading"></a></h3>
+<p>If the first parameter is <code class="xref py py-attr docutils literal notranslate"><span class="pre">sgc</span></code>, the system will be sampled in the <a class="reference internal" href="../../glossary.html#term-SGC"><span class="xref std std-term">SGC</span></a> <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> ensemble.
+It can be used as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mc</span> <span class="n">sgc</span> <span class="o">&lt;</span><span class="n">md_steps</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">mc_trials</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">T_i</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">T_f</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">num_species</span><span class="o">&gt;</span> <span class="p">{</span><span class="o">&lt;</span><span class="n">species_0</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">mu_0</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">species_1</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">mu_1</span><span class="o">&gt;</span> <span class="o">...</span><span class="p">}</span> <span class="p">[</span><span class="n">group</span> <span class="o">&lt;</span><span class="n">grouping_method</span><span class="o">&gt;</span>  <span class="o">&lt;</span><span class="n">group_id</span><span class="o">&gt;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>This means that <code class="xref py py-attr docutils literal notranslate"><span class="pre">mc_trials</span></code> <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> trials are performed every <code class="xref py py-attr docutils literal notranslate"><span class="pre">md_steps</span></code> <a class="reference internal" href="../../glossary.html#term-MD"><span class="xref std std-term">MD</span></a> steps, while the instant temperature for the <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> ensemble changes linearly from <code class="xref py py-attr docutils literal notranslate"><span class="pre">T_i</span></code> to <code class="xref py py-attr docutils literal notranslate"><span class="pre">T_f</span></code>.</p>
+<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">num_species</span></code> specifies the number of species that are to be included in the sampling.
+It must be no less than 2 and no larger than 4.
+After specifying the number of species, one needs to specify their chemical symbols (<code class="xref py py-attr docutils literal notranslate"><span class="pre">species_i</span></code>) and chemical potentials (<code class="xref py py-attr docutils literal notranslate"><span class="pre">mu_i</span></code>) in units of eV.
+The species can be listed in arbitrary order.
+Note that only the differences between the chemical potentials matter.</p>
+</section>
+<section id="vcsgc">
+<h3><code class="xref py py-attr docutils literal notranslate"><span class="pre">vcsgc</span></code><a class="headerlink" href="#vcsgc" title="Link to this heading"></a></h3>
+<p>If the first parameter is <code class="xref py py-attr docutils literal notranslate"><span class="pre">vcsgc</span></code>, the system will be sampled in the <a class="reference internal" href="../../glossary.html#term-VCSGC"><span class="xref std std-term">VCSGC</span></a> <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> ensemble.
+It can be used in the following way:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mc</span> <span class="n">vcsgc</span> <span class="o">&lt;</span><span class="n">md_steps</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">mc_trials</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">T_i</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">T_f</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">num_species</span><span class="o">&gt;</span> <span class="p">{</span><span class="o">&lt;</span><span class="n">species_0</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">phi_0</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">species_1</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">phi_1</span><span class="o">&gt;</span> <span class="o">...</span><span class="p">}</span> <span class="n">kappa</span> <span class="p">[</span><span class="n">group</span> <span class="o">&lt;</span><span class="n">grouping_method</span><span class="o">&gt;</span>  <span class="o">&lt;</span><span class="n">group_id</span><span class="o">&gt;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>This means that <code class="xref py py-attr docutils literal notranslate"><span class="pre">mc_trials</span></code> <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> trials are performed every <code class="xref py py-attr docutils literal notranslate"><span class="pre">md_steps</span></code> <a class="reference internal" href="../../glossary.html#term-MD"><span class="xref std std-term">MD</span></a> steps, while the instant temperature for the <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> ensemble changes linearly from <code class="xref py py-attr docutils literal notranslate"><span class="pre">T_i</span></code> to <code class="xref py py-attr docutils literal notranslate"><span class="pre">T_f</span></code>.</p>
+<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">num_species</span></code> specifies the number of species that are to be included in the sampling.
+It must be no less than 2 and no larger than 4.
+After specifying the number of species, one needs to specify their chemical symbols (<code class="xref py py-attr docutils literal notranslate"><span class="pre">species_i</span></code>) and chemical potentials (<code class="xref py py-attr docutils literal notranslate"><span class="pre">phi_i</span></code> = <span class="math notranslate nohighlight">\(\phi_i\)</span>).
+The species can be listed in arbitrary order.
+Next one needs to specify the (dimensionless) <code class="xref py py-attr docutils literal notranslate"><span class="pre">kappa</span></code> parameter (<span class="math notranslate nohighlight">\(\kappa\)</span>).</p>
+<p>The <span class="math notranslate nohighlight">\(\phi\)</span> and <span class="math notranslate nohighlight">\(\kappa\)</span> parameters constrain the average and variance of the species concentrations, respectively.
+One can usually achieve a sampling of the full composition range by varying <span class="math notranslate nohighlight">\(\phi_i\)</span> between −1.2 and +1.2, which thus play a role that is equivalent to the <span class="math notranslate nohighlight">\(\mu_i\)</span> parameters in the <a class="reference internal" href="../../glossary.html#term-SGC"><span class="xref std std-term">SGC</span></a> ensemble.
+Typically a <span class="math notranslate nohighlight">\(\kappa\)</span> value of 100 is suitable.
+If the concentration fluctuations are too large (e.g., deep with miscibility gaps) one should increase this value.</p>
+<p>The choice of parameters that we use here differs from the original papers <a class="reference internal" href="../../bibliography.html#sadigh2012a" id="id3"><span>[Sadigh2012a]</span></a> <a class="reference internal" href="../../bibliography.html#sadigh2012b" id="id4"><span>[Sadigh2012b]</span></a> in terms of normalization and follows the expressions in e.g., <a class="reference internal" href="../../bibliography.html#rahm2021" id="id5"><span>[Rahm2021]</span></a>.</p>
+</section>
+<section id="general">
+<h3>General<a class="headerlink" href="#general" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>The listed species must be supported by the <a class="reference internal" href="../../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> model.</p></li>
+<li><p>For all the <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> ensembles, there is an option to specify the grouping method <code class="xref py py-attr docutils literal notranslate"><span class="pre">grouping_method</span></code> and the group ID <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_id</span></code> in the given grouping method, after the parameter <code class="xref py py-attr docutils literal notranslate"><span class="pre">group</span></code>.
+The functionality is illustrated in the example section below.</p></li>
+<li><p>There must be at least one listed species in the initial model system or specified group. For example, if you list Au and Cu for doing <a class="reference internal" href="../../glossary.html#term-SGC"><span class="xref std std-term">SGC</span></a> <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a>, the system or the specified group must have some Au or Cu atoms (or both); otherwise the <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> trial cannot get started.</p></li>
+</ul>
+</section>
+</section>
+<section id="example-1">
+<h2>Example 1<a class="headerlink" href="#example-1" title="Link to this heading"></a></h2>
+<p>An example for sampling in the canonical ensemble is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mc</span> <span class="n">canonical</span> <span class="mi">100</span> <span class="mi">200</span> <span class="mi">500</span> <span class="mi">100</span> <span class="n">group</span> <span class="mi">1</span> <span class="mi">3</span>
+</pre></div>
+</div>
+<p>This means</p>
+<ul class="simple">
+<li><p>Perform 200 <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> trials after every 100 <a class="reference internal" href="../../glossary.html#term-MD"><span class="xref std std-term">MD</span></a> steps.</p></li>
+<li><p>Change the temperature for the <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> simulation linearly from 500 to 100 K.</p></li>
+<li><p>Only the atoms in group 3 of grouping method 1 will be considered during <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> sampling.</p></li>
+</ul>
+</section>
+<section id="example-2">
+<h2>Example 2<a class="headerlink" href="#example-2" title="Link to this heading"></a></h2>
+<p>Here is an example for <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> sampling the <a class="reference internal" href="../../glossary.html#term-SGC"><span class="xref std std-term">SGC</span></a> ensemble:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mc</span> <span class="n">sgc</span> <span class="mi">100</span> <span class="mi">1000</span> <span class="mi">300</span> <span class="mi">300</span> <span class="mi">2</span> <span class="n">Cu</span> <span class="mi">0</span> <span class="n">Au</span> <span class="mf">0.6</span>
+</pre></div>
+</div>
+<p>This means</p>
+<ul class="simple">
+<li><p>Perform 1000 <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> trials after every 100 <a class="reference internal" href="../../glossary.html#term-MD"><span class="xref std std-term">MD</span></a> steps.</p></li>
+<li><p>The temperature for the <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> ensemble will be kept at 300 K.</p></li>
+<li><p>Only the Cu and Au atoms are involved in the <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> process.
+The Au atoms have a chemical potential of 0.6 eV relative to the Cu atoms.</p></li>
+</ul>
+</section>
+<section id="example-3">
+<h2>Example 3<a class="headerlink" href="#example-3" title="Link to this heading"></a></h2>
+<p>Here is an example for sampling in the <a class="reference internal" href="../../glossary.html#term-VCSGC"><span class="xref std std-term">VCSGC</span></a> ensemble:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mc</span> <span class="n">vcsgc</span> <span class="mi">200</span> <span class="mi">1000</span> <span class="mi">500</span> <span class="mi">500</span> <span class="mi">2</span> <span class="n">Al</span> <span class="o">-</span><span class="mi">2</span> <span class="n">Ag</span> <span class="mi">0</span> <span class="mi">10000</span>
+</pre></div>
+</div>
+<p>This means</p>
+<ul class="simple">
+<li><p>Perform 1000 <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> trials after every 200 <a class="reference internal" href="../../glossary.html#term-MD"><span class="xref std std-term">MD</span></a> steps.</p></li>
+<li><p>The temperature for the <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> ensemble will be kept at 500 K.</p></li>
+<li><p>Only the Al and Ag atoms are involved in the <a class="reference internal" href="../../glossary.html#term-MC"><span class="xref std std-term">MC</span></a> process.
+The dimensionless <span class="math notranslate nohighlight">\(\phi\)</span> parameters for Al and Ag are −2 and 0, respectively.
+The dimensionless <span class="math notranslate nohighlight">\(\kappa\)</span> parameter is 10000.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="plumed.html" class="btn btn-neutral float-left" title="plumed" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="electron_stop.html" class="btn btn-neutral float-right" title="electron_stop" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

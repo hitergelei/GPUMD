@@ -36,7 +36,7 @@ The dipole and quadruple terms are calculated as:
 
 where u and w are tabulated functions in the ADP potential file.
 
-IMPORTANT NOTES BASED ON LAMMPS IMPLEMENTATION:
+IMPORTANT IMPLEMENTATION NOTES:
 1. Dipole terms have opposite signs for atom pairs: μ_i += u*r_ij, μ_j -= u*r_ij
 2. Quadruple tensor ordering: [λ_xx, λ_yy, λ_zz, λ_yz, λ_xz, λ_xy] (not [xx,yy,zz,xy,xz,yz])
 3. Energy: E_quad = 0.5*(λ_xx² + λ_yy² + λ_zz²) + 1.0*(λ_yz² + λ_xz² + λ_xy²) - (1/6)*ν²
@@ -55,17 +55,14 @@ IMPORTANT NOTES BASED ON LAMMPS IMPLEMENTATION:
 #include <cctype>
 #include <cmath>
 
-// Use the standard GPUMD neighbor list implementation from neighbor.cu
-
-#define BLOCK_SIZE_FORCE 64
+#define BLOCK_SIZE_FORCE 128
 constexpr int ADP_MAX_NEIGHBORS = 400;
 
-// Periodic image encoding helper for neighbor shifts (supports offsets in [-15,15])
 constexpr int PBC_SHIFT_BIAS = 15;
 constexpr int PBC_SHIFT_PAYLOAD_MASK = 0x7FFF;
 constexpr int PBC_SHIFT_FLAG = 1 << 15;
 
-__host__ __device__ inline int encode_neighbor_shift(int sx, int sy, int sz)
+__host__ __device__ __forceinline__ int encode_neighbor_shift(const int sx, const int sy, const int sz)
 {
   if (sx == 0 && sy == 0 && sz == 0) {
     return 0;
@@ -76,13 +73,13 @@ __host__ __device__ inline int encode_neighbor_shift(int sx, int sy, int sz)
   return ((bx & 0x1F) | ((by & 0x1F) << 5) | ((bz & 0x1F) << 10)) | PBC_SHIFT_FLAG;
 }
 
-__host__ __device__ inline void decode_neighbor_shift(int code, int& sx, int& sy, int& sz)
+__host__ __device__ __forceinline__ void decode_neighbor_shift(const int code, int& sx, int& sy, int& sz)
 {
   if (code == 0) {
     sx = sy = sz = 0;
     return;
   }
-  int payload = code & PBC_SHIFT_PAYLOAD_MASK;
+  const int payload = code & PBC_SHIFT_PAYLOAD_MASK;
   sx = ((payload & 0x1F) - PBC_SHIFT_BIAS);
   sy = (((payload >> 5) & 0x1F) - PBC_SHIFT_BIAS);
   sz = (((payload >> 10) & 0x1F) - PBC_SHIFT_BIAS);
@@ -181,24 +178,20 @@ ADP::ADP(const char* file_potential, const int number_of_atoms,
          const std::vector<std::string>& options)
 {
   parse_options(options);
-  initialize_adp(file_potential, number_of_atoms);
+  initialize(file_potential, number_of_atoms);
 }
 
-// Minimal constructor used by existing Force::parse_potential path
 ADP::ADP(const char* file_potential, const int number_of_atoms)
   : ADP(file_potential, number_of_atoms, std::vector<std::string>{}) {}
 
-ADP::~ADP(void)
-{
-  // Nothing special to clean up
-}
+ADP::~ADP(void) {}
 
-void ADP::initialize_adp(const char* file_potential, const int number_of_atoms)
+void ADP::initialize(const char* file_potential, const int number_of_atoms)
 {
   read_adp_file(file_potential);
   
   // Build element mapping: from user-specified elements to ADP file elements
-  setup_element_mapping();
+  setup_mapping();
   
   // Copy element mapping to GPU if needed
   if (!element_mapping.empty()) {
@@ -206,7 +199,7 @@ void ADP::initialize_adp(const char* file_potential, const int number_of_atoms)
     adp_data.element_mapping_gpu.copy_from_host(element_mapping.data());
   }
   
-  setup_spline_interpolation();
+  setup_spline();
   
   adp_data.inv_drho = (adp_data.drho != 0.0) ? 1.0 / adp_data.drho : 0.0;
   adp_data.inv_dr = (adp_data.dr != 0.0) ? 1.0 / adp_data.dr : 0.0;
@@ -282,8 +275,6 @@ void ADP::initialize_adp(const char* file_potential, const int number_of_atoms)
   adp_data.w_r_d_g.copy_from_host(adp_data.w_r_d.data());
   
   printf("Use %d-element ADP potential, rc = %.6f.\n", adp_data.Nelements, adp_data.rc);
-  printf("ADP spline mode: %s.\n", use_lammps_spline_ ? "LAMMPS" : "natural");
-  printf("ADP neighbor mode: %s.\n", use_linear_neighbor_ ? "O(N) cell list" : "O(N^2) brute force");
 }
 
 void ADP::ensure_capacity(int number_of_atoms)
@@ -325,35 +316,12 @@ void ADP::ensure_capacity(int number_of_atoms)
 
 void ADP::parse_options(const std::vector<std::string>& options)
 {
-  // Default: LAMMPS-compatible spline and linear neighbor list
-  use_lammps_spline_ = true;
-  use_linear_neighbor_ = true;
   user_elements.clear();
   
-  auto to_lower = [](std::string s){ for (auto& c : s) c = std::tolower(static_cast<unsigned char>(c)); return s; };
-  
-  // First pass: collect elements (tokens without '=')
+  // Collect element names (tokens without '=')
   for (const auto& opt : options) {
     if (opt.find('=') == std::string::npos) {
-      // This is likely an element name
       user_elements.push_back(opt);
-    }
-  }
-  
-  // Second pass: process key=value options
-  for (auto opt : options) {
-    size_t eq = opt.find('=');
-    if (eq == std::string::npos) continue; // skip element names
-    
-    std::string key = to_lower(opt.substr(0, eq));
-    std::string val = to_lower(opt.substr(eq + 1));
-    
-    if (key == "adp_spline" || key == "spline") {
-      if (val == "natural") use_lammps_spline_ = false;
-      else if (val == "lammps") use_lammps_spline_ = true;
-    } else if (key == "neighbor" || key == "neighbor_list") {
-      if (val == "on2" || val == "n2" || val == "brute") use_linear_neighbor_ = false;
-      else if (val == "on1" || val == "linear" || val == "cell") use_linear_neighbor_ = true;
     }
   }
 }
@@ -452,8 +420,6 @@ void ADP::read_adp_file(const char* file_potential)
         std::istringstream iss_phi(line);
         double val;
         while (iss_phi >> val && values_read < adp_data.nr) {
-          // Store r*phi(r) directly (as in LAMMPS z2r array)
-          // This will be used as z2 = r*phi(r) in force calculation
           adp_data.phi_r[base_pair + values_read] = val;
           values_read++;
         }
@@ -509,7 +475,7 @@ void ADP::read_adp_file(const char* file_potential)
   
 }
 
-void ADP::setup_element_mapping()
+void ADP::setup_mapping()
 {
   // If no user elements specified, use default mapping (all types map to first ADP element)
   if (user_elements.empty()) {
@@ -551,11 +517,8 @@ void ADP::setup_element_mapping()
   printf("\n");
 }
 
-void ADP::setup_spline_interpolation()
+void ADP::setup_spline()
 {
-  // Calculate cubic spline coefficients for all tabulated functions
-  // This follows the same approach as the EAM_alloy implementation
-  
   int total_rho_points = adp_data.Nelements * adp_data.nrho;
   int total_r_points = adp_data.Nelements * adp_data.nr;
   int total_pair_points = adp_data.Nelements * (adp_data.Nelements + 1) / 2 * adp_data.nr;
@@ -586,140 +549,58 @@ void ADP::setup_spline_interpolation()
   adp_data.w_r_c.resize(total_pair_points);
   adp_data.w_r_d.resize(total_pair_points);
   
-  if (use_lammps_spline_) {
-    // Build coefficients equivalent to LAMMPS pair_adp interpolate() (Hermite with estimated slopes)
-    calculate_lammps_like_coefficients(
-      adp_data.F_rho.data(), total_rho_points, adp_data.drho,
-      adp_data.F_rho_a.data(), adp_data.F_rho_b.data(), adp_data.F_rho_c.data(), adp_data.F_rho_d.data(),
-      adp_data.Nelements, adp_data.nrho);
-    calculate_lammps_like_coefficients(
-      adp_data.rho_r.data(), total_r_points, adp_data.dr,
-      adp_data.rho_r_a.data(), adp_data.rho_r_b.data(), adp_data.rho_r_c.data(), adp_data.rho_r_d.data(),
-      adp_data.Nelements, adp_data.nr);
-    calculate_lammps_like_coefficients(
-      adp_data.phi_r.data(), total_pair_points, adp_data.dr,
-      adp_data.phi_r_a.data(), adp_data.phi_r_b.data(), adp_data.phi_r_c.data(), adp_data.phi_r_d.data(),
-      adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
-    calculate_lammps_like_coefficients(
-      adp_data.u_r.data(), total_pair_points, adp_data.dr,
-      adp_data.u_r_a.data(), adp_data.u_r_b.data(), adp_data.u_r_c.data(), adp_data.u_r_d.data(),
-      adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
-    calculate_lammps_like_coefficients(
-      adp_data.w_r.data(), total_pair_points, adp_data.dr,
-      adp_data.w_r_a.data(), adp_data.w_r_b.data(), adp_data.w_r_c.data(), adp_data.w_r_d.data(),
-      adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
-  } else {
-    // Natural cubic splines
-    calculate_cubic_spline_coefficients(
-      adp_data.F_rho.data(), total_rho_points, adp_data.drho,
-      adp_data.F_rho_a.data(), adp_data.F_rho_b.data(),
-      adp_data.F_rho_c.data(), adp_data.F_rho_d.data(), adp_data.Nelements, adp_data.nrho);
-    calculate_cubic_spline_coefficients(
-      adp_data.rho_r.data(), total_r_points, adp_data.dr,
-      adp_data.rho_r_a.data(), adp_data.rho_r_b.data(),
-      adp_data.rho_r_c.data(), adp_data.rho_r_d.data(), adp_data.Nelements, adp_data.nr);
-    calculate_cubic_spline_coefficients(
-      adp_data.phi_r.data(), total_pair_points, adp_data.dr,
-      adp_data.phi_r_a.data(), adp_data.phi_r_b.data(), adp_data.phi_r_c.data(), adp_data.phi_r_d.data(),
-      adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
-    calculate_cubic_spline_coefficients(
-      adp_data.u_r.data(), total_pair_points, adp_data.dr,
-      adp_data.u_r_a.data(), adp_data.u_r_b.data(), adp_data.u_r_c.data(), adp_data.u_r_d.data(),
-      adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
-    calculate_cubic_spline_coefficients(
-      adp_data.w_r.data(), total_pair_points, adp_data.dr,
-      adp_data.w_r_a.data(), adp_data.w_r_b.data(), adp_data.w_r_c.data(), adp_data.w_r_d.data(),
-      adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
-  }
-  
-  // Output spline coefficients for comparison with LAMMPS
-  output_spline_coefficients();
-}
-
-// Calculate cubic spline coefficients for tabulated functions
-void ADP::calculate_cubic_spline_coefficients(
-  const double* y, int n_total, double dx,
-  double* a, double* b, double* c, double* d,
-  int n_functions, int n_points)
-{
-  // Process each function separately (by element or element pair)
-  for (int func = 0; func < n_functions; func++) {
-    int offset = func * n_points;
-    const double* y_func = y + offset;
-    double* a_func = a + offset;
-    double* b_func = b + offset;
-    double* c_func = c + offset;
-    double* d_func = d + offset;
-    
-    // Natural cubic spline implementation
-    std::vector<double> h(n_points - 1);
-    std::vector<double> alpha(n_points - 1);
-    std::vector<double> l(n_points);
-    std::vector<double> mu(n_points);
-    std::vector<double> z(n_points);
-    
-    // Step 1: Calculate h and alpha
-    for (int i = 0; i < n_points - 1; i++) {
-      h[i] = dx;
-      if (i > 0) {
-        alpha[i] = (3.0 / h[i]) * (y_func[i+1] - y_func[i]) - 
-                   (3.0 / h[i-1]) * (y_func[i] - y_func[i-1]);
-      }
-    }
-    
-    // Step 2: Solve the tridiagonal system for natural spline
-    l[0] = 1.0;
-    mu[0] = 0.0;
-    z[0] = 0.0;
-    
-    for (int i = 1; i < n_points - 1; i++) {
-      l[i] = 2.0 * (h[i-1] + h[i]) - h[i-1] * mu[i-1];
-      mu[i] = h[i] / l[i];
-      z[i] = (alpha[i] - h[i-1] * z[i-1]) / l[i];
-    }
-    
-    l[n_points-1] = 1.0;
-    z[n_points-1] = 0.0;
-    c_func[n_points-1] = 0.0;
-    
-    // Step 3: Back substitution to get coefficients
-    for (int j = n_points - 2; j >= 0; j--) {
-      c_func[j] = z[j] - mu[j] * c_func[j+1];
-      b_func[j] = (y_func[j+1] - y_func[j]) / h[j] - h[j] * (c_func[j+1] + 2.0 * c_func[j]) / 3.0;
-      d_func[j] = (c_func[j+1] - c_func[j]) / (3.0 * h[j]);
-      a_func[j] = y_func[j];
-    }
-    
-  a_func[n_points-1] = y_func[n_points-1];
-  }
+  // Use Hermite spline interpolation
+  calculate_spline(
+    adp_data.F_rho.data(), total_rho_points, adp_data.drho,
+    adp_data.F_rho_a.data(), adp_data.F_rho_b.data(), adp_data.F_rho_c.data(), adp_data.F_rho_d.data(),
+    adp_data.Nelements, adp_data.nrho);
+  calculate_spline(
+    adp_data.rho_r.data(), total_r_points, adp_data.dr,
+    adp_data.rho_r_a.data(), adp_data.rho_r_b.data(), adp_data.rho_r_c.data(), adp_data.rho_r_d.data(),
+    adp_data.Nelements, adp_data.nr);
+  calculate_spline(
+    adp_data.phi_r.data(), total_pair_points, adp_data.dr,
+    adp_data.phi_r_a.data(), adp_data.phi_r_b.data(), adp_data.phi_r_c.data(), adp_data.phi_r_d.data(),
+    adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
+  calculate_spline(
+    adp_data.u_r.data(), total_pair_points, adp_data.dr,
+    adp_data.u_r_a.data(), adp_data.u_r_b.data(), adp_data.u_r_c.data(), adp_data.u_r_d.data(),
+    adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
+  calculate_spline(
+    adp_data.w_r.data(), total_pair_points, adp_data.dr,
+    adp_data.w_r_a.data(), adp_data.w_r_b.data(), adp_data.w_r_c.data(), adp_data.w_r_d.data(),
+    adp_data.Nelements * (adp_data.Nelements + 1) / 2, adp_data.nr);
 }
 
 // GPU utility functions for interpolation
-__device__ static void interpolate_adp(
-  const double* a, const double* b, const double* c, const double* d,
-  int index, double x_frac, double dx, double& y, double& yp)
+__device__ __forceinline__ static void interpolate(
+  const double* __restrict__ a,
+  const double* __restrict__ b,
+  const double* __restrict__ c,
+  const double* __restrict__ d,
+  const int index,
+  const double x_frac,
+  const double dx,
+  double& y,
+  double& yp)
 {
-  // Evaluate natural cubic spline on uniform grid with spacing dx
-  // x_frac in [0,1). Physical offset t = x_frac * dx
-  double t = x_frac * dx;
-  y = a[index] + b[index] * t + c[index] * t * t + d[index] * t * t * t;
-  // yp is derivative w.r.t physical variable (drho or dr)
-  yp = b[index] + 2.0 * c[index] * t + 3.0 * d[index] * t * t;
+  const double t = x_frac * dx;
+  y = a[index] + t * (b[index] + t * (c[index] + t * d[index]));
+  yp = b[index] + t * (2.0 * c[index] + 3.0 * t * d[index]);
 }
 
-__device__ __forceinline__ static double interpolate_adp_value(
-  const double* a,
-  const double* b,
-  const double* c,
-  const double* d,
-  int index,
-  double t)
+__device__ __forceinline__ static double interpolate_value(
+  const double* __restrict__ a,
+  const double* __restrict__ b,
+  const double* __restrict__ c,
+  const double* __restrict__ d,
+  const int index,
+  const double t)
 {
-  return ((d[index] * t + c[index]) * t + b[index]) * t + a[index];
+  return a[index] + t * (b[index] + t * (c[index] + t * d[index]));
 }
 
-// Construct LAMMPS-like spline coefficients but stored as (a,b,c,d)
-void ADP::calculate_lammps_like_coefficients(
+void ADP::calculate_spline(
   const double* y, int /*n_total*/, double dx,
   double* a, double* b, double* c, double* d,
   int n_functions, int n_points)
@@ -733,7 +614,7 @@ void ADP::calculate_lammps_like_coefficients(
     double* df = d + off;
 
     std::vector<double> s(n_points, 0.0);
-    // LAMMPS slopes (PairADP::interpolate):
+    // Estimate slopes using centered differences:
     // s[0]   = f[1] - f[0]
     // s[1]   = 0.5*(f[2] - f[0])
     // s[i]   = ((f[i-2]-f[i+2]) + 8*(f[i+1]-f[i-1]))/12 for i in [2, n-3]
@@ -761,103 +642,6 @@ void ADP::calculate_lammps_like_coefficients(
     cf[n_points-1] = 0.0;
     df[n_points-1] = 0.0;
   }
-}
-
-// Output spline coefficients for comparison with LAMMPS
-void ADP::output_spline_coefficients()
-{
-  printf("Writing GPUMD ADP spline coefficients to adp_spline_coeffs_gpumd.txt\n");
-  
-  FILE* fp = fopen("adp_spline_coeffs_gpumd.txt", "w");
-  if (!fp) {
-    printf("Warning: Cannot create adp_spline_coeffs_gpumd.txt\n");
-    return;
-  }
-  
-  // Output F_rho coefficients
-  fprintf(fp, "--- F_rho ---\n");
-  for (int elem = 0; elem < adp_data.Nelements; ++elem) {
-    fprintf(fp, "Function %d:\n", elem);
-    int offset = elem * adp_data.nrho;
-    for (int i = 0; i < adp_data.nrho && i < 50; ++i) { // Limit output for readability
-      double a = adp_data.F_rho_a[offset + i];
-      double b = adp_data.F_rho_b[offset + i];
-      double c = adp_data.F_rho_c[offset + i];
-      double d = adp_data.F_rho_d[offset + i];
-      fprintf(fp, "  pt %d: a=%.15e, b=%.15e, c=%.15e, d=%.15e\n", i, a, b, c, d);
-    }
-  }
-  
-  // Output rho_r coefficients  
-  fprintf(fp, "\n--- rho_r ---\n");
-  for (int elem = 0; elem < adp_data.Nelements; ++elem) {
-    fprintf(fp, "Function %d:\n", elem);
-    int offset = elem * adp_data.nr;
-    for (int i = 0; i < adp_data.nr && i < 50; ++i) { // Limit output for readability
-      double a = adp_data.rho_r_a[offset + i];
-      double b = adp_data.rho_r_b[offset + i];
-      double c = adp_data.rho_r_c[offset + i];
-      double d = adp_data.rho_r_d[offset + i];
-      fprintf(fp, "  pt %d: a=%.15e, b=%.15e, c=%.15e, d=%.15e\n", i, a, b, c, d);
-    }
-  }
-  
-  // Output phi_r coefficients
-  fprintf(fp, "\n--- phi_r ---\n");
-  int pair_idx = 0;
-  for (int i = 0; i < adp_data.Nelements; ++i) {
-    for (int j = 0; j <= i; ++j) {
-      fprintf(fp, "Function %d (pair %d-%d):\n", pair_idx, i, j);
-      int offset = pair_idx * adp_data.nr;
-      for (int k = 0; k < adp_data.nr && k < 50; ++k) { // Limit output for readability
-        double a = adp_data.phi_r_a[offset + k];
-        double b = adp_data.phi_r_b[offset + k];
-        double c = adp_data.phi_r_c[offset + k];
-        double d = adp_data.phi_r_d[offset + k];
-        fprintf(fp, "  pt %d: a=%.15e, b=%.15e, c=%.15e, d=%.15e\n", k, a, b, c, d);
-      }
-      pair_idx++;
-    }
-  }
-  
-  // Output u_r coefficients
-  fprintf(fp, "\n--- u_r ---\n");
-  pair_idx = 0;
-  for (int i = 0; i < adp_data.Nelements; ++i) {
-    for (int j = 0; j <= i; ++j) {
-      fprintf(fp, "Function %d (pair %d-%d):\n", pair_idx, i, j);
-      int offset = pair_idx * adp_data.nr;
-      for (int k = 0; k < adp_data.nr && k < 50; ++k) { // Limit output for readability
-        double a = adp_data.u_r_a[offset + k];
-        double b = adp_data.u_r_b[offset + k];
-        double c = adp_data.u_r_c[offset + k];
-        double d = adp_data.u_r_d[offset + k];
-        fprintf(fp, "  pt %d: a=%.15e, b=%.15e, c=%.15e, d=%.15e\n", k, a, b, c, d);
-      }
-      pair_idx++;
-    }
-  }
-  
-  // Output w_r coefficients
-  fprintf(fp, "\n--- w_r ---\n");
-  pair_idx = 0;
-  for (int i = 0; i < adp_data.Nelements; ++i) {
-    for (int j = 0; j <= i; ++j) {
-      fprintf(fp, "Function %d (pair %d-%d):\n", pair_idx, i, j);
-      int offset = pair_idx * adp_data.nr;
-      for (int k = 0; k < adp_data.nr && k < 50; ++k) { // Limit output for readability
-        double a = adp_data.w_r_a[offset + k];
-        double b = adp_data.w_r_b[offset + k];
-        double c = adp_data.w_r_c[offset + k];
-        double d = adp_data.w_r_d[offset + k];
-        fprintf(fp, "  pt %d: a=%.15e, b=%.15e, c=%.15e, d=%.15e\n", k, a, b, c, d);
-      }
-      pair_idx++;
-    }
-  }
-  
-  fclose(fp);
-  printf("GPUMD spline coefficients written successfully.\n");
 }
 
 // GPU kernel to map user element types to ADP file element indices
@@ -972,20 +756,21 @@ static __global__ void find_force_adp_step1(
     const int idx = i1 * N + n1;
     const int n2 = g_NL[idx];
     const int type2 = g_type[n2];
+    const double x2 = g_x[n2];
+    const double y2 = g_y[n2];
+    const double z2 = g_z[n2];
 
-    double delx = x1 - g_x[n2];
-    double dely = y1 - g_y[n2];
-    double delz = z1 - g_z[n2];
+    double delx = x1 - x2;
+    double dely = y1 - y2;
+    double delz = z1 - z2;
 
-    if (g_shift != nullptr) {
+    if (g_shift) {
       const int code = g_shift[idx];
-      if (code != 0) {
-        int sx, sy, sz;
-        decode_neighbor_shift(code, sx, sy, sz);
-        delx -= sx * hx0 + sy * hx1 + sz * hx2;
-        dely -= sx * hy0 + sy * hy1 + sz * hy2;
-        delz -= sx * hz0 + sy * hz1 + sz * hz2;
-      }
+      int sx, sy, sz;
+      decode_neighbor_shift(code, sx, sy, sz);
+      delx -= sx * hx0 + sy * hx1 + sz * hx2;
+      dely -= sx * hy0 + sy * hy1 + sz * hy2;
+      delz -= sx * hz0 + sy * hz1 + sz * hz2;
     } else {
       apply_mic(box, delx, dely, delz);
     }
@@ -997,50 +782,45 @@ static __global__ void find_force_adp_step1(
 
     const double inv_r = rsqrt(d2);
     const double d12 = d2 * inv_r;
-
-    double pp = d12 * inv_dr + 1.0;
+    const double pp = d12 * inv_dr + 1.0;
     int m = static_cast<int>(pp);
-    if (m < 1) m = 1;
-    if (m > nr - 1) m = nr - 1;
-    double frac = pp - m;
-    if (frac > 1.0) frac = 1.0;
+    m = (m < 1) ? 1 : ((m > nr - 1) ? nr - 1 : m);
+    const double frac = (pp - m > 1.0) ? 1.0 : (pp - m);
     const int ir = m - 1;
     const double interp_t = frac * dr;
 
     const int rho_offset = type2 * nr + ir;
     const int pair_offset = pair_row[type2] * nr + ir;
 
-    rho +=
-      interpolate_adp_value(rho_r_a, rho_r_b, rho_r_c, rho_r_d, rho_offset, interp_t);
-    const double u_val =
-      interpolate_adp_value(u_r_a, u_r_b, u_r_c, u_r_d, pair_offset, interp_t);
-    const double w_val =
-      interpolate_adp_value(w_r_a, w_r_b, w_r_c, w_r_d, pair_offset, interp_t);
+    rho += interpolate_value(rho_r_a, rho_r_b, rho_r_c, rho_r_d, rho_offset, interp_t);
+    const double u_val = interpolate_value(u_r_a, u_r_b, u_r_c, u_r_d, pair_offset, interp_t);
+    const double w_val = interpolate_value(w_r_a, w_r_b, w_r_c, w_r_d, pair_offset, interp_t);
 
     mu_x += u_val * delx;
     mu_y += u_val * dely;
     mu_z += u_val * delz;
 
-    lambda_xx += w_val * delx * delx;
-    lambda_yy += w_val * dely * dely;
-    lambda_zz += w_val * delz * delz;
+    const double delx2 = delx * delx;
+    const double dely2 = dely * dely;
+    const double delz2 = delz * delz;
+    lambda_xx += w_val * delx2;
+    lambda_yy += w_val * dely2;
+    lambda_zz += w_val * delz2;
     lambda_xy += w_val * delx * dely;
     lambda_xz += w_val * delx * delz;
     lambda_yz += w_val * dely * delz;
   }
 
   const int F_base = type1 * nrho;
-  double pp = rho * inv_drho + 1.0;
+  const double pp = rho * inv_drho + 1.0;
   int m = static_cast<int>(pp);
-  if (m < 1) m = 1;
-  if (m > nrho - 1) m = nrho - 1;
-  double frac = pp - m;
-  if (frac > 1.0) frac = 1.0;
+  m = (m < 1) ? 1 : ((m > nrho - 1) ? nrho - 1 : m);
+  const double frac = (pp - m > 1.0) ? 1.0 : (pp - m);
   const int irho = m - 1;
 
   double F = 0.0;
   double Fp = 0.0;
-  interpolate_adp(
+  interpolate(
     F_rho_a,
     F_rho_b,
     F_rho_c,
@@ -1183,20 +963,21 @@ static __global__ void find_force_adp_step2(
     const int idx = i1 * N + n1;
     const int n2 = g_NL[idx];
     const int type2 = g_type[n2];
+    const double x2 = g_x[n2];
+    const double y2 = g_y[n2];
+    const double z2 = g_z[n2];
 
-    double delx = x1 - g_x[n2];
-    double dely = y1 - g_y[n2];
-    double delz = z1 - g_z[n2];
+    double delx = x1 - x2;
+    double dely = y1 - y2;
+    double delz = z1 - z2;
 
-    if (g_shift != nullptr) {
+    if (g_shift) {
       const int code = g_shift[idx];
-      if (code != 0) {
-        int sx, sy, sz;
-        decode_neighbor_shift(code, sx, sy, sz);
-        delx -= sx * hx0 + sy * hx1 + sz * hx2;
-        dely -= sx * hy0 + sy * hy1 + sz * hy2;
-        delz -= sx * hz0 + sy * hz1 + sz * hz2;
-      }
+      int sx, sy, sz;
+      decode_neighbor_shift(code, sx, sy, sz);
+      delx -= sx * hx0 + sy * hx1 + sz * hx2;
+      dely -= sx * hy0 + sy * hy1 + sz * hy2;
+      delz -= sx * hz0 + sy * hz1 + sz * hz2;
     } else {
       apply_mic(box, delx, dely, delz);
     }
@@ -1208,82 +989,23 @@ static __global__ void find_force_adp_step2(
 
     const double inv_r = rsqrt(d2);
     const double d12 = d2 * inv_r;
-
-    double pp = d12 * inv_dr + 1.0;
+    const double pp = d12 * inv_dr + 1.0;
     int m = static_cast<int>(pp);
-    if (m < 1) m = 1;
-    if (m > nr - 1) m = nr - 1;
-    double frac = pp - m;
-    if (frac > 1.0) frac = 1.0;
+    m = (m < 1) ? 1 : ((m > nr - 1) ? nr - 1 : m);
+    const double frac = (pp - m > 1.0) ? 1.0 : (pp - m);
     const int ir = m - 1;
 
     const int rho2_base = type2 * nr;
     const int pair_offset = pair_row[type2] * nr + ir;
 
-    double rho1_unused;
-    double rho1_deriv;
-    interpolate_adp(
-      rho_r_a,
-      rho_r_b,
-      rho_r_c,
-      rho_r_d,
-      rho2_base + ir,
-      frac,
-      dr,
-      rho1_unused,
-      rho1_deriv);
+    double rho_unused, rho1_deriv, rho2_deriv;
+    interpolate(rho_r_a, rho_r_b, rho_r_c, rho_r_d, rho2_base + ir, frac, dr, rho_unused, rho1_deriv);
+    interpolate(rho_r_a, rho_r_b, rho_r_c, rho_r_d, rho1_base + ir, frac, dr, rho_unused, rho2_deriv);
 
-    double rho2_unused;
-    double rho2_deriv;
-    interpolate_adp(
-      rho_r_a,
-      rho_r_b,
-      rho_r_c,
-      rho_r_d,
-      rho1_base + ir,
-      frac,
-      dr,
-      rho2_unused,
-      rho2_deriv);
-
-    double phi_rphi_val;
-    double phi_rphi_deriv;
-    interpolate_adp(
-      phi_r_a,
-      phi_r_b,
-      phi_r_c,
-      phi_r_d,
-      pair_offset,
-      frac,
-      dr,
-      phi_rphi_val,
-      phi_rphi_deriv);
-
-    double u_val;
-    double u_deriv;
-    interpolate_adp(
-      u_r_a,
-      u_r_b,
-      u_r_c,
-      u_r_d,
-      pair_offset,
-      frac,
-      dr,
-      u_val,
-      u_deriv);
-
-    double w_val;
-    double w_deriv;
-    interpolate_adp(
-      w_r_a,
-      w_r_b,
-      w_r_c,
-      w_r_d,
-      pair_offset,
-      frac,
-      dr,
-      w_val,
-      w_deriv);
+    double phi_rphi_val, phi_rphi_deriv, u_val, u_deriv, w_val, w_deriv;
+    interpolate(phi_r_a, phi_r_b, phi_r_c, phi_r_d, pair_offset, frac, dr, phi_rphi_val, phi_rphi_deriv);
+    interpolate(u_r_a, u_r_b, u_r_c, u_r_d, pair_offset, frac, dr, u_val, u_deriv);
+    interpolate(w_r_a, w_r_b, w_r_c, w_r_d, pair_offset, frac, dr, w_val, w_deriv);
 
     const double phi_val = phi_rphi_val * inv_r;
     const double phi_deriv = phi_rphi_deriv * inv_r - phi_rphi_val * (inv_r * inv_r);
@@ -1321,47 +1043,45 @@ static __global__ void find_force_adp_step2(
       2.0 * sumlamyz * dely * delz;
     const double nu = sumlamxx + sumlamyy + sumlamzz;
     const double w_scale = w_deriv * d12 + 2.0 * w_val;
+    const double nu_w_third = (1.0 / 3.0) * nu * w_scale;
+    const double w_val_2 = 2.0 * w_val;
+    const double trdelmu_u_deriv_inv_r = trdelmu * u_deriv * inv_r;
+    const double w_deriv_inv_r_tradellam = w_deriv * inv_r * tradellam;
 
-    double adpx = delmux * u_val + trdelmu * u_deriv * delx * inv_r +
-                  2.0 * w_val * (sumlamxx * delx + sumlamxy * dely + sumlamxz * delz) +
-                  w_deriv * delx * inv_r * tradellam - (1.0 / 3.0) * nu * w_scale * delx;
-    double adpy = delmuy * u_val + trdelmu * u_deriv * dely * inv_r +
-                  2.0 * w_val * (sumlamxy * delx + sumlamyy * dely + sumlamyz * delz) +
-                  w_deriv * dely * inv_r * tradellam - (1.0 / 3.0) * nu * w_scale * dely;
-    double adpz = delmuz * u_val + trdelmu * u_deriv * delz * inv_r +
-                  2.0 * w_val * (sumlamxz * delx + sumlamyz * dely + sumlamzz * delz) +
-                  w_deriv * delz * inv_r * tradellam - (1.0 / 3.0) * nu * w_scale * delz;
-
-    adpx *= -1.0;
-    adpy *= -1.0;
-    adpz *= -1.0;
-
-    const double force_total_x = scalar * delx * inv_r + adpx;
-    const double force_total_y = scalar * dely * inv_r + adpy;
-    const double force_total_z = scalar * delz * inv_r + adpz;
+    const double force_total_x = scalar * delx * inv_r - 
+      (delmux * u_val + trdelmu_u_deriv_inv_r * delx +
+       w_val_2 * (sumlamxx * delx + sumlamxy * dely + sumlamxz * delz) +
+       w_deriv_inv_r_tradellam * delx - nu_w_third * delx);
+    const double force_total_y = scalar * dely * inv_r - 
+      (delmuy * u_val + trdelmu_u_deriv_inv_r * dely +
+       w_val_2 * (sumlamxy * delx + sumlamyy * dely + sumlamyz * delz) +
+       w_deriv_inv_r_tradellam * dely - nu_w_third * dely);
+    const double force_total_z = scalar * delz * inv_r - 
+      (delmuz * u_val + trdelmu_u_deriv_inv_r * delz +
+       w_val_2 * (sumlamxz * delx + sumlamyz * dely + sumlamzz * delz) +
+       w_deriv_inv_r_tradellam * delz - nu_w_third * delz);
 
     fx += force_total_x;
     fy += force_total_y;
     fz += force_total_z;
     pe += 0.5 * phi_val;
 
-    const double v0 = delx * force_total_x;
-    const double v1 = dely * force_total_y;
-    const double v2 = delz * force_total_z;
-    const double v3 = delx * force_total_y;
-    const double v4 = delx * force_total_z;
-    const double v5 = dely * force_total_z;
+    const double half_vxx = 0.5 * delx * force_total_x;
+    const double half_vyy = 0.5 * dely * force_total_y;
+    const double half_vzz = 0.5 * delz * force_total_z;
+    const double half_vxy = 0.5 * delx * force_total_y;
+    const double half_vxz = 0.5 * delx * force_total_z;
+    const double half_vyz = 0.5 * dely * force_total_z;
 
-    const double half = 0.5;
-    s_sxx += half * v0;
-    s_syy += half * v1;
-    s_szz += half * v2;
-    s_sxy += half * v3;
-    s_sxz += half * v4;
-    s_syz += half * v5;
-    s_syx += half * v3;
-    s_szx += half * v4;
-    s_szy += half * v5;
+    s_sxx += half_vxx;
+    s_syy += half_vyy;
+    s_szz += half_vzz;
+    s_sxy += half_vxy;
+    s_sxz += half_vxz;
+    s_syz += half_vyz;
+    s_syx += half_vxy;
+    s_szx += half_vxz;
+    s_szy += half_vyz;
   }
 
   g_fx[n1] += fx;
@@ -1412,21 +1132,17 @@ void ADP::compute(
     type_ptr = adp_data.mapped_type.data();
   }
   
-  // Build neighbor list with configurable algorithm selection
+  // Build neighbor list with automatic algorithm selection
   {
     int nbins[3];
     bool small_box = box.get_num_bins(0.5 * adp_data.rc, nbins);
-    const bool extended_x = box.pbc_x && box.thickness_x > 0.0 && adp_data.rc > 0.5 * box.thickness_x;
-    const bool extended_y = box.pbc_y && box.thickness_y > 0.0 && adp_data.rc > 0.5 * box.thickness_y;
-    const bool extended_z = box.pbc_z && box.thickness_z > 0.0 && adp_data.rc > 0.5 * box.thickness_z;
-    const bool requires_extended_images = extended_x || extended_y || extended_z;
-
-    // Choose neighbor algorithm based on user preference and box size
-    bool use_brute_force = !use_linear_neighbor_ || small_box || requires_extended_images;
+    
+    // Use O(N) cell list for normal boxes, O(N^2) brute force for very small boxes
+    // Note: cell list can handle extended periodic images (when rc > 0.5*box_size)
     const int max_neighbors = number_of_atoms > 0 ? adp_data.NL.size() / number_of_atoms : ADP_MAX_NEIGHBORS;
     neighbor_shift_ptr = nullptr;
     
-    if (!use_brute_force) {
+    if (!small_box) {
       // Use O(N) linear complexity cell list algorithm
       find_neighbor(
         N1,

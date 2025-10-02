@@ -1,0 +1,456 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="_static/logo.ico"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Theoretical background" href="theory/index.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GPUMD
+              <img src="_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#download">Download</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compilation">Compilation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#index-1">NetCDF setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#index-2">PLUMED setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dp-potential-support">DP potential support</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#program-introduction">Program introduction</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#necessary-instructions">Necessary instructions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#installation-dependencies">Installation dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#installation-details">Installation details</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gpumd-dp-installation-offline-version">GPUMD-DP installation (Offline version)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#dp-installation-offline-version">DP installation (Offline version)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gpumd-dp-installation">GPUMD-DP installation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#running-tests">Running tests</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#gpumd-dp-installation-online-version">GPUMD-DP installation (Online version)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#conda-environment">Conda environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#download-deep-kit-and-install">Download deep-kit and install</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#configure-the-gpumd-makefile">Configure the GPUMD makefile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#run-gpumd">Run GPUMD</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#run-test">Run Test</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#notice">Notice</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example">Example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="theory/index.html">Theoretical background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="potentials/index.html">Interatomic potentials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="gpumd/index.html">gpumd executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nep/index.html">nep executable</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<span id="index-0"></span><h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
+<section id="download">
+<h2>Download<a class="headerlink" href="#download" title="Link to this heading"></a></h2>
+<p>The source code is hosted on <a class="reference external" href="https://github.com/brucefan1983/GPUMD">github</a>.</p>
+</section>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
+<p>To compile (and run) <strong class="program">GPUMD</strong> one requires an Nvidia GPU card with compute capability no less than 3.5 and CUDA toolkit 9.0 or newer.
+On Linux systems, one also needs a C++ compiler supporting at least the C++11 standard.
+On Windows systems, one also needs the <code class="docutils literal notranslate"><span class="pre">cl.exe</span></code> compiler from Microsoft Visual Studio and a <a class="reference external" href="http://www.equation.com/servlet/equation.cmd?fa=make">64-bit version of make.exe</a>.</p>
+</section>
+<section id="compilation">
+<h2>Compilation<a class="headerlink" href="#compilation" title="Link to this heading"></a></h2>
+<p>In the <code class="docutils literal notranslate"><span class="pre">src</span></code> directory run <code class="docutils literal notranslate"><span class="pre">make</span></code>, which generates two executables, <code class="docutils literal notranslate"><span class="pre">nep</span></code> and <code class="docutils literal notranslate"><span class="pre">gpumd</span></code>.
+Please check the comments in the beginning of the makefile for some compiling options.</p>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<p>You can find several examples for how to use both the <code class="docutils literal notranslate"><span class="pre">gpumd</span></code> and <code class="docutils literal notranslate"><span class="pre">nep</span></code> executables in <a class="reference external" href="https://github.com/brucefan1983/GPUMD/tree/master/examples">the examples directory</a> of the <strong class="program">GPUMD</strong> repository.</p>
+</section>
+<section id="index-1">
+<span id="netcdf-setup"></span><span id="id1"></span><h2>NetCDF setup<a class="headerlink" href="#index-1" title="Link to this heading"></a></h2>
+<p>To use <a class="reference external" href="https://www.unidata.ucar.edu/software/netcdf/">NetCDF</a> (see <a class="reference internal" href="gpumd/input_parameters/dump_netcdf.html#kw-dump-netcdf"><span class="std std-ref">dump_netcdf keyword</span></a>) with <strong class="program">GPUMD</strong>, a few extra steps must be taken before building <strong class="program">GPUMD</strong>.
+First, you must download and install the correct version of NetCDF.
+Currently, <strong class="program">GPUMD</strong> is coded to work with <a class="reference external" href="https://github.com/Unidata/netcdf-c/releases/tag/v4.6.3">netCDF-C 4.6.3</a> and it is recommended that this version is used (not newer versions).</p>
+<p>The setup instructions are below:</p>
+<ul>
+<li><p>Download <a class="reference external" href="https://github.com/Unidata/netcdf-c/releases/tag/v4.6.3">netCDF-C 4.6.3</a></p></li>
+<li><p>Configure and build NetCDF.
+It is best to follow the instructions included with the software but, for the configuration, please use the following flags seen in our example line</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./configure<span class="w"> </span>--prefix<span class="o">=</span>&lt;path&gt;<span class="w"> </span>--disable-netcdf-4<span class="w"> </span>--disable-dap
+</pre></div>
+</div>
+<p>Here, the <code class="xref py py-attr docutils literal notranslate"><span class="pre">--prefix</span></code> determines the output directory of the build. Then make and install NetCDF:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>-j<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>make<span class="w"> </span>install
+</pre></div>
+</div>
+</li>
+<li><p>Enable the NetCDF functionality.
+To do this, one must enable the <code class="xref py py-attr docutils literal notranslate"><span class="pre">USE_NETCDF</span></code> flag.
+In the makefile, this will look as follows:</p>
+<div class="highlight-make notranslate"><div class="highlight"><pre><span></span><span class="nv">CFLAGS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>-std<span class="o">=</span>c++14<span class="w"> </span>-O3<span class="w"> </span><span class="k">$(</span>CUDA_ARCH<span class="k">)</span><span class="w"> </span>-DUSE_NETCDF
+</pre></div>
+</div>
+<p>In addition to that line the makefile must also be updated to the following:</p>
+<div class="highlight-make notranslate"><div class="highlight"><pre><span></span><span class="nv">INC</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>-I&lt;path&gt;/include<span class="w"> </span>-I./
+<span class="nv">LDFLAGS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>-L&lt;path&gt;/lib
+<span class="nv">LIBS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>-lcublas<span class="w"> </span>-lcusolver<span class="w"> </span>-l:libnetcdf.a
+</pre></div>
+</div>
+<p>where <code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;path&gt;</span></code> should be replaced with the installation path for NetCDF (defined in <code class="xref py py-attr docutils literal notranslate"><span class="pre">--prefix</span></code> of the <code class="docutils literal notranslate"><span class="pre">./configure</span></code> command).</p>
+</li>
+<li><p>Follow the remaining <strong class="program">GPUMD</strong> installation instructions</p></li>
+</ul>
+<p>Following these steps will enable the <a class="reference internal" href="gpumd/input_parameters/dump_netcdf.html#kw-dump-netcdf"><span class="std std-ref">dump_netcdf keyword</span></a>.</p>
+</section>
+<section id="index-2">
+<span id="plumed-setup"></span><span id="id3"></span><h2>PLUMED setup<a class="headerlink" href="#index-2" title="Link to this heading"></a></h2>
+<p>To use <a class="reference external" href="https://www.plumed.org/">PLUMED</a> (see <a class="reference internal" href="gpumd/input_parameters/plumed.html#kw-plumed"><span class="std std-ref">plumed keyword</span></a>) with <strong class="program">GPUMD</strong>, a few extra steps must be taken before building <strong class="program">GPUMD</strong>.
+First, you must download and install PLUMED.</p>
+<p>The setup instructions are below:</p>
+<ul>
+<li><p>Download <a class="reference external" href="https://github.com/plumed/plumed2/releases/">the latest version of PLUMED</a>, e.g. the <a class="reference external" href="https://github.com/plumed/plumed2/releases/download/v2.8.2/plumed-src-2.8.2.tgz">plumed-src-2.8.2.tgz</a> tarball.</p></li>
+<li><p>Configure and build PLUMED.
+It is best to follow the <a class="reference external" href="https://www.plumed.org/doc-v2.8/user-doc/html/_installation.html">instructions</a>, but for a quick installation, you may use the following setup:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./configure<span class="w"> </span>--prefix<span class="o">=</span>&lt;path&gt;<span class="w"> </span>--disable-mpi<span class="w"> </span>--enable-openmp<span class="w"> </span>--enable-modules<span class="o">=</span>all
+</pre></div>
+</div>
+<p>Here, the <code class="xref py py-attr docutils literal notranslate"><span class="pre">--prefix</span></code> determines the output directory of the build. Then make and install PLUMED:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>-j6<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>make<span class="w"> </span>install
+</pre></div>
+</div>
+<p>Then update your environment variables (e.g., add the following lines to your bashrc file):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PLUMED_KERNEL</span><span class="o">=</span>&lt;path&gt;/lib/libplumedKernel.so
+<span class="nb">export</span><span class="w"> </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="nv">$LD_LIBRARY_PATH</span>:&lt;path&gt;/lib
+<span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:&lt;path&gt;/bin
+</pre></div>
+</div>
+<p>where <code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;path&gt;</span></code> should be replaced with the installation path for PLUMED (defined in <code class="xref py py-attr docutils literal notranslate"><span class="pre">--prefix</span></code> of the <code class="docutils literal notranslate"><span class="pre">./configure</span></code> command). Finally, reopen your shell to apply changes.</p>
+</li>
+<li><p>Enable the PLUMED functionality.
+To do this, one must enable the <code class="xref py py-attr docutils literal notranslate"><span class="pre">USE_PLUMED</span></code> flag.
+In the makefile, this will look as follows:</p>
+<div class="highlight-make notranslate"><div class="highlight"><pre><span></span><span class="nv">CFLAGS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>-std<span class="o">=</span>c++14<span class="w"> </span>-O3<span class="w"> </span><span class="k">$(</span>CUDA_ARCH<span class="k">)</span><span class="w"> </span>-DUSE_PLUMED
+</pre></div>
+</div>
+<p>In addition to that line the makefile must also be updated to the following:</p>
+<div class="highlight-make notranslate"><div class="highlight"><pre><span></span><span class="nv">INC</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>-I&lt;path&gt;/include<span class="w"> </span>-I./
+<span class="nv">LDFLAGS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>-L&lt;path&gt;/lib<span class="w"> </span>-lplumed<span class="w"> </span>-lplumedKernel
+</pre></div>
+</div>
+<p>where <code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;path&gt;</span></code> should be replaced with the installation path for PLUMED (defined in <code class="xref py py-attr docutils literal notranslate"><span class="pre">--prefix</span></code> of the <code class="docutils literal notranslate"><span class="pre">./configure</span></code> command).</p>
+</li>
+<li><p>Follow the remaining <strong class="program">GPUMD</strong> installation instructions</p></li>
+</ul>
+<p>Following these steps will enable the <a class="reference internal" href="gpumd/input_parameters/plumed.html#kw-plumed"><span class="std std-ref">plumed keyword</span></a>.</p>
+</section>
+<section id="dp-potential-support">
+<span id="index-3"></span><span id="use-dp-in-gpumd"></span><h2>DP potential support<a class="headerlink" href="#dp-potential-support" title="Link to this heading"></a></h2>
+<section id="program-introduction">
+<h3>Program introduction<a class="headerlink" href="#program-introduction" title="Link to this heading"></a></h3>
+<p>This is the beginning of <strong class="program">GPUMD</strong> support for other machine learned interatomic potentials.</p>
+<section id="necessary-instructions">
+<h4>Necessary instructions<a class="headerlink" href="#necessary-instructions" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>This is a test version.</p></li>
+<li><p>Only potential function files ending with <code class="docutils literal notranslate"><span class="pre">.pb</span></code> in deepmd are supported, that is, the potential function files of the tensorflow version generated using <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">--tf</span></code> freeze.</p></li>
+</ul>
+</section>
+<section id="installation-dependencies">
+<h4>Installation dependencies<a class="headerlink" href="#installation-dependencies" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>You must ensure that the new version of DP is installed and can run normally. This program contains DP-related dependencies.</p></li>
+<li><p>The installation environment requirements of GPUMD itself must be met.</p></li>
+</ul>
+</section>
+</section>
+<section id="installation-details">
+<h3>Installation details<a class="headerlink" href="#installation-details" title="Link to this heading"></a></h3>
+<p>Use the instance in AutoDL for testing. If one need testing use AutoDL, please contact Ke Xu (<a class="reference external" href="mailto:twtdq&#37;&#52;&#48;qq&#46;com">twtdq<span>&#64;</span>qq<span>&#46;</span>com</a>).</p>
+<p>And we have created an image in <a class="reference external" href="https://www.autodl.com/">AutoDL</a> that can run GPUMD-DP directly, which can be shared with the account that provides the user ID. Then, you will not require the following process and can be used directly.</p>
+</section>
+<section id="gpumd-dp-installation-offline-version">
+<h3>GPUMD-DP installation (Offline version)<a class="headerlink" href="#gpumd-dp-installation-offline-version" title="Link to this heading"></a></h3>
+<section id="dp-installation-offline-version">
+<h4>DP installation (Offline version)<a class="headerlink" href="#dp-installation-offline-version" title="Link to this heading"></a></h4>
+<p>Use the latest version of DP installation steps:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt; $ # Copy data and unzip files.
+&gt;&gt; $ cd /root/autodl-tmp/
+&gt;&gt; $ wget https://mirror.nju.edu.cn/github-release/deepmodeling/deepmd-kit/v3.0.0/deepmd-kit-3.0.0-cuda126-Linux-x86_64.sh.0 -O deepmd-kit-3.0.0-cuda126-Linux-x86_64.sh.0
+&gt;&gt; $ wget https://mirror.nju.edu.cn/github-release/deepmodeling/deepmd-kit/v3.0.0/deepmd-kit-3.0.0-cuda126-Linux-x86_64.sh.1 -O deepmd-kit-3.0.0-cuda126-Linux-x86_64.sh.1
+&gt;&gt; $ cat deepmd-kit-3.0.0-cuda126-Linux-x86_64.sh.0 deepmd-kit-3.0.0-cuda126-Linux-x86_64.sh.1 &gt; deepmd-kit-3.0.0-cuda126-Linux-x86_64.sh
+&gt;&gt; $ # rm deepmd-kit-3.0.0-cuda126-Linux-x86_64.sh.0 deepmd-kit-3.0.0-cuda126-Linux-x86_64.sh.1 # Please use with caution &quot;rm&quot;
+&gt;&gt; $ sh deepmd-kit-3.0.0-cuda126-Linux-x86_64.sh -p /root/autodl-tmp/deepmd-kit -u # Just keep pressing Enter/yes.
+&gt;&gt; $ source /root/autodl-tmp/deepmd-kit/bin/activate /root/autodl-tmp/deepmd-kit
+&gt;&gt; $ dp -h
+</pre></div>
+</div>
+<p>After running according to the above steps, using <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">-h</span></code> can successfully display no errors.</p>
+</section>
+<section id="gpumd-dp-installation">
+<h4>GPUMD-DP installation<a class="headerlink" href="#gpumd-dp-installation" title="Link to this heading"></a></h4>
+<p>The GitHub link is <a class="reference external" href="https://github.com/Kick-H/GPUMD/tree/7af5267f4d8ba720830c154f11634a1942b66b08">Here</a>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt; $ wget https://codeload.github.com/Kick-H/GPUMD/zip/7af5267f4d8ba720830c154f11634a1942b66b08
+&gt;&gt; $ cd ${GPUMD}/src-v0.1
+</pre></div>
+</div>
+<p>Modify <code class="docutils literal notranslate"><span class="pre">makefile</span></code> as follows:</p>
+<ul class="simple">
+<li><p>Line 19 is changed from <code class="docutils literal notranslate"><span class="pre">CUDA_ARCH=-arch=sm_60</span></code> to <code class="docutils literal notranslate"><span class="pre">CUDA_ARCH=-arch=sm_89</span></code> (for RTX 4090). Modify according to the corresponding graphics card model.</p></li>
+<li><p>Line 25 is changed from <code class="docutils literal notranslate"><span class="pre">INC</span> <span class="pre">=</span> <span class="pre">-I./</span></code> to <code class="docutils literal notranslate"><span class="pre">INC</span> <span class="pre">=</span> <span class="pre">-I./</span> <span class="pre">-I/root/miniconda3/deepmd-kit/source/build/path_to_install/include/deepmd</span></code></p></li>
+<li><p>Line 27 is changed from <code class="docutils literal notranslate"><span class="pre">LIBS</span> <span class="pre">=</span> <span class="pre">-lcublas</span> <span class="pre">-lcusolver</span></code> to <code class="docutils literal notranslate"><span class="pre">LIBS</span> <span class="pre">=</span> <span class="pre">-lcublas</span> <span class="pre">-lcusolver</span> <span class="pre">-L/root/miniconda3/deepmd-kit/source/build/path_to_install/lib</span> <span class="pre">-ldeepmd_cc</span></code></p></li>
+</ul>
+<p>Then run the following installation command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt; $ sudo echo &quot;export LD_LIBRARY_PATH=/root/miniconda3/deepmd-kit/source/build/path_to_install/lib:$LD_LIBRARY_PATH&quot; &gt;&gt; /root/.bashrc
+&gt;&gt; $ source /root/.bashrc
+&gt;&gt; $ make gpumd -j
+</pre></div>
+</div>
+</section>
+<section id="running-tests">
+<h4>Running tests<a class="headerlink" href="#running-tests" title="Link to this heading"></a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt; $ cd /root/miniconda3/GPUMD-bu0/tests/dp
+&gt;&gt; $ ../../src/gpumd
+</pre></div>
+</div>
+</section>
+</section>
+<section id="gpumd-dp-installation-online-version">
+<h3>GPUMD-DP installation (Online version)<a class="headerlink" href="#gpumd-dp-installation-online-version" title="Link to this heading"></a></h3>
+<section id="introduction">
+<h4>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h4>
+<p>This is to use the online method to install the <cite>GPUMD-DP</cite> version, you need to connect the machine to the Internet and use github and other websites.</p>
+</section>
+<section id="conda-environment">
+<h4>Conda environment<a class="headerlink" href="#conda-environment" title="Link to this heading"></a></h4>
+<p>Create a new conda environment with Python and activate it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt; $ conda create -n tf-gpu2  python=3.9
+&gt;&gt; $ conda install -c conda-forge cudatoolkit=11.8
+&gt;&gt; $ pip install --upgrade tensorflow
+</pre></div>
+</div>
+</section>
+<section id="download-deep-kit-and-install">
+<h4>Download deep-kit and install<a class="headerlink" href="#download-deep-kit-and-install" title="Link to this heading"></a></h4>
+<p>Download DP source code and compile the source files following DP docs. Here are the cmake commands:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt; $ git clone https://github.com/deepmodeling/deepmd-kit.git
+&gt;&gt; $ cd deepmd-kit/source
+&gt;&gt; $ mkdir build &amp;&amp; cd build
+&gt;&gt; $ cmake -DENABLE_TENSORFLOW=TRUE -DUSE_CUDA_TOOLKIT=TRUE -DCMAKE_INSTALL_PREFIX=`path_to_install` -DUSE_TF_PYTHON_LIBS=TRUE ../
+&gt;&gt; $ make -j &amp;&amp; make install
+</pre></div>
+</div>
+<p>We just need the DP C++ interface, so we don’t source all DP environment. The libraries will be installed in <code class="docutils literal notranslate"><span class="pre">path_to_install</span></code>.</p>
+</section>
+<section id="configure-the-gpumd-makefile">
+<h4>Configure the GPUMD makefile<a class="headerlink" href="#configure-the-gpumd-makefile" title="Link to this heading"></a></h4>
+<p>The GitHub link is <a class="reference external" href="https://github.com/Kick-H/GPUMD/tree/7af5267f4d8ba720830c154f11634a1942b66b08">Here</a>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt; $ wget https://codeload.github.com/Kick-H/GPUMD/zip/7af5267f4d8ba720830c154f11634a1942b66b08
+&gt;&gt; $ cd ${GPUMD}/src
+&gt;&gt; $ vi makefile
+</pre></div>
+</div>
+<p>Configure the makefile of GPUMD. The DP code is included by macro definition <code class="docutils literal notranslate"><span class="pre">USE_TENSORFLOW</span></code>. So add it to <code class="docutils literal notranslate"><span class="pre">CFLAGS</span></code>:</p>
+<p><code class="docutils literal notranslate"><span class="pre">CFLAGS</span> <span class="pre">=</span> <span class="pre">-std=c++14</span> <span class="pre">-O3</span> <span class="pre">$(CUDA_ARCH)</span> <span class="pre">-DUSE_TENSORFLOW</span></code></p>
+<p>Then link the DP C++ libraries. Add the following two lines to update the include and link paths and compile GPUMD:</p>
+<p><code class="docutils literal notranslate"><span class="pre">INC</span> <span class="pre">+=</span> <span class="pre">-Ipath_to_install/include/deepmd</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">LDFLAGS</span> <span class="pre">+=</span> <span class="pre">-Lpath_to_install/lib</span> <span class="pre">-ldeepmd_cc</span></code></p>
+<p>Then, you can install it using the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt; $ make gpumd -j
+</pre></div>
+</div>
+</section>
+<section id="run-gpumd">
+<h4>Run GPUMD<a class="headerlink" href="#run-gpumd" title="Link to this heading"></a></h4>
+<p>When running GPUMD, if an error occurs stating that the DP libraries could not be found, add the library path temporarily with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>LD_LIBRARY_PATH=path_to_install/lib:$LD_LIBRARY_PATH
+</pre></div>
+</div>
+<p>Or add the environment permanently to the <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt; $ sudo echo &quot;export LD_LIBRARY_PATH=/root/miniconda3/deepmd-kit/source/build/path_to_install/lib:$LD_LIBRARY_PATH&quot; &gt;&gt; ~/.bashrc
+&gt;&gt; $ source ~/.bashrc
+</pre></div>
+</div>
+</section>
+<section id="run-test">
+<h4>Run Test<a class="headerlink" href="#run-test" title="Link to this heading"></a></h4>
+<p>This DP interface requires two files: a setting file and a DP potential file. The first file is very simple and is used to inform GPUMD of the atom number and types. For example, the <code class="docutils literal notranslate"><span class="pre">dp.txt</span></code> is shown in here for use the <code class="docutils literal notranslate"><span class="pre">potential</span> <span class="pre">dp.txt</span> <span class="pre">DP_POTENTIAL_FILE.pb</span></code> command in the <code class="docutils literal notranslate"><span class="pre">run.in</span></code> file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dp</span> <span class="mi">2</span> <span class="n">O</span> <span class="n">H</span>
+</pre></div>
+</div>
+</section>
+<section id="notice">
+<h4>Notice<a class="headerlink" href="#notice" title="Link to this heading"></a></h4>
+<p>The type list in the setting file and the potential file must be the same.</p>
+</section>
+<section id="example">
+<h4>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>Some water simulations using the <code class="docutils literal notranslate"><span class="pre">DP</span></code> model in <code class="docutils literal notranslate"><span class="pre">GPUMD</span></code>: <a class="reference external" href="https://github.com/brucefan1983/GPUMD/discussions">https://github.com/brucefan1983/GPUMD/discussions</a></p></li>
+</ul>
+</section>
+<section id="references">
+<h4>References<a class="headerlink" href="#references" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>DeePMD-kit: <a class="reference external" href="https://github.com/deepmodeling/deepmd-kit">https://github.com/deepmodeling/deepmd-kit</a></p></li>
+</ul>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="introduction.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="theory/index.html" class="btn btn-neutral float-right" title="Theoretical background" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

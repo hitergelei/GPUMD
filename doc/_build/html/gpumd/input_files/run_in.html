@@ -1,0 +1,421 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulation protocol (run.in) &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../../_static/logo.ico"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Simulation model (model.xyz)" href="model_xyz.html" />
+    <link rel="prev" title="Input files" href="index.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory/index.html">Theoretical background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../potentials/index.html">Interatomic potentials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">gpumd executable</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Input files</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Simulation protocol (<code class="docutils literal notranslate"><span class="pre">run.in</span></code>)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#simulation-setup">Simulation setup</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="model_xyz.html">Simulation model (<code class="docutils literal notranslate"><span class="pre">model.xyz</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="basis_in.html">Primitive cell (<code class="docutils literal notranslate"><span class="pre">basis.in</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kpoints_in.html">k-points (<code class="docutils literal notranslate"><span class="pre">kpoints.in</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="eigenvector_in.html">Eigenvectors for modal analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../input_parameters/index.html">Input parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../output_files/index.html">Output files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../nep/index.html">nep executable</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="simulation-protocol-run-in">
+<span id="index-0"></span><span id="run-in"></span><h1>Simulation protocol (<code class="docutils literal notranslate"><span class="pre">run.in</span></code>)<a class="headerlink" href="#simulation-protocol-run-in" title="Link to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">run.in</span></code> file is used to define the simulation protocol.
+The code will execute the commands in this file one by one.
+If the code encounters an invalid command in this file on start-up, it will report an error message and terminate.
+In this input file, blank lines and lines starting with <code class="docutils literal notranslate"><span class="pre">#</span></code> are ignored.
+One can thus write comments after <code class="docutils literal notranslate"><span class="pre">#</span></code>.
+All other lines should be of the form:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">keyword</span> <span class="n">parameter_1</span> <span class="n">parameter_2</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>The overall structure of a <code class="docutils literal notranslate"><span class="pre">run.in</span></code> file is as follows:</p>
+<ul class="simple">
+<li><p>First, set up the potential model using the <a class="reference internal" href="../input_parameters/potential.html#kw-potential"><span class="std std-ref">potential</span></a> keyword.
+* Multiple NEP potentials may be used using the <a class="reference internal" href="../input_parameters/dump_observer.html#kw-dump-observer"><span class="std std-ref">dump_observer</span></a> keyword. These NEP potentials may either be used to evaluate energy, forces and virials along the trajectory, or averaged together to run the MD on an average PES.</p></li>
+<li><p>Then, if needed, use the <a class="reference internal" href="../input_parameters/minimize.html#kw-minimize"><span class="std std-ref">minimize</span></a> keyword to minimize the energy of the whole system.</p></li>
+<li><p>Then one can use the following keywords to carry out static calculations:</p>
+<ul>
+<li><p>Use the <a class="reference internal" href="../input_parameters/compute_cohesive.html#kw-compute-cohesive"><span class="std std-ref">compute_cohesive</span></a> keyword to compute the cohesive energy curve.</p></li>
+<li><p>Use the <a class="reference internal" href="../input_parameters/compute_elastic.html#kw-compute-elastic"><span class="std std-ref">compute_elastic</span></a> keyword to compute the elastic constants.</p></li>
+<li><p>Use the <a class="reference internal" href="../input_parameters/compute_phonon.html#kw-compute-phonon"><span class="std std-ref">compute_phonon</span></a> keyword to compute the phonon dispersions.</p></li>
+</ul>
+</li>
+<li><p>Then, if one wants to carry out <a class="reference internal" href="../../glossary.html#term-MD"><span class="xref std std-term">MD</span></a> simulations, one has to set up the initial velocities using the <a class="reference internal" href="../input_parameters/velocity.html#kw-velocity"><span class="std std-ref">velocity</span></a> keyword and carry out a number of <a class="reference internal" href="../../glossary.html#term-MD"><span class="xref std std-term">MD</span></a> runs as follows:</p>
+<ul>
+<li><p>Specify an integrator using the <a class="reference internal" href="../input_parameters/ensemble.html#kw-ensemble"><span class="std std-ref">ensemble</span></a> keyword and optionally add keywords to further control the evolution and measurement processes.</p></li>
+<li><p>Use the <a class="reference internal" href="../input_parameters/run.html#kw-run"><span class="std std-ref">run</span></a> keyword to run a number of <a class="reference internal" href="../../glossary.html#term-MD"><span class="xref std std-term">MD</span></a> steps according to the above settings.</p></li>
+<li><p>The last two steps can be repeated.</p></li>
+</ul>
+</li>
+</ul>
+<p>The following tables provide an overview of the different keywords.
+A complete list can also be found <a class="reference internal" href="../input_parameters/index.html#gpumd-input-parameters"><span class="std std-ref">here</span></a>.
+The last two columns indicate whether the command is executed immediately (<em>Exec.</em>) and whether it is propagted from one <code class="docutils literal notranslate"><span class="pre">run</span></code> command to the next (<em>Prop.</em>).</p>
+<section id="simulation-setup">
+<h2>Simulation setup<a class="headerlink" href="#simulation-setup" title="Link to this heading"></a></h2>
+<table class="docutils align-default" style="width: 100%">
+<thead>
+<tr class="row-odd"><th class="head"><p>Keyword</p></th>
+<th class="head"><p>Brief description</p></th>
+<th class="head"><p>Exec.</p></th>
+<th class="head"><p>Prop.</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/velocity.html#kw-velocity"><span class="std std-ref">velocity</span></a></p></td>
+<td><p>Set the initial velocities</p></td>
+<td><p>Yes</p></td>
+<td><p>N/A</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/potential.html#kw-potential"><span class="std std-ref">potential</span></a></p></td>
+<td><p>Set up the interaction model</p></td>
+<td><p>Yes</p></td>
+<td><p>N/A</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/dftd3.html#kw-dftd3"><span class="std std-ref">dftd3</span></a></p></td>
+<td><p>Add the DFT-D3 dispersion correction to the NEP model</p></td>
+<td><p>Yes</p></td>
+<td><p>N/A</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/change_box.html#kw-change-box"><span class="std std-ref">change_box</span></a></p></td>
+<td><p>Change the box</p></td>
+<td><p>Yes</p></td>
+<td><p>N/A</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/deform.html#kw-deform"><span class="std std-ref">deform</span></a></p></td>
+<td><p>Deform the simulation box</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/ensemble.html#kw-ensemble"><span class="std std-ref">ensemble</span></a></p></td>
+<td><p>Specify the integrator for a <a class="reference internal" href="../../glossary.html#term-MD"><span class="xref std std-term">MD</span></a> run</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/fix.html#kw-fix"><span class="std std-ref">fix</span></a></p></td>
+<td><p>Fix (freeze) atoms</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/time_step.html#kw-time-step"><span class="std std-ref">time_step</span></a></p></td>
+<td><p>Specify the integration time step</p></td>
+<td><p>No</p></td>
+<td><p>Yes</p></td>
+</tr>
+</tbody>
+</table>
+<section id="actions">
+<h3>Actions<a class="headerlink" href="#actions" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Keyword</p></th>
+<th class="head"><p>Brief description</p></th>
+<th class="head"><p>Exec.</p></th>
+<th class="head"><p>Prop.</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/minimize.html#kw-minimize"><span class="std std-ref">minimize</span></a></p></td>
+<td><p>Perform an energy minimization</p></td>
+<td><p>Yes</p></td>
+<td><p>N/A</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/run.html#kw-run"><span class="std std-ref">run</span></a></p></td>
+<td><p>Run a number of <a class="reference internal" href="../../glossary.html#term-MD"><span class="xref std std-term">MD</span></a> steps</p></td>
+<td><p>Yes</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/compute.html#kw-compute"><span class="std std-ref">compute</span></a></p></td>
+<td><p>Compute some time and space-averaged quantities</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/compute_cohesive.html#kw-compute-cohesive"><span class="std std-ref">compute_cohesive</span></a></p></td>
+<td><p>Compute the cohesive energy curve</p></td>
+<td><p>Yes</p></td>
+<td><p>N/A</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/compute_elastic.html#kw-compute-elastic"><span class="std std-ref">compute_elastic</span></a></p></td>
+<td><p>Compute the elastic constants</p></td>
+<td><p>Yes</p></td>
+<td><p>N/A</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/compute_dos.html#kw-compute-dos"><span class="std std-ref">compute_dos</span></a></p></td>
+<td><p>Compute the phonon density of states (<a class="reference internal" href="../../glossary.html#term-PDOS"><span class="xref std std-term">PDOS</span></a>)</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/compute_gkma.html#kw-compute-gkma"><span class="std std-ref">compute_gkma</span></a></p></td>
+<td><p>Compute the modal heat current using the <a class="reference internal" href="../../glossary.html#term-GKMA"><span class="xref std std-term">GKMA</span></a> method</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/compute_hac.html#kw-compute-hac"><span class="std std-ref">compute_hac</span></a></p></td>
+<td><p>Compute the thermal conductivity using the <a class="reference internal" href="../../glossary.html#term-EMD"><span class="xref std std-term">EMD</span></a> method</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/compute_hnema.html#kw-compute-hnema"><span class="std std-ref">compute_hnema</span></a></p></td>
+<td><p>Compute the modal thermal conductivity using the <a class="reference internal" href="../../glossary.html#term-HNEMA"><span class="xref std std-term">HNEMA</span></a> method</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/compute_hnemd.html#kw-compute-hnemd"><span class="std std-ref">compute_hnemd</span></a></p></td>
+<td><p>Compute the thermal conductivity using the <a class="reference internal" href="../../glossary.html#term-HNEMD"><span class="xref std std-term">HNEMD</span></a> method</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/compute_hnemdec.html#kw-compute-hnemdec"><span class="std std-ref">compute_hnemdec</span></a></p></td>
+<td><p>Compute the multicomponent system thermal conductivity using the <a class="reference internal" href="../../glossary.html#term-HNEMDEC"><span class="xref std std-term">HNEMDEC</span></a> method</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/compute_phonon.html#kw-compute-phonon"><span class="std std-ref">compute_phonon</span></a></p></td>
+<td><p>Compute the phonon dispersion</p></td>
+<td><p>Yes</p></td>
+<td><p>N/A</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/compute_sdc.html#kw-compute-sdc"><span class="std std-ref">compute_sdc</span></a></p></td>
+<td><p>Compute the self-diffusion coefficient (<a class="reference internal" href="../../glossary.html#term-SDC"><span class="xref std std-term">SDC</span></a>)</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/compute_msd.html#kw-compute-msd"><span class="std std-ref">compute_msd</span></a></p></td>
+<td><p>Compute the mean-square displacement (<a class="reference internal" href="../../glossary.html#term-MSD"><span class="xref std std-term">MSD</span></a>)</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/compute_shc.html#kw-compute-shc"><span class="std std-ref">compute_shc</span></a></p></td>
+<td><p>Compute the spectral heat current (<a class="reference internal" href="../../glossary.html#term-SHC"><span class="xref std std-term">SHC</span></a>)</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="output">
+<h3>Output<a class="headerlink" href="#output" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Keyword</p></th>
+<th class="head"><p>Brief description</p></th>
+<th class="head"><p>Exec.</p></th>
+<th class="head"><p>Prop.</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/active.html#kw-active"><span class="std std-ref">active</span></a></p></td>
+<td><p>Run on-the-fly active learning, saving structures that exceeds a set threshold maximum force uncertainty over all specified NEP potentials.</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/dump_exyz.html#kw-dump-exyz"><span class="std std-ref">dump_exyz</span></a></p></td>
+<td><p>Write positions and other quantities in <a class="reference external" href="https://github.com/libAtoms/extxyz">extended XYZ format</a></p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/dump_observer.html#kw-dump-observer"><span class="std std-ref">dump_observer</span></a></p></td>
+<td><p>Write positions and other quantities for each of the observing NEP potentials, or the average of them, in the extended XYZ format.</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/dump_force.html#kw-dump-force"><span class="std std-ref">dump_force</span></a></p></td>
+<td><p>Write the atomic forces</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/dump_position.html#kw-dump-position"><span class="std std-ref">dump_position</span></a></p></td>
+<td><p>Write the atomic positions</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/dump_netcdf.html#kw-dump-netcdf"><span class="std std-ref">dump_netcdf</span></a></p></td>
+<td><p>Write the atomic positions in netCDF format</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/dump_restart.html#kw-dump-restart"><span class="std std-ref">dump_restart</span></a></p></td>
+<td><p>Write a restart file</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/dump_thermo.html#kw-dump-thermo"><span class="std std-ref">dump_thermo</span></a></p></td>
+<td><p>Write thermodynamic quantities</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/dump_velocity.html#kw-dump-velocity"><span class="std std-ref">dump_velocity</span></a></p></td>
+<td><p>Write the atomic velocities</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Input files" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="model_xyz.html" class="btn btn-neutral float-right" title="Simulation model (model.xyz)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

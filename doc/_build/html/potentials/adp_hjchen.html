@@ -1,0 +1,572 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular Dependent Potential (ADP) &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/index.html">Theoretical background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Interatomic potentials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../gpumd/index.html">gpumd executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nep/index.html">nep executable</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="angular-dependent-potential-adp">
+<span id="index-0"></span><span id="adp"></span><h1>Angular Dependent Potential (ADP)<a class="headerlink" href="#angular-dependent-potential-adp" title="Link to this heading"></a></h1>
+<p><strong class="program">GPUMD</strong> supports the Angular Dependent Potential (ADP), which is an extension of the embedded atom method (<a class="reference internal" href="../glossary.html#term-EAM"><span class="xref std std-term">EAM</span></a>) that includes angular forces through dipole and quadrupole distortions of the local atomic environment.</p>
+<p>The ADP was developed to provide a more accurate description of directional bonding and angular forces in metallic systems, particularly for materials where traditional EAM potentials fail to capture the full complexity of atomic interactions. The ADP formalism is especially useful for modeling complex crystal structures, defects, and phase transformations in metals and alloys.</p>
+<section id="potential-form">
+<h2>Potential form<a class="headerlink" href="#potential-form" title="Link to this heading"></a></h2>
+<section id="general-form">
+<h3>General form<a class="headerlink" href="#general-form" title="Link to this heading"></a></h3>
+<p>The ADP is described in detail by Mishin et al. <a class="reference internal" href="#mishin2005" id="id1"><span>[Mishin2005]</span></a>. The total energy of atom <span class="math notranslate nohighlight">\(i\)</span> is given by:</p>
+<div class="math notranslate nohighlight">
+\[E_i = F_\alpha\left(\sum_{j\neq i} \rho_\beta(r_{ij})\right) + \frac{1}{2} \sum_{j\neq i} \phi_{\alpha\beta}(r_{ij}) + \frac{1}{2} \sum_s (\mu_{is})^2 + \frac{1}{2} \sum_{s,t} (\lambda_{ist})^2 - \frac{1}{6} \nu_i^2\]</div>
+<p>where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(F_\alpha\)</span> is the embedding energy as a function of the total electron density at atom <span class="math notranslate nohighlight">\(i\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\rho_\beta(r_{ij})\)</span> is the electron density contribution from atom <span class="math notranslate nohighlight">\(j\)</span> at distance <span class="math notranslate nohighlight">\(r_{ij}\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\phi_{\alpha\beta}(r_{ij})\)</span> is the pair potential interaction between atoms of types <span class="math notranslate nohighlight">\(\alpha\)</span> and <span class="math notranslate nohighlight">\(\beta\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\alpha\)</span> and <span class="math notranslate nohighlight">\(\beta\)</span> are the element types of atoms <span class="math notranslate nohighlight">\(i\)</span> and <span class="math notranslate nohighlight">\(j\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(s\)</span> and <span class="math notranslate nohighlight">\(t\)</span> are indices running over Cartesian coordinates (<span class="math notranslate nohighlight">\(x, y, z\)</span>)</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mu_{is}\)</span> is the dipole distortion tensor (3 components)</p></li>
+<li><p><span class="math notranslate nohighlight">\(\lambda_{ist}\)</span> is the quadrupole distortion tensor (6 independent components)</p></li>
+<li><p><span class="math notranslate nohighlight">\(\nu_i\)</span> is the trace of the quadrupole tensor</p></li>
+</ul>
+</section>
+<section id="angular-terms">
+<h3>Angular terms<a class="headerlink" href="#angular-terms" title="Link to this heading"></a></h3>
+<p>The dipole distortion tensor represents the first moment of the local environment:</p>
+<div class="math notranslate nohighlight">
+\[\mu_{is} = \sum_{j\neq i} u_{\alpha\beta}(r_{ij}) r_{ij}^s\]</div>
+<p>where <span class="math notranslate nohighlight">\(u_{\alpha\beta}(r)\)</span> is a tabulated function and <span class="math notranslate nohighlight">\(r_{ij}^s\)</span> is the <span class="math notranslate nohighlight">\(s\)</span>-component of the vector from atom <span class="math notranslate nohighlight">\(i\)</span> to atom <span class="math notranslate nohighlight">\(j\)</span>.</p>
+<p>The quadrupole distortion tensor represents the second moment of the local environment:</p>
+<div class="math notranslate nohighlight">
+\[\lambda_{ist} = \sum_{j\neq i} w_{\alpha\beta}(r_{ij}) r_{ij}^s r_{ij}^t\]</div>
+<p>where <span class="math notranslate nohighlight">\(w_{\alpha\beta}(r)\)</span> is another tabulated function. The trace of the quadrupole tensor is:</p>
+<div class="math notranslate nohighlight">
+\[\nu_i = \lambda_{ixx} + \lambda_{iyy} + \lambda_{izz}\]</div>
+<p>The angular terms <span class="math notranslate nohighlight">\(\mu\)</span> and <span class="math notranslate nohighlight">\(\lambda\)</span> introduce directional dependence into the potential energy, allowing the ADP to capture angular forces that are absent in the traditional EAM formalism. These terms are essential for accurately modeling materials with complex bonding environments.</p>
+</section>
+<section id="physical-interpretation">
+<h3>Physical interpretation<a class="headerlink" href="#physical-interpretation" title="Link to this heading"></a></h3>
+<p>The ADP energy can be understood as:</p>
+<ol class="arabic simple">
+<li><p><strong>EAM contribution</strong>: <span class="math notranslate nohighlight">\(F(\rho) + \frac{1}{2}\phi(r)\)</span> - Standard many-body and pair interactions</p></li>
+<li><p><strong>Dipole contribution</strong>: <span class="math notranslate nohighlight">\(\frac{1}{2}\sum_s \mu_{is}^2\)</span> - Energetic penalty for asymmetric local environment</p></li>
+<li><p><strong>Quadrupole contribution</strong>: <span class="math notranslate nohighlight">\(\frac{1}{2}\sum_{s,t} \lambda_{ist}^2 - \frac{1}{6}\nu_i^2\)</span> - Energetic penalty for aspherical distortions</p></li>
+</ol>
+<p>The angular terms effectively measure deviations from ideal local symmetry, with the energy increasing for distorted configurations. This makes the ADP particularly well-suited for modeling:</p>
+<ul class="simple">
+<li><p>Crystal defects (vacancies, interstitials, dislocations)</p></li>
+<li><p>Grain boundaries and surfaces</p></li>
+<li><p>Phase transformations</p></li>
+<li><p>Materials under complex stress states</p></li>
+</ul>
+</section>
+</section>
+<section id="file-format">
+<h2>File format<a class="headerlink" href="#file-format" title="Link to this heading"></a></h2>
+<section id="general-structure">
+<h3>General structure<a class="headerlink" href="#general-structure" title="Link to this heading"></a></h3>
+<p>The ADP potential file follows the extended DYNAMO setfl format, which is compatible with LAMMPS and other molecular dynamics codes. The file structure consists of:</p>
+<p><strong>Header section</strong> (lines 1-5):</p>
+<ul class="simple">
+<li><p>Lines 1-3: Comment lines (can contain any text, typically author and date information)</p></li>
+<li><p>Line 4: <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nelements</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">Element1</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">Element2</span></code> … <code class="xref py py-attr docutils literal notranslate"><span class="pre">ElementN</span></code></p>
+<ul>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">Nelements</span></code>: Number of elements in the potential</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">Element1</span></code>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">Element2</span></code>, etc.: Element symbols (e.g., Cu, Ta, Mo)</p></li>
+</ul>
+</li>
+<li><p>Line 5: <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nrho</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">drho</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nr</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">dr</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">cutoff</span></code></p>
+<ul>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">Nrho</span></code>: Number of points in the embedding function <span class="math notranslate nohighlight">\(F(\rho)\)</span> tabulation</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">drho</span></code>: Spacing between tabulated <span class="math notranslate nohighlight">\(\rho\)</span> values</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">Nr</span></code>: Number of points in the pair potential and density function tabulations</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">dr</span></code>: Spacing between tabulated <span class="math notranslate nohighlight">\(r\)</span> values</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">cutoff</span></code>: Cutoff distance for all functions (in Angstroms)</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Per-element sections</strong> (repeated <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nelements</span></code> times):</p>
+<p>Each element section contains:</p>
+<ul class="simple">
+<li><p>Line 1: <code class="xref py py-attr docutils literal notranslate"><span class="pre">atomic_number</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">mass</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">lattice_constant</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">lattice_type</span></code></p>
+<ul>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">atomic_number</span></code>: Atomic number of the element</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">mass</span></code>: Atomic mass (in amu)</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">lattice_constant</span></code>: Equilibrium lattice constant (in Angstroms)</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">lattice_type</span></code>: Crystal structure (e.g., fcc, bcc, hcp)</p></li>
+</ul>
+</li>
+<li><p>Next <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nrho</span></code> values: Embedding function <span class="math notranslate nohighlight">\(F(\rho)\)</span></p>
+<ul>
+<li><p>Tabulated values of <span class="math notranslate nohighlight">\(F\)</span> at <span class="math notranslate nohighlight">\(\rho = 0, \Delta\rho, 2\Delta\rho, ..., (N_\rho-1)\Delta\rho\)</span></p></li>
+<li><p>Units: eV</p></li>
+</ul>
+</li>
+<li><p>Next <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nr</span></code> values: Electron density function <span class="math notranslate nohighlight">\(\rho(r)\)</span></p>
+<ul>
+<li><p>Tabulated values at <span class="math notranslate nohighlight">\(r = 0, \Delta r, 2\Delta r, ..., (N_r-1)\Delta r\)</span></p></li>
+<li><p>Units: electron density</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Pair potential section</strong>:</p>
+<p>For all element pairs <span class="math notranslate nohighlight">\((i, j)\)</span> with <span class="math notranslate nohighlight">\(i \geq j\)</span> (upper triangular, since <span class="math notranslate nohighlight">\(\phi_{ij} = \phi_{ji}\)</span>):</p>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">Nr</span></code> values: Pair potential <span class="math notranslate nohighlight">\(\phi_{ij}(r)\)</span></p>
+<ul>
+<li><p>Tabulated as <span class="math notranslate nohighlight">\(r \times \phi(r)\)</span> (scaled by distance)</p></li>
+<li><p>Units: eV·Angstrom</p></li>
+<li><p>Order: (1,1), (2,1), (2,2), (3,1), (3,2), (3,3), etc.</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Dipole function section</strong>:</p>
+<p>For all element pairs <span class="math notranslate nohighlight">\((i, j)\)</span> with <span class="math notranslate nohighlight">\(i \geq j\)</span>:</p>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">Nr</span></code> values: Dipole function <span class="math notranslate nohighlight">\(u_{ij}(r)\)</span></p>
+<ul>
+<li><p>Tabulated as <span class="math notranslate nohighlight">\(u(r)\)</span> (NOT scaled by distance)</p></li>
+<li><p>Units: electron density·Angstrom</p></li>
+<li><p>Same ordering as pair potentials</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Quadrupole function section</strong>:</p>
+<p>For all element pairs <span class="math notranslate nohighlight">\((i, j)\)</span> with <span class="math notranslate nohighlight">\(i \geq j\)</span>:</p>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">Nr</span></code> values: Quadrupole function <span class="math notranslate nohighlight">\(w_{ij}(r)\)</span></p>
+<ul>
+<li><p>Tabulated as <span class="math notranslate nohighlight">\(w(r)\)</span> (NOT scaled by distance)</p></li>
+<li><p>Units: electron density·Angstrom²</p></li>
+<li><p>Same ordering as pair potentials</p></li>
+</ul>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Important</strong>: Only <span class="math notranslate nohighlight">\(\phi(r)\)</span> is tabulated with an <span class="math notranslate nohighlight">\(r\)</span> scaling factor. The functions <span class="math notranslate nohighlight">\(u(r)\)</span> and <span class="math notranslate nohighlight">\(w(r)\)</span> are tabulated directly without scaling. This is a critical detail when creating or converting ADP potential files.</p>
+</div>
+</section>
+<section id="example-format">
+<h3>Example format<a class="headerlink" href="#example-format" title="Link to this heading"></a></h3>
+<p>For a two-element system (e.g., Cu-Ta), the file structure would be:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Comment line 1: ADP potential for Cu-Ta system</span>
+<span class="c1"># Comment line 2: Developed by Author Name</span>
+<span class="c1"># Comment line 3: Date: YYYY-MM-DD</span>
+<span class="mi">2</span> <span class="n">Cu</span> <span class="n">Ta</span>
+<span class="mi">10000</span> <span class="mf">0.001</span> <span class="mi">10000</span> <span class="mf">0.001</span> <span class="mf">6.5</span>
+
+<span class="c1"># Element 1: Cu</span>
+<span class="mi">29</span> <span class="mf">63.546</span> <span class="mf">3.615</span> <span class="n">fcc</span>
+<span class="o">&lt;</span><span class="mi">10000</span> <span class="n">values</span> <span class="n">of</span> <span class="n">F_Cu</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="mi">10000</span> <span class="n">values</span> <span class="n">of</span> <span class="n">rho_Cu</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">&gt;</span>
+
+<span class="c1"># Element 2: Ta</span>
+<span class="mi">73</span> <span class="mf">180.948</span> <span class="mf">3.303</span> <span class="n">bcc</span>
+<span class="o">&lt;</span><span class="mi">10000</span> <span class="n">values</span> <span class="n">of</span> <span class="n">F_Ta</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="mi">10000</span> <span class="n">values</span> <span class="n">of</span> <span class="n">rho_Ta</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">&gt;</span>
+
+<span class="c1"># Pair potentials</span>
+<span class="o">&lt;</span><span class="mi">10000</span> <span class="n">values</span> <span class="n">of</span> <span class="n">r</span><span class="o">*</span><span class="n">phi_CuCu</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="mi">10000</span> <span class="n">values</span> <span class="n">of</span> <span class="n">r</span><span class="o">*</span><span class="n">phi_TaCu</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="mi">10000</span> <span class="n">values</span> <span class="n">of</span> <span class="n">r</span><span class="o">*</span><span class="n">phi_TaTa</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">&gt;</span>
+
+<span class="c1"># Dipole functions</span>
+<span class="o">&lt;</span><span class="mi">10000</span> <span class="n">values</span> <span class="n">of</span> <span class="n">u_CuCu</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="mi">10000</span> <span class="n">values</span> <span class="n">of</span> <span class="n">u_TaCu</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="mi">10000</span> <span class="n">values</span> <span class="n">of</span> <span class="n">u_TaTa</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">&gt;</span>
+
+<span class="c1"># Quadrupole functions</span>
+<span class="o">&lt;</span><span class="mi">10000</span> <span class="n">values</span> <span class="n">of</span> <span class="n">w_CuCu</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="mi">10000</span> <span class="n">values</span> <span class="n">of</span> <span class="n">w_TaCu</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="mi">10000</span> <span class="n">values</span> <span class="n">of</span> <span class="n">w_TaTa</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>The tabulated values are typically written with 5 values per line, separated by whitespace.</p>
+</section>
+<section id="element-mapping">
+<h3>Element mapping<a class="headerlink" href="#element-mapping" title="Link to this heading"></a></h3>
+<p>By default, GPUMD maps elements from the potential file to atoms in the simulation based on the order they appear in the structure file. However, you can explicitly specify the element mapping using an extended syntax:</p>
+<p><strong>Default mapping</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">Cu_Ta</span><span class="o">.</span><span class="n">adp</span>
+</pre></div>
+</div>
+<p>This maps the first element in the potential file (Cu) to atom type 0, and the second element (Ta) to atom type 1.</p>
+<p><strong>Explicit mapping</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">Cu_Ta</span><span class="o">.</span><span class="n">adp</span> <span class="n">Cu</span> <span class="n">Ta</span>
+</pre></div>
+</div>
+<p>This explicitly maps Cu → type 0 and Ta → type 1.</p>
+<p><strong>Reordered mapping</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">Cu_Ta</span><span class="o">.</span><span class="n">adp</span> <span class="n">Ta</span> <span class="n">Cu</span>
+</pre></div>
+</div>
+<p>This maps Ta → type 0 and Cu → type 1, effectively swapping the element assignments.</p>
+<p>The explicit mapping is particularly useful when:</p>
+<ul class="simple">
+<li><p>Your structure file has atoms in a different order than the potential file</p></li>
+<li><p>You want to use a subset of elements from a multi-element potential</p></li>
+<li><p>You need to verify which element corresponds to which atom type</p></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The number of elements specified in the mapping must match the number of atom types in your system. Mismatches will cause GPUMD to report an error during initialization.</p>
+</div>
+</section>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<section id="basic-usage">
+<h3>Basic usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h3>
+<p>To use an ADP potential in GPUMD, specify it in the <code class="file docutils literal notranslate"><span class="pre">run.in</span></code> input file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">Ta</span><span class="o">.</span><span class="n">adp</span>
+</pre></div>
+</div>
+<p>The potential file must begin with the line:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">adp</span>
+</pre></div>
+</div>
+<p>followed by the tabulated data in the extended DYNAMO setfl format as described above.</p>
+</section>
+<section id="single-element-system">
+<h3>Single-element system<a class="headerlink" href="#single-element-system" title="Link to this heading"></a></h3>
+<p>For a pure metal system (e.g., pure molybdenum):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">Mo</span><span class="o">.</span><span class="n">adp</span>
+</pre></div>
+</div>
+<p>GPUMD will automatically map the Mo element from the potential file to all atoms in the system.</p>
+</section>
+<section id="multi-element-system">
+<h3>Multi-element system<a class="headerlink" href="#multi-element-system" title="Link to this heading"></a></h3>
+<p>For a binary alloy (e.g., U-Mo):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">U_Mo</span><span class="o">.</span><span class="n">adp</span>
+</pre></div>
+</div>
+<p>By default, the first element in the potential file (U) maps to atom type 0, and the second element (Mo) maps to atom type 1. Ensure your structure file has the correct atom type assignments.</p>
+<p>Explicit element mapping:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">U_Mo</span><span class="o">.</span><span class="n">adp</span> <span class="n">U</span> <span class="n">Mo</span>
+</pre></div>
+</div>
+<p>Or with reversed order:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">U_Mo</span><span class="o">.</span><span class="n">adp</span> <span class="n">Mo</span> <span class="n">U</span>
+</pre></div>
+</div>
+<p>This is useful when your structure file has atom types in a different order than the potential file.</p>
+</section>
+</section>
+<section id="implementation-details">
+<h2>Implementation details<a class="headerlink" href="#implementation-details" title="Link to this heading"></a></h2>
+<section id="interpolation-method">
+<h3>Interpolation method<a class="headerlink" href="#interpolation-method" title="Link to this heading"></a></h3>
+<p>GPUMD uses <strong>Hermite cubic spline interpolation</strong> for evaluating the tabulated functions <span class="math notranslate nohighlight">\(F(\rho)\)</span>, <span class="math notranslate nohighlight">\(\rho(r)\)</span>, <span class="math notranslate nohighlight">\(\phi(r)\)</span>, <span class="math notranslate nohighlight">\(u(r)\)</span>, and <span class="math notranslate nohighlight">\(w(r)\)</span>.</p>
+<p>The Hermite spline method:</p>
+<ul class="simple">
+<li><p>Constructs cubic polynomials between each pair of tabulated points</p></li>
+<li><p>Uses finite difference approximations for derivatives at grid points</p></li>
+<li><p>Provides smooth, continuous first derivatives across the entire interpolation range</p></li>
+<li><p>Offers excellent balance between accuracy and computational efficiency</p></li>
+</ul>
+<p>The spline coefficients are pre-computed during initialization and stored in GPU memory for fast lookup during force calculations.</p>
+</section>
+<section id="neighbor-list-construction">
+<h3>Neighbor list construction<a class="headerlink" href="#neighbor-list-construction" title="Link to this heading"></a></h3>
+<p>GPUMD automatically selects the optimal neighbor list algorithm based on system size and cutoff radius:</p>
+<ul class="simple">
+<li><p><strong>Cell list method</strong> (O(N)): Used by default for most systems</p>
+<ul>
+<li><p>Divides simulation box into cells of size ≥ cutoff radius</p></li>
+<li><p>Efficiently handles systems with <span class="math notranslate nohighlight">\(r_c &gt; 0.5 \times L_{\text{box}}\)</span></p></li>
+<li><p>Automatically accounts for periodic boundary conditions</p></li>
+<li><p>Recommended for all production simulations</p></li>
+</ul>
+</li>
+<li><p><strong>Brute force method</strong> (O(N²)): Automatic fallback for very small systems</p>
+<ul>
+<li><p>Used only when box dimensions are too small for cell list</p></li>
+<li><p>Typically activated for systems with &lt; ~100 atoms</p></li>
+<li><p>Less efficient but guarantees correctness for edge cases</p></li>
+</ul>
+</li>
+</ul>
+<p>Users do not need to specify the neighbor list method - GPUMD selects the optimal algorithm automatically.</p>
+</section>
+<section id="cuda-optimization">
+<h3>CUDA optimization<a class="headerlink" href="#cuda-optimization" title="Link to this heading"></a></h3>
+<p>The ADP implementation in GPUMD is highly optimized for NVIDIA GPUs:</p>
+<ul class="simple">
+<li><p><strong>Two-pass kernel design</strong>:</p>
+<ul>
+<li><p>First pass: Compute electron density, dipole, and quadrupole tensors</p></li>
+<li><p>Second pass: Compute forces and stresses using precomputed quantities</p></li>
+</ul>
+</li>
+<li><p><strong>Memory coalescing</strong>: All atomic data stored in structure-of-arrays format for optimal memory access patterns</p></li>
+<li><p><strong>Inline functions</strong>: Critical interpolation routines marked with <code class="docutils literal notranslate"><span class="pre">__forceinline__</span></code> to reduce function call overhead</p></li>
+<li><p><strong>Restrict pointers</strong>: <code class="docutils literal notranslate"><span class="pre">__restrict__</span></code> qualifiers enable compiler optimizations by guaranteeing no pointer aliasing</p></li>
+<li><p><strong>Optimized block size</strong>: Default thread block size of 128 provides good occupancy across different GPU architectures</p></li>
+</ul>
+<p>Performance benchmarks on RTX 4060 Laptop GPU (sm_89) show throughput of ~45,000 atom·steps/second for typical Mo systems with ~10,000 atoms.</p>
+</section>
+<section id="limitations-and-considerations">
+<h3>Limitations and considerations<a class="headerlink" href="#limitations-and-considerations" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Cutoff radius</strong>: Must be consistent across all tabulated functions in the potential file</p></li>
+<li><p><strong>Tabulation resolution</strong>: Higher <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nr</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nrho</span></code> values increase accuracy but also memory usage</p>
+<ul>
+<li><p>Typical values: <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nr</span></code> = <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nrho</span></code> = 5,000 to 10,000</p></li>
+<li><p>Grid spacing should be fine enough to resolve features in <span class="math notranslate nohighlight">\(F\)</span>, <span class="math notranslate nohighlight">\(\phi\)</span>, <span class="math notranslate nohighlight">\(u\)</span>, <span class="math notranslate nohighlight">\(w\)</span></p></li>
+</ul>
+</li>
+<li><p><strong>Boundary conditions</strong>: The implementation assumes fully periodic boundary conditions (PBC) in all three directions</p></li>
+<li><p><strong>Units</strong>: GPUMD uses the metal unit system (Angstrom, eV, amu, ps)</p>
+<ul>
+<li><p>Ensure potential file uses consistent units</p></li>
+<li><p>Distances in Angstroms, energies in eV</p></li>
+</ul>
+</li>
+<li><p><strong>Compatibility</strong>: ADP potential files from LAMMPS can be used directly in GPUMD without modification</p></li>
+</ul>
+</section>
+</section>
+<section id="available-potentials">
+<h2>Available potentials<a class="headerlink" href="#available-potentials" title="Link to this heading"></a></h2>
+<p>ADP potentials are available for various metallic systems. Check the <code class="file docutils literal notranslate"><span class="pre">potentials/</span></code> directory in the GPUMD distribution for example files.</p>
+<p>Published ADP potentials include:</p>
+<ul class="simple">
+<li><p><strong>Uranium-Molybdenum (U-Mo)</strong>: For nuclear fuel applications <a class="reference internal" href="#mishin2005" id="id2"><span>[Mishin2005]</span></a></p></li>
+<li><p><strong>Aluminum-Copper (Al-Cu)</strong>: For precipitation studies in aluminum alloys</p></li>
+<li><p><strong>Copper-Tantalum (Cu-Ta)</strong>: For immiscible alloy systems</p></li>
+<li><p><strong>Molybdenum-Tantalum (Mo-Ta)</strong>: For BCC refractory alloys</p></li>
+</ul>
+<p>When using published potentials, always cite the original reference where the potential was developed and validated.</p>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<section id="common-issues">
+<h3>Common issues<a class="headerlink" href="#common-issues" title="Link to this heading"></a></h3>
+<p><strong>“ADP element mapping failed”</strong></p>
+<ul class="simple">
+<li><p>Check that the number of elements in the potential file matches your system</p></li>
+<li><p>Verify element symbols are spelled correctly</p></li>
+<li><p>Ensure atom types in structure file match the specified element mapping</p></li>
+</ul>
+<p><strong>“Potential cutoff exceeds simulation box”</strong></p>
+<ul class="simple">
+<li><p>The cutoff radius <span class="math notranslate nohighlight">\(r_c\)</span> must be less than half the shortest box dimension</p></li>
+<li><p>Either increase box size or use a potential with smaller cutoff</p></li>
+<li><p>For small systems, GPUMD will automatically switch to brute force neighbor list</p></li>
+</ul>
+<p><strong>Poor energy conservation in NVE simulations</strong></p>
+<ul class="simple">
+<li><p>Check time step is sufficiently small (typically ≤ 1 fs for metals)</p></li>
+<li><p>Verify potential file tabulation has adequate resolution</p></li>
+<li><p>Ensure cutoff radius is appropriate for the system</p></li>
+</ul>
+<p><strong>Unexpected forces or energies</strong></p>
+<ul class="simple">
+<li><p>Verify potential file format is correct (especially <span class="math notranslate nohighlight">\(r\phi\)</span> vs <span class="math notranslate nohighlight">\(\phi\)</span> scaling)</p></li>
+<li><p>Check that element mapping is correct</p></li>
+<li><p>Compare single-point energy/force calculation with LAMMPS for validation</p></li>
+</ul>
+</section>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="mishin2005" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Mishin2005<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id2">2</a>)</span>
+<ol class="upperalpha simple" start="25">
+<li><p>Mishin, M. J. Mehl, and D. A. Papaconstantopoulos, “Interatomic potentials for monoatomic metals from experimental data and ab initio calculations,” Phys. Rev. B 59, 3393 (1999); Y. Mishin, D. Farkas, M. J. Mehl, and D. A. Papaconstantopoulos, “Interatomic potentials for monoatomic metals from experimental data and ab initio calculations,” Phys. Rev. B 59, 3393 (1999); Y. Mishin, M. J. Mehl, D. A. Papaconstantopoulos, A. F. Voter, and J. D. Kress, “Structural stability and lattice defects in copper: Ab initio, tight-binding, and embedded-atom calculations,” Phys. Rev. B 63, 224106 (2001); Y. Mishin, M. R. Sørensen, and A. F. Voter, “Calculation of point-defect entropy in metals,” Philos. Mag. A 81, 2591 (2001); Y. Mishin, M. J. Mehl, and D. A. Papaconstantopoulos, “Phase stability in the Fe–Ni system: Investigation by first-principles calculations and atomistic simulations,” Acta Mater. 53, 4029 (2005).</p></li>
+</ol>
+</div>
+</div>
+</section>
+<section id="see-also">
+<h2>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="eam.html#eam"><span class="std std-ref">Embedded atom method</span></a> - Embedded Atom Method potential (parent formalism of ADP)</p></li>
+<li><p><a class="reference internal" href="fcp.html#fcp"><span class="std std-ref">Force constant potential</span></a> - Force-Constant Potential (another extension of EAM)</p></li>
+<li><p>LAMMPS <a class="reference external" href="https://docs.lammps.org/pair_adp.html">pair_style adp documentation</a></p></li>
+</ul>
+</section>
+<section id="example-files">
+<h2>Example files<a class="headerlink" href="#example-files" title="Link to this heading"></a></h2>
+<p>Example ADP potential files and test cases can be found in:</p>
+<ul class="simple">
+<li><p><code class="file docutils literal notranslate"><span class="pre">examples/adp_U_Mo/</span></code> - U-Mo binary system with simulation examples</p></li>
+<li><p><code class="file docutils literal notranslate"><span class="pre">examples/adp_Mo_Ta/</span></code> - Mo-Ta system with analysis scripts</p></li>
+<li><p><code class="file docutils literal notranslate"><span class="pre">potentials/</span></code> - Collection of validated ADP potential files</p></li>
+</ul>
+<p>These examples include:</p>
+<ul class="simple">
+<li><p>Complete potential files in correct format</p></li>
+<li><p>Sample structure files (XYZ format)</p></li>
+<li><p><code class="file docutils literal notranslate"><span class="pre">run.in</span></code> input files for GPUMD</p></li>
+<li><p>Analysis and visualization scripts (MATLAB, Python)</p></li>
+</ul>
+<p>For questions or issues with ADP potentials in GPUMD, please:</p>
+<ol class="arabic simple">
+<li><p>Check the examples directory for reference implementations</p></li>
+<li><p>Validate your potential file format against working examples</p></li>
+<li><p>Report issues on the GPUMD GitHub repository: <a class="reference external" href="https://github.com/brucefan1983/GPUMD">https://github.com/brucefan1983/GPUMD</a></p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,299 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nep.in &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../../_static/logo.ico"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="train.xyz and test.xyz" href="train_test_xyz.html" />
+    <link rel="prev" title="Input files" href="index.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory/index.html">Theoretical background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../potentials/index.html">Interatomic potentials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../gpumd/index.html">gpumd executable</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">nep executable</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Input files</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">nep.in</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#file-format">File format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#keywords">Keywords</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="train_test_xyz.html"><code class="docutils literal notranslate"><span class="pre">train.xyz</span></code> and <code class="docutils literal notranslate"><span class="pre">test.xyz</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../input_parameters/index.html">Input parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../output_files/index.html">Output files</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="index-0">
+<span id="nep-in"></span><span id="id1"></span><h1><code class="docutils literal notranslate"><span class="pre">nep.in</span></code><a class="headerlink" href="#index-0" title="Link to this heading"></a></h1>
+<p>This file specifies hyperparameters used for training neuroevolution potential (<a class="reference internal" href="../../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a>) models, the functional form of which is outline <a class="reference internal" href="../../potentials/nep.html#nep-formalism"><span class="std std-ref">here</span></a>.
+The <a class="reference internal" href="../../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> approach was proposed in <a class="reference internal" href="../../bibliography.html#fan2021" id="id2"><span>[Fan2021]</span></a> (NEP1) and later improved in <a class="reference internal" href="../../bibliography.html#fan2022a" id="id3"><span>[Fan2022a]</span></a> (NEP2), <a class="reference internal" href="../../bibliography.html#fan2022b" id="id4"><span>[Fan2022b]</span></a> (NEP3), and <a class="reference internal" href="../../bibliography.html#song2024" id="id5"><span>[Song2024]</span></a> (NEP4).
+Currently, we support NEP3 and NEP4, which can be chosen by the <a class="reference internal" href="../input_parameters/version.html#kw-version"><span class="std std-ref">version keyword</span></a>.</p>
+<section id="file-format">
+<h2>File format<a class="headerlink" href="#file-format" title="Link to this heading"></a></h2>
+<p>In this input file, blank lines and lines starting with <code class="xref py py-attr docutils literal notranslate"><span class="pre">#</span></code> are ignored.
+One can thus write comments after <code class="xref py py-attr docutils literal notranslate"><span class="pre">#</span></code>.</p>
+<p>All other lines need to be of the following form:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">keyword</span> <span class="n">parameter_1</span> <span class="n">parameter_2</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>Keywords can appear in any order with the exception of the <a class="reference internal" href="../input_parameters/type_weight.html#kw-type-weight"><span class="std std-ref">type_weight keyword</span></a>, which cannot appear before the <a class="reference internal" href="../input_parameters/type.html#kw-type"><span class="std std-ref">type keyword</span></a>.</p>
+<p>The <a class="reference internal" href="../input_parameters/type.html#kw-type"><span class="std std-ref">type keyword</span></a> does not have default parameters and <em>must</em> be set.
+All other keywords have default values.</p>
+</section>
+<section id="keywords">
+<h2>Keywords<a class="headerlink" href="#keywords" title="Link to this heading"></a></h2>
+<table class="docutils align-default" style="width: 100%">
+<thead>
+<tr class="row-odd"><th class="head"><p>Keyword</p></th>
+<th class="head"><p>Brief description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/version.html#kw-version"><span class="std std-ref">version</span></a></p></td>
+<td><p>select the NEP version</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/type.html#kw-type"><span class="std std-ref">type</span></a></p></td>
+<td><p>number of atom types and list of chemical species</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/type_weight.html#kw-type-weight"><span class="std std-ref">type_weight</span></a></p></td>
+<td><p>force weights for different atom types</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/model_type.html#kw-model-type"><span class="std std-ref">model_type</span></a></p></td>
+<td><p>select to train potential, dipole, or polarizability</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/prediction.html#kw-prediction"><span class="std std-ref">prediction</span></a></p></td>
+<td><p>select between training and prediction (inference)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/zbl.html#kw-zbl"><span class="std std-ref">zbl</span></a></p></td>
+<td><p>outer cutoff for the universal <a class="reference internal" href="../../glossary.html#term-ZBL"><span class="xref std std-term">ZBL</span></a> potential <a class="reference internal" href="../../bibliography.html#ziegler1985" id="id6"><span>[Ziegler1985]</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/cutoff.html#kw-cutoff"><span class="std std-ref">cutoff</span></a></p></td>
+<td><p>radial (<span class="math notranslate nohighlight">\(r_\mathrm{c}^\mathrm{R}\)</span>) and angular (<span class="math notranslate nohighlight">\(r_\mathrm{c}^\mathrm{A}\)</span>) cutoffs</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/n_max.html#kw-n-max"><span class="std std-ref">n_max</span></a></p></td>
+<td><p>size of radial (<span class="math notranslate nohighlight">\(n_\mathrm{max}^\mathrm{R}\)</span>) and angular (<span class="math notranslate nohighlight">\(n_\mathrm{max}^\mathrm{A}\)</span>) basis</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/basis_size.html#kw-basis-size"><span class="std std-ref">basis_size</span></a></p></td>
+<td><p>number of radial (<span class="math notranslate nohighlight">\(N_\mathrm{bas}^\mathrm{R}\)</span>) and angular (<span class="math notranslate nohighlight">\(N_\mathrm{bas}^\mathrm{A}\)</span>) basis functions</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/l_max.html#kw-l-max"><span class="std std-ref">l_max</span></a></p></td>
+<td><p>expansion order for angular terms</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/neuron.html#kw-neuron"><span class="std std-ref">neuron</span></a></p></td>
+<td><p>number of neurons in the hidden layer (<span class="math notranslate nohighlight">\(N_\mathrm{neu}\)</span>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/lambda_1.html#kw-lambda-1"><span class="std std-ref">lambda_1</span></a></p></td>
+<td><p>weight of <span class="math notranslate nohighlight">\(\mathcal{L}_1\)</span>-norm regularization term</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/lambda_1.html#kw-lambda-1"><span class="std std-ref">lambda_2</span></a></p></td>
+<td><p>weight of <span class="math notranslate nohighlight">\(\mathcal{L}_2\)</span>-norm regularization term</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/lambda_e.html#kw-lambda-e"><span class="std std-ref">lambda_e</span></a></p></td>
+<td><p>weight of energy loss term</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/lambda_f.html#kw-lambda-f"><span class="std std-ref">lambda_f</span></a></p></td>
+<td><p>weight of force loss term</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/lambda_v.html#kw-lambda-v"><span class="std std-ref">lambda_v</span></a></p></td>
+<td><p>weight of virial loss term</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/atomic_v.html#kw-atomic-v"><span class="std std-ref">atomic_v</span></a></p></td>
+<td><p>fit atomic or global virial</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/force_delta.html#kw-force-delta"><span class="std std-ref">force_delta</span></a></p></td>
+<td><p>bias term that can be used to make smaller forces more accurate</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/batch.html#kw-batch"><span class="std std-ref">batch</span></a></p></td>
+<td><p>batch size for training</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../input_parameters/population.html#kw-population"><span class="std std-ref">population</span></a></p></td>
+<td><p>population size used in the <a class="reference internal" href="../../glossary.html#term-SNES"><span class="xref std std-term">SNES</span></a> algorithm <a class="reference internal" href="../../bibliography.html#schaul2011" id="id7"><span>[Schaul2011]</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../input_parameters/generation.html#kw-generation"><span class="std std-ref">generation</span></a></p></td>
+<td><p>number of generations used by the <a class="reference internal" href="../../glossary.html#term-SNES"><span class="xref std std-term">SNES</span></a> algorithm <a class="reference internal" href="../../bibliography.html#schaul2011" id="id8"><span>[Schaul2011]</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h2>
+<p>Here is an example <code class="xref py py-attr docutils literal notranslate"><span class="pre">nep.in</span></code> file using all the default parameters:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">type</span>          <span class="mi">2</span> <span class="n">Te</span> <span class="n">Pb</span> <span class="c1"># this is a mandatory keyword</span>
+<span class="n">version</span>       <span class="mi">4</span>       <span class="c1"># default</span>
+<span class="n">cutoff</span>        <span class="mi">8</span> <span class="mi">4</span>     <span class="c1"># default</span>
+<span class="n">n_max</span>         <span class="mi">4</span> <span class="mi">4</span>     <span class="c1"># default</span>
+<span class="n">basis_size</span>    <span class="mi">8</span> <span class="mi">8</span>     <span class="c1"># default</span>
+<span class="n">l_max</span>         <span class="mi">4</span> <span class="mi">2</span> <span class="mi">0</span>   <span class="c1"># default</span>
+<span class="n">neuron</span>        <span class="mi">30</span>      <span class="c1"># default</span>
+<span class="n">lambda_e</span>      <span class="mf">1.0</span>     <span class="c1"># default</span>
+<span class="n">lambda_f</span>      <span class="mf">1.0</span>     <span class="c1"># default</span>
+<span class="n">lambda_v</span>      <span class="mf">0.1</span>     <span class="c1"># default</span>
+<span class="n">batch</span>         <span class="mi">1000</span>    <span class="c1"># default</span>
+<span class="n">population</span>    <span class="mi">50</span>      <span class="c1"># default</span>
+<span class="n">generation</span>    <span class="mi">100000</span>  <span class="c1"># default</span>
+</pre></div>
+</div>
+<p>The <a class="reference external" href="https://github.com/brucefan1983/GPUMD/tree/master/examples/11_NEP_potential_PbTe/tutorial.ipynb">NEP tutorial</a> illustrates the construction of a <a class="reference internal" href="../../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> model.
+More examples can be found in <a class="reference external" href="https://gitlab.com/brucefan1983/nep-data">this repository</a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Input files" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="train_test_xyz.html" class="btn btn-neutral float-right" title="train.xyz and test.xyz" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

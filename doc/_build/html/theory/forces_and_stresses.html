@@ -1,0 +1,228 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forces and stresses &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Ensembles" href="ensembles.html" />
+    <link rel="prev" title="Theoretical background" href="index.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Theoretical background</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Forces and stresses</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#interatomic-forces">Interatomic forces</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stress-tensor">Stress tensor</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ensembles.html">Ensembles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heat_current.html">Heat current</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heat_transport.html">Heat transport</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../potentials/index.html">Interatomic potentials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../gpumd/index.html">gpumd executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nep/index.html">nep executable</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="forces-and-stresses">
+<h1>Forces and stresses<a class="headerlink" href="#forces-and-stresses" title="Link to this heading"></a></h1>
+<p>In classical molecular dynamics, the total potential energy <span class="math notranslate nohighlight">\(U\)</span> of a system can be written as the sum of site potentials <span class="math notranslate nohighlight">\(U_i\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[U=\sum_{i=1}^N U_i(\{\boldsymbol{r}_{ij}\}_{j\neq i}).\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(\boldsymbol{r}_{ij} \equiv \boldsymbol{r}_j - \boldsymbol{r}_i\)</span> is the position difference vector used throughout this manual.</p>
+<section id="interatomic-forces">
+<span id="index-0"></span><h2>Interatomic forces<a class="headerlink" href="#interatomic-forces" title="Link to this heading"></a></h2>
+<p>A well-defined force expression for general many-body potentials that explicitly respects (the weak version of) Newton’s third law has been derived in <a class="reference internal" href="../bibliography.html#fan2015" id="id1"><span>[Fan2015]</span></a>:</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{F}_{i} = \sum_{j \neq i} \boldsymbol{F}_{ij}\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{F}_{ij} = - \boldsymbol{F}_{ji} =
+\frac{\partial U_{i}}{\partial \boldsymbol{r}_{ij}} -
+\frac{\partial U_{j}}{\partial \boldsymbol{r}_{ji}} =
+\frac{\partial \left(U_{i} + U_{j}\right) }{\partial \boldsymbol{r}_{ij}}.\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(\partial U_{i}/\partial \boldsymbol{r}_{ij}\)</span> is a shorthand notation for a vector with Cartesian components <span class="math notranslate nohighlight">\(\partial U_{i}/\partial x_{ij}\)</span>, <span class="math notranslate nohighlight">\(\partial U_{i}/\partial y_{ij}\)</span>, and <span class="math notranslate nohighlight">\(\partial U_{i}/\partial z_{ij}\)</span>.</p>
+<p>Starting from the above force expression, one can derive expressions for the stress tensor and the heat current.</p>
+</section>
+<section id="stress-tensor">
+<span id="index-1"></span><h2>Stress tensor<a class="headerlink" href="#stress-tensor" title="Link to this heading"></a></h2>
+<p>The stress tensor is an important quantity in MD simulations.
+It consists of two parts: a virial part which is related to the force and an ideal gas part which is related to the temperature.
+The virial part must be calculated along with force evaluation.</p>
+<p>The validity of Newton’s third law is crucial to derive the following expression of the virial tensor <a class="reference internal" href="../bibliography.html#fan2015" id="id2"><span>[Fan2015]</span></a>:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{W} = \sum_{i} \mathbf{W}_i\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{W}_i = -\frac{1}{2} \sum_{j \neq i} \boldsymbol{r}_{ij} \otimes \boldsymbol{F}_{ij},\]</div>
+<p>where only relative positions <span class="math notranslate nohighlight">\(\boldsymbol{r}_{ij}\)</span> are involved.</p>
+<p>After some algebra, we can also express the virial as <a class="reference internal" href="../bibliography.html#gabourie2021" id="id3"><span>[Gabourie2021]</span></a></p>
+<div class="math notranslate nohighlight">
+\[\mathbf{W} = \sum_{i} \mathbf{W}_i\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{W}_i = \sum_{j \neq i} \boldsymbol{r}_{ij} \otimes \frac{\partial U_j}{\partial \boldsymbol{r}_{ji}}.\]</div>
+<p>The ideal gas part of the stress is:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\sum_{i} m_i v_i^{\alpha} v_i^{\beta} }{V},\]</div>
+<p>where <span class="math notranslate nohighlight">\(m_i\)</span> is the mass of particle $i$, <span class="math notranslate nohighlight">\(v_i^{\alpha}\)</span> is the velocity of particle $i$, and <span class="math notranslate nohighlight">\(V\)</span> is the volume of the system.</p>
+<p>The total stress tensor is thus</p>
+<div class="math notranslate nohighlight">
+\[\sigma^{\alpha\beta} = \frac{W^{\alpha\beta} + \sum_{i} m_i v_i^{\alpha} v_i^{\beta}}{V}.\]</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Theoretical background" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ensembles.html" class="btn btn-neutral float-right" title="Ensembles" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

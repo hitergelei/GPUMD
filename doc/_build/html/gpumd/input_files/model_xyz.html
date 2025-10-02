@@ -1,0 +1,279 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulation model (model.xyz) &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../../_static/logo.ico"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Primitive cell (basis.in)" href="basis_in.html" />
+    <link rel="prev" title="Simulation protocol (run.in)" href="run_in.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory/index.html">Theoretical background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../potentials/index.html">Interatomic potentials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">gpumd executable</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Input files</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="run_in.html">Simulation protocol (<code class="docutils literal notranslate"><span class="pre">run.in</span></code>)</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Simulation model (<code class="docutils literal notranslate"><span class="pre">model.xyz</span></code>)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#file-format">File format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#units">Units</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="basis_in.html">Primitive cell (<code class="docutils literal notranslate"><span class="pre">basis.in</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kpoints_in.html">k-points (<code class="docutils literal notranslate"><span class="pre">kpoints.in</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="eigenvector_in.html">Eigenvectors for modal analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../input_parameters/index.html">Input parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../output_files/index.html">Output files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../nep/index.html">nep executable</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="simulation-model-model-xyz">
+<span id="index-0"></span><span id="model-xyz"></span><h1>Simulation model (<code class="docutils literal notranslate"><span class="pre">model.xyz</span></code>)<a class="headerlink" href="#simulation-model-model-xyz" title="Link to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">model.xyz</span></code> file defines the simulation model, including for example the initial positions, velocities, and boundary conditions.
+The file needs to be provided in extended XYZ format, which is described <a class="reference external" href="https://github.com/libAtoms/extxyz">here</a>.</p>
+<section id="file-format">
+<h2>File format<a class="headerlink" href="#file-format" title="Link to this heading"></a></h2>
+<section id="line-1">
+<h3>Line 1<a class="headerlink" href="#line-1" title="Link to this heading"></a></h3>
+<p>The first line should have one item only, which is the number of atoms in the model <span class="math notranslate nohighlight">\(N\)</span>.</p>
+</section>
+<section id="line-2">
+<h3>Line 2<a class="headerlink" href="#line-2" title="Link to this heading"></a></h3>
+<p>This line consists of a number of <code class="docutils literal notranslate"><span class="pre">keyword=value</span></code> pairs separated by spaces.
+Spaces before and after <code class="docutils literal notranslate"><span class="pre">=</span></code> <em>are allowed</em>.
+All the characters are case-insensitive.
+<code class="docutils literal notranslate"><span class="pre">value</span></code> can be a single item or a number of items enclosed by double quotes, such as <code class="docutils literal notranslate"><span class="pre">keyword=&quot;value_1</span> <span class="pre">value_2</span> <span class="pre">value_3&quot;</span></code>.
+Here, the different values are separated by spaces and spaces after the left <code class="docutils literal notranslate"><span class="pre">&quot;</span></code> and before the right <code class="docutils literal notranslate"><span class="pre">&quot;</span></code> are allowed.
+For example, one can write <code class="docutils literal notranslate"><span class="pre">keyword=&quot;</span> <span class="pre">value_1</span> <span class="pre">value_2</span> <span class="pre">value_3</span> <span class="pre">&quot;</span></code>.</p>
+<p>Essentially any keyword is allowed, but we only read the following ones:</p>
+<ul>
+<li><p>(<em>Optional</em>) <code class="docutils literal notranslate"><span class="pre">pbc=&quot;pbc_a</span> <span class="pre">pbc_b</span> <span class="pre">pbc_c&quot;</span></code>, where <code class="docutils literal notranslate"><span class="pre">pbc_a</span></code>, <code class="docutils literal notranslate"><span class="pre">pbc_b</span></code>, and <code class="docutils literal notranslate"><span class="pre">pbc_c</span></code> can be <code class="docutils literal notranslate"><span class="pre">T</span></code> or <code class="docutils literal notranslate"><span class="pre">F</span></code>, which means box is periodic or non-periodic (free, or open) in the <span class="math notranslate nohighlight">\(\boldsymbol{a}\)</span>, <span class="math notranslate nohighlight">\(\boldsymbol{b}\)</span>, and <span class="math notranslate nohighlight">\(\boldsymbol{c}\)</span> directions.
+We use the minimum-image convention to account for the periodic boundary conditions for non-<a class="reference internal" href="../../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> potentials but will consider sufficiently many periodic images for the <a class="reference internal" href="../../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> potentials.
+Therefore, one needs to make sure that the box size is large enough (the thickness in each direction is larger than twice of the potential cutoff) to incorporate enough neighbors for non-<a class="reference internal" href="../../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> potentials but does not need to care about this for NEP potentials.
+The default is <code class="docutils literal notranslate"><span class="pre">pbc=&quot;T</span> <span class="pre">T</span> <span class="pre">T&quot;</span></code></p></li>
+<li><p>(<em>Mandatory</em>) <code class="docutils literal notranslate"><span class="pre">lattice=&quot;ax</span> <span class="pre">ay</span> <span class="pre">az</span> <span class="pre">bx</span> <span class="pre">by</span> <span class="pre">bz</span> <span class="pre">cx</span> <span class="pre">cy</span> <span class="pre">cz&quot;</span></code> specifies the cell vectors:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\boldsymbol{a} = a_x \boldsymbol{e}_x + a_y \boldsymbol{e}_y + a_z \boldsymbol{e}_z\\
+\boldsymbol{b} = b_x \boldsymbol{e}_x + b_y \boldsymbol{e}_y + b_z \boldsymbol{e}_z\\
+\boldsymbol{c} = c_x \boldsymbol{e}_x + c_y \boldsymbol{e}_y + c_z \boldsymbol{e}_z\end{split}\]</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">properties=property_name:data_type:number_of_columns</span></code></p>
+<p>We only read the following items:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">species:S:1</span></code> atom type (<em>Mandatory</em>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pos:R:3</span></code> position vector (<em>Mandatory</em>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mass:R:1</span></code> mass (<em>Optional</em>: default mass values will be used when this is missing)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">charge:R:1</span></code> charge (<em>Optional</em>: default charge is zero)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">vel:R:3</span></code> velocity vector (<em>Optional</em>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">group:I:number_of_grouping_methods</span></code> grouping methods (<em>Optional</em>)</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="line-3-and-forward">
+<h3>Line 3 and forward<a class="headerlink" href="#line-3-and-forward" title="Link to this heading"></a></h3>
+<p>Each line must contain the same number of items, which are determined by the <code class="docutils literal notranslate"><span class="pre">property</span></code> keyword on line 2.
+The meaning of the grouping methods is illustrated by the example below.</p>
+</section>
+</section>
+<section id="units">
+<h2>Units<a class="headerlink" href="#units" title="Link to this heading"></a></h2>
+<p>The mass should be given in units of the unified atomic mass unit (amu).
+The charge is in units of e (proton charge).
+The cell dimensions and atom coordinates should be given in units of Ångstrom.
+Velocities need to be specified in units of Å/fs.</p>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h2>
+<p>Assume we have the following <code class="docutils literal notranslate"><span class="pre">model.xyz</span></code> file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">10</span>
+<span class="n">pbc</span><span class="o">=</span><span class="s2">&quot;T F F&quot;</span> <span class="n">lattice</span><span class="o">=</span><span class="s2">&quot;4 0 0 0 1 0 0 0 1&quot;</span> <span class="n">properties</span><span class="o">=</span><span class="n">species</span><span class="p">:</span><span class="n">S</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="n">pos</span><span class="p">:</span><span class="n">R</span><span class="p">:</span><span class="mi">3</span><span class="p">:</span><span class="n">group</span><span class="p">:</span><span class="n">I</span><span class="p">:</span><span class="mi">3</span>
+<span class="n">C</span>  <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span>
+<span class="n">Si</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span>
+<span class="n">C</span>  <span class="mi">2</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">2</span> <span class="mi">0</span>
+<span class="n">Si</span> <span class="mi">3</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">3</span> <span class="mi">0</span>
+<span class="n">C</span>  <span class="mi">4</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">4</span> <span class="mi">0</span>
+<span class="n">Si</span> <span class="mi">5</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">5</span> <span class="mi">0</span>
+<span class="n">C</span>  <span class="mi">6</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">6</span> <span class="mi">0</span>
+<span class="n">Si</span> <span class="mi">7</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">7</span> <span class="mi">0</span>
+<span class="n">C</span>  <span class="mi">8</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">8</span> <span class="mi">0</span>
+<span class="n">Si</span> <span class="mi">9</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">9</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<p>This means</p>
+<ul class="simple">
+<li><p>There are 10 atoms.</p></li>
+<li><p>Use periodic boundary conditions in the <span class="math notranslate nohighlight">\(x\)</span> direction and free boundary conditions in the other directions.</p></li>
+<li><p>The box lengths in the three directions are respectively 4 Å, 1 Å, and 1 Å.</p></li>
+<li><p>There are 5 carbon atoms and 5 silicon atoms. The default masses will be used for the atoms (as there are no specific values given in the input file).</p></li>
+<li><p>The 10 atoms are located along a line in the <span class="math notranslate nohighlight">\(x\)</span> direction with equal spacing, from 0 Å to 9 Å.</p></li>
+<li><p>There is no velocity data in this file.</p></li>
+<li><p>There are 3 grouping methods</p>
+<ul>
+<li><p>In grouping method 0, atom 0 to atom 4 have group label 0 (which means they are in group 0), and atom 5 to atom 9 have group label 1 (which means they are in group 1).</p></li>
+<li><p>In grouping method 1, atom <span class="math notranslate nohighlight">\(m\)</span> (<span class="math notranslate nohighlight">\(0\leq m \leq 9\)</span>) has group label <span class="math notranslate nohighlight">\(m\)</span>. That is, each group consists of a single atom.</p></li>
+<li><p>In grouping method 2, all the atoms have group label 0. That is, all the atoms are in the same group.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="run_in.html" class="btn btn-neutral float-left" title="Simulation protocol (run.in)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="basis_in.html" class="btn btn-neutral float-right" title="Primitive cell (basis.in)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,436 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular Dependent Potential (ADP) &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Force constant potential" href="fcp.html" />
+    <link rel="prev" title="Embedded atom method" href="eam.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/index.html">Theoretical background</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Interatomic potentials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tersoff_1988.html">Tersoff potential (1988)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tersoff_1989.html">Tersoff potential (1989)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tersoff_mini.html">Tersoff mini-potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lennard_jones.html">Lennard-Jones potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="eam.html">Embedded atom method</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Angular Dependent Potential (ADP)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#potential-form">Potential form</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#general-form">General form</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#angular-terms">Angular terms</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#file-format">File format</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#general-structure">General structure</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#syntax">Syntax</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#basic-usage">Basic usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#single-element-system">Single-element system</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#multi-element-system">Multi-element system</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fcp.html">Force constant potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nep.html">Neuroevolution potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nep_ilp.html">Hybrid NEP+ILP potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sw_ilp.html">Hybrid SW+ILP potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tersoff_ilp.html">Hybrid Tersoff+ILP potential</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../gpumd/index.html">gpumd executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nep/index.html">nep executable</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="angular-dependent-potential-adp">
+<span id="index-0"></span><span id="adp"></span><h1>Angular Dependent Potential (ADP)<a class="headerlink" href="#angular-dependent-potential-adp" title="Link to this heading"></a></h1>
+<p><strong class="program">GPUMD</strong> supports the Angular Dependent Potential (ADP), which is an extension of the embedded atom method (<a class="reference internal" href="../glossary.html#term-EAM"><span class="xref std std-term">EAM</span></a>) that includes angular forces through dipole and quadrupole distortions of the local atomic environment.</p>
+<p>The ADP was developed to provide a more accurate description of directional bonding and angular forces in metallic systems, particularly for materials where traditional EAM potentials fail to capture the full complexity of atomic interactions. The ADP formalism is especially useful for modeling complex crystal structures, defects, and phase transformations in metals and alloys.</p>
+<section id="potential-form">
+<h2>Potential form<a class="headerlink" href="#potential-form" title="Link to this heading"></a></h2>
+<section id="general-form">
+<h3>General form<a class="headerlink" href="#general-form" title="Link to this heading"></a></h3>
+<p>The ADP is described in detail by Mishin et al. <a class="reference internal" href="adp_hjchen.html#mishin2005" id="id1"><span>[Mishin2005]</span></a> and has been successfully applied to various metallic systems including the Cu-Ta system <a class="reference internal" href="#pun2015" id="id2"><span>[Pun2015]</span></a> and U-Mo alloys <a class="reference internal" href="#starikov2018" id="id3"><span>[Starikov2018]</span></a>. The total energy of atom <span class="math notranslate nohighlight">\(i\)</span> is given by:</p>
+<div class="math notranslate nohighlight">
+\[E_i = F_\alpha\left(\sum_{j\neq i} \rho_\beta(r_{ij})\right) + \frac{1}{2} \sum_{j\neq i} \phi_{\alpha\beta}(r_{ij}) + \frac{1}{2} \sum_s (\mu_{is})^2 + \frac{1}{2} \sum_{s,t} (\lambda_{ist})^2 - \frac{1}{6} \nu_i^2\]</div>
+<p>where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(F_\alpha\)</span> is the embedding energy as a function of the total electron density at atom <span class="math notranslate nohighlight">\(i\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\rho_\beta(r_{ij})\)</span> is the electron density contribution from atom <span class="math notranslate nohighlight">\(j\)</span> at distance <span class="math notranslate nohighlight">\(r_{ij}\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\phi_{\alpha\beta}(r_{ij})\)</span> is the pair potential interaction between atoms of types <span class="math notranslate nohighlight">\(\alpha\)</span> and <span class="math notranslate nohighlight">\(\beta\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\alpha\)</span> and <span class="math notranslate nohighlight">\(\beta\)</span> are the element types of atoms <span class="math notranslate nohighlight">\(i\)</span> and <span class="math notranslate nohighlight">\(j\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(s\)</span> and <span class="math notranslate nohighlight">\(t\)</span> are indices running over Cartesian coordinates (<span class="math notranslate nohighlight">\(x, y, z\)</span>)</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mu_{is}\)</span> is the dipole distortion tensor (3 components)</p></li>
+<li><p><span class="math notranslate nohighlight">\(\lambda_{ist}\)</span> is the quadrupole distortion tensor (6 independent components)</p></li>
+<li><p><span class="math notranslate nohighlight">\(\nu_i\)</span> is the trace of the quadrupole tensor</p></li>
+</ul>
+</section>
+<section id="angular-terms">
+<h3>Angular terms<a class="headerlink" href="#angular-terms" title="Link to this heading"></a></h3>
+<p>The dipole distortion tensor represents the first moment of the local environment:</p>
+<div class="math notranslate nohighlight">
+\[\mu_{is} = \sum_{j\neq i} u_{\alpha\beta}(r_{ij}) r_{ij}^s\]</div>
+<p>where <span class="math notranslate nohighlight">\(u_{\alpha\beta}(r)\)</span> is a tabulated function and <span class="math notranslate nohighlight">\(r_{ij}^s\)</span> is the <span class="math notranslate nohighlight">\(s\)</span>-component of the vector from atom <span class="math notranslate nohighlight">\(i\)</span> to atom <span class="math notranslate nohighlight">\(j\)</span>.</p>
+<p>The quadrupole distortion tensor represents the second moment of the local environment:</p>
+<div class="math notranslate nohighlight">
+\[\lambda_{ist} = \sum_{j\neq i} w_{\alpha\beta}(r_{ij}) r_{ij}^s r_{ij}^t\]</div>
+<p>where <span class="math notranslate nohighlight">\(w_{\alpha\beta}(r)\)</span> is another tabulated function. The trace of the quadrupole tensor is:</p>
+<div class="math notranslate nohighlight">
+\[\nu_i = \lambda_{ixx} + \lambda_{iyy} + \lambda_{izz}\]</div>
+<p>The angular terms <span class="math notranslate nohighlight">\(\mu\)</span> and <span class="math notranslate nohighlight">\(\lambda\)</span> introduce directional dependence into the potential energy, allowing the ADP to capture angular forces that are absent in the traditional EAM formalism. These terms are essential for accurately modeling materials with complex bonding environments.</p>
+</section>
+</section>
+<section id="file-format">
+<h2>File format<a class="headerlink" href="#file-format" title="Link to this heading"></a></h2>
+<section id="general-structure">
+<h3>General structure<a class="headerlink" href="#general-structure" title="Link to this heading"></a></h3>
+<p>The ADP potential file follows the extended DYNAMO setfl format, which is compatible with LAMMPS and other molecular dynamics codes. The file structure consists of:</p>
+<p><strong>Header section</strong> (lines 1-5):</p>
+<ul class="simple">
+<li><p>Lines 1-3: Comment lines (can contain any text, typically author and date information)</p></li>
+<li><p>Line 4: <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nelements</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">Element1</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">Element2</span></code> … <code class="xref py py-attr docutils literal notranslate"><span class="pre">ElementN</span></code></p>
+<ul>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">Nelements</span></code>: Number of elements in the potential</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">Element1</span></code>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">Element2</span></code>, etc.: Element symbols (e.g., Cu, Ta, Mo)</p></li>
+</ul>
+</li>
+<li><p>Line 5: <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nrho</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">drho</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nr</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">dr</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">cutoff</span></code></p>
+<ul>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">Nrho</span></code>: Number of points in the embedding function <span class="math notranslate nohighlight">\(F(\rho)\)</span> tabulation</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">drho</span></code>: Spacing between tabulated <span class="math notranslate nohighlight">\(\rho\)</span> values</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">Nr</span></code>: Number of points in the pair potential and density function tabulations</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">dr</span></code>: Spacing between tabulated <span class="math notranslate nohighlight">\(r\)</span> values</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">cutoff</span></code>: Cutoff distance for all functions (in Angstroms)</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Per-element sections</strong> (repeated <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nelements</span></code> times):</p>
+<p>Each element section contains:</p>
+<ul class="simple">
+<li><p>Line 1: <code class="xref py py-attr docutils literal notranslate"><span class="pre">atomic_number</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">mass</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">lattice_constant</span></code> <code class="xref py py-attr docutils literal notranslate"><span class="pre">lattice_type</span></code></p>
+<ul>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">atomic_number</span></code>: Atomic number of the element</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">mass</span></code>: Atomic mass (in amu)</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">lattice_constant</span></code>: Equilibrium lattice constant (in Angstroms)</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">lattice_type</span></code>: Crystal structure (e.g., fcc, bcc, hcp)</p></li>
+</ul>
+</li>
+<li><p>Next <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nrho</span></code> values: Embedding function <span class="math notranslate nohighlight">\(F(\rho)\)</span></p>
+<ul>
+<li><p>Tabulated values of <span class="math notranslate nohighlight">\(F\)</span> at <span class="math notranslate nohighlight">\(\rho = 0, \Delta\rho, 2\Delta\rho, ..., (N_\rho-1)\Delta\rho\)</span></p></li>
+<li><p>Units: eV</p></li>
+</ul>
+</li>
+<li><p>Next <code class="xref py py-attr docutils literal notranslate"><span class="pre">Nr</span></code> values: Electron density function <span class="math notranslate nohighlight">\(\rho(r)\)</span></p>
+<ul>
+<li><p>Tabulated values at <span class="math notranslate nohighlight">\(r = 0, \Delta r, 2\Delta r, ..., (N_r-1)\Delta r\)</span></p></li>
+<li><p>Units: electron density</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Pair potential section</strong>:</p>
+<p>For all element pairs <span class="math notranslate nohighlight">\((i, j)\)</span> with <span class="math notranslate nohighlight">\(i \geq j\)</span> (upper triangular, since <span class="math notranslate nohighlight">\(\phi_{ij} = \phi_{ji}\)</span>):</p>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">Nr</span></code> values: Pair potential <span class="math notranslate nohighlight">\(\phi_{ij}(r)\)</span></p>
+<ul>
+<li><p>Tabulated as <span class="math notranslate nohighlight">\(r \times \phi(r)\)</span> (scaled by distance)</p></li>
+<li><p>Units: eV·Angstrom</p></li>
+<li><p>Order: (1,1), (2,1), (2,2), (3,1), (3,2), (3,3), etc.</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Dipole function section</strong>:</p>
+<p>For all element pairs <span class="math notranslate nohighlight">\((i, j)\)</span> with <span class="math notranslate nohighlight">\(i \geq j\)</span>:</p>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">Nr</span></code> values: Dipole function <span class="math notranslate nohighlight">\(u_{ij}(r)\)</span></p>
+<ul>
+<li><p>Tabulated as <span class="math notranslate nohighlight">\(u(r)\)</span> (NOT scaled by distance)</p></li>
+<li><p>Units: electron density·Angstrom</p></li>
+<li><p>Same ordering as pair potentials</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Quadrupole function section</strong>:</p>
+<p>For all element pairs <span class="math notranslate nohighlight">\((i, j)\)</span> with <span class="math notranslate nohighlight">\(i \geq j\)</span>:</p>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">Nr</span></code> values: Quadrupole function <span class="math notranslate nohighlight">\(w_{ij}(r)\)</span></p>
+<ul>
+<li><p>Tabulated as <span class="math notranslate nohighlight">\(w(r)\)</span> (NOT scaled by distance)</p></li>
+<li><p>Units: electron density·Angstrom²</p></li>
+<li><p>Same ordering as pair potentials</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<section id="syntax">
+<h3>Syntax<a class="headerlink" href="#syntax" title="Link to this heading"></a></h3>
+<p>To use an ADP potential in GPUMD, specify it in the <code class="file docutils literal notranslate"><span class="pre">run.in</span></code> input file with the following syntax:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="o">&lt;</span><span class="n">potential_file</span><span class="o">&gt;</span> <span class="p">[</span><span class="nb">list</span> <span class="n">of</span> <span class="n">elements</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>where:</p>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">&lt;potential_file&gt;</span></code>: Path to the ADP potential file (required)</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">[list</span> <span class="pre">of</span> <span class="pre">elements]</span></code>: Space-separated list of element symbols for explicit mapping (optional)</p></li>
+</ul>
+<p>The element list, if provided, determines the mapping between atom types in your structure file and elements in the potential file. The number of element types is automatically inferred from the number of elements specified.</p>
+</section>
+<section id="basic-usage">
+<h3>Basic usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h3>
+<p>For a single-element or auto-detected system:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">Ta</span><span class="o">.</span><span class="n">adp</span>
+</pre></div>
+</div>
+<p>GPUMD will automatically read the number of elements from the potential file and map them in order.</p>
+</section>
+<section id="single-element-system">
+<h3>Single-element system<a class="headerlink" href="#single-element-system" title="Link to this heading"></a></h3>
+<p>For a pure metal system (e.g., pure tantalum):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">Ta</span><span class="o">.</span><span class="n">adp</span>
+</pre></div>
+</div>
+<p>If not specifying element names, GPUMD will use default mapping (all atoms map to the first element in the ADP file).</p>
+<p>You can also explicitly specify the element:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">Ta</span><span class="o">.</span><span class="n">adp</span> <span class="n">Ta</span>
+</pre></div>
+</div>
+<p>This explicitly maps all atoms in the system to the Ta element from the potential file.</p>
+</section>
+<section id="multi-element-system">
+<h3>Multi-element system<a class="headerlink" href="#multi-element-system" title="Link to this heading"></a></h3>
+<p>For binary alloys, you have several options depending on your system.</p>
+<p><strong>Example 1: Copper-Tantalum (Cu-Ta)</strong></p>
+<p>Simple usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">Cu_Ta</span><span class="o">.</span><span class="n">adp</span>
+</pre></div>
+</div>
+<p>Without explicit element mapping, GPUMD uses default mapping (all atoms map to the first element in the potential file).</p>
+<p>Explicit element mapping:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">Cu_Ta</span><span class="o">.</span><span class="n">adp</span> <span class="n">Cu</span> <span class="n">Ta</span>
+</pre></div>
+</div>
+<p>This maps atom type 0 → Cu and atom type 1 → Ta in your structure file.</p>
+<p>Reversed element order:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">Cu_Ta</span><span class="o">.</span><span class="n">adp</span> <span class="n">Ta</span> <span class="n">Cu</span>
+</pre></div>
+</div>
+<p>This maps atom type 0 → Ta and atom type 1 → Cu.</p>
+<p><strong>Example 2: Uranium-Molybdenum (U-Mo)</strong></p>
+<p>Simple usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">U_Mo</span><span class="o">.</span><span class="n">adp</span>
+</pre></div>
+</div>
+<p>Explicit element mapping:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">U_Mo</span><span class="o">.</span><span class="n">adp</span> <span class="n">U</span> <span class="n">Mo</span>
+</pre></div>
+</div>
+<p>This maps atom type 0 → U and atom type 1 → Mo in your structure file.</p>
+<p>Reversed element order:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">adp</span> <span class="n">U_Mo</span><span class="o">.</span><span class="n">adp</span> <span class="n">Mo</span> <span class="n">U</span>
+</pre></div>
+</div>
+<p>This is useful when your structure file has atom types in a different order than desired.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When using explicit element mapping, the order of elements in the <code class="xref py py-attr docutils literal notranslate"><span class="pre">[list</span> <span class="pre">of</span> <span class="pre">elements]</span></code> determines how atom types in your structure file correspond to elements in the potential file. The number of elements must match the number of atom types in your system.</p>
+</div>
+</section>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="mishin2005" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Mishin2005</a><span class="fn-bracket">]</span></span>
+<ol class="upperalpha simple" start="25">
+<li><p>Mishin, M. J. Mehl, and D. A. Papaconstantopoulos, “Phase stability in the Fe–Ni system: Investigation by first-principles calculations and atomistic simulations,” Acta Mater. 53, 4029 (2005).</p></li>
+</ol>
+</div>
+<div class="citation" id="apostol2011" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Apostol2011<span class="fn-bracket">]</span></span>
+<ol class="upperalpha simple" start="6">
+<li><p>Apostol and Y. Mishin, “Interatomic potential for the Al-Cu system,” Phys. Rev. B 83, 054116 (2011).</p></li>
+</ol>
+</div>
+<div class="citation" id="pun2015" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">Pun2015</a><span class="fn-bracket">]</span></span>
+<ol class="upperalpha simple" start="7">
+<li><ol class="upperalpha simple" start="16">
+<li><p>Pun, K. A. Darling, L. J. Kecskes, and Y. Mishin, “Angular-dependent interatomic potential for the Cu–Ta system and its application to structural stability of nano-crystalline alloys,” Acta Mater. 100, 377 (2015).</p></li>
+</ol>
+</li>
+</ol>
+</div>
+<div class="citation" id="starikov2018" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">Starikov2018</a><span class="fn-bracket">]</span></span>
+<ol class="upperalpha simple" start="19">
+<li><ol class="upperalpha simple" start="22">
+<li><p>Starikov, L. N. Kolotova, A. Y. Kuksin, D. E. Smirnova, and V. I. Tseplyaev, “Atomistic simulation of cubic and tetragonal phases of U-Mo alloy: Structure and thermodynamic properties,” J. Nucl. Mater. 499, 451 (2018).</p></li>
+</ol>
+</li>
+</ol>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="eam.html" class="btn btn-neutral float-left" title="Embedded atom method" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="fcp.html" class="btn btn-neutral float-right" title="Force constant potential" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,258 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>train.xyz and test.xyz &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../../_static/logo.ico"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Input parameters" href="../input_parameters/index.html" />
+    <link rel="prev" title="nep.in" href="nep_in.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory/index.html">Theoretical background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../potentials/index.html">Interatomic potentials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../gpumd/index.html">gpumd executable</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">nep executable</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Input files</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="nep_in.html"><code class="docutils literal notranslate"><span class="pre">nep.in</span></code></a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">train.xyz</span></code> and <code class="docutils literal notranslate"><span class="pre">test.xyz</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#format-for-a-single-structure">Format for a single structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#units">Units</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tips">Tips</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../input_parameters/index.html">Input parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../output_files/index.html">Output files</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="train-xyz-and-test-xyz">
+<span id="index-0"></span><span id="train-test-xyz"></span><h1><code class="docutils literal notranslate"><span class="pre">train.xyz</span></code> and <code class="docutils literal notranslate"><span class="pre">test.xyz</span></code><a class="headerlink" href="#train-xyz-and-test-xyz" title="Link to this heading"></a></h1>
+<p>The <code class="xref py py-attr docutils literal notranslate"><span class="pre">train.xyz</span></code> file, which contains the training data for the construction of a <a class="reference internal" href="../../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> model, and the <code class="xref py py-attr docutils literal notranslate"><span class="pre">test.xyz</span></code> file, which contains the corresponding test data, both need to be provided in <a class="reference external" href="https://github.com/libAtoms/extxyz">extended xyz file format</a>.
+Each structure (or configuration or frame) occupies <span class="math notranslate nohighlight">\(N+2\)</span> lines, where <span class="math notranslate nohighlight">\(N\)</span> is the number of atoms in the structure.</p>
+<section id="format-for-a-single-structure">
+<h2>Format for a single structure<a class="headerlink" href="#format-for-a-single-structure" title="Link to this heading"></a></h2>
+<section id="line-1">
+<h3>Line 1<a class="headerlink" href="#line-1" title="Link to this heading"></a></h3>
+<p>The first line should only contain one field, which is the number of atoms in the structure <span class="math notranslate nohighlight">\(N\)</span>.</p>
+</section>
+<section id="line-2">
+<h3>Line 2<a class="headerlink" href="#line-2" title="Link to this heading"></a></h3>
+<p>This line consists of a number of <code class="docutils literal notranslate"><span class="pre">keyword=value</span></code> pairs separated by spaces.
+Spaces before and after <code class="docutils literal notranslate"><span class="pre">=</span></code> are allowed.
+All the characters are case-insensitive.
+<code class="docutils literal notranslate"><span class="pre">value</span></code> can be a single item or a number of items enclosed by double quotes, such as <code class="docutils literal notranslate"><span class="pre">keyword=&quot;value_1</span> <span class="pre">value_2</span> <span class="pre">value_3&quot;</span></code>.
+Here, the different values are separated by spaces and spaces after the left <code class="docutils literal notranslate"><span class="pre">&quot;</span></code> and before the right <code class="docutils literal notranslate"><span class="pre">&quot;</span></code> are allowed.
+For example, one can write <code class="docutils literal notranslate"><span class="pre">keyword=&quot;</span> <span class="pre">value_1</span> <span class="pre">value_2</span> <span class="pre">value_3</span> <span class="pre">&quot;</span></code>.</p>
+<p>Essentially any keyword is allowed, but we only read the following ones:</p>
+<ul>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">lattice=&quot;ax</span> <span class="pre">ay</span> <span class="pre">az</span> <span class="pre">bx</span> <span class="pre">by</span> <span class="pre">bz</span> <span class="pre">cx</span> <span class="pre">cy</span> <span class="pre">cz&quot;</span></code> is mandatory and gives the cell vectors:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\boldsymbol{a} &amp;= a_x \boldsymbol{e}_x + a_y \boldsymbol{e}_y + a_z \boldsymbol{e}_z \\
+\boldsymbol{b} &amp;= b_x \boldsymbol{e}_x + b_y \boldsymbol{e}_y + b_z \boldsymbol{e}_z \\
+\boldsymbol{c} &amp;= c_x \boldsymbol{e}_x + c_y \boldsymbol{e}_y + c_z \boldsymbol{e}_z\end{split}\]</div>
+</li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">energy=energy_value</span></code> such as <code class="xref py py-attr docutils literal notranslate"><span class="pre">energy=-123.4</span></code> is mandatory and gives the target energy of the structure, which is <span class="math notranslate nohighlight">\(-123.4\)</span> eV in this example.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">virial=&quot;vxx</span> <span class="pre">vxy</span> <span class="pre">vxz</span> <span class="pre">vyx</span> <span class="pre">vyy</span> <span class="pre">vyz</span> <span class="pre">vzx</span> <span class="pre">vzy</span> <span class="pre">vzz&quot;</span></code> is optional and gives the <span class="math notranslate nohighlight">\(3\times3\)</span> virial tensor of the structure in eV.
+Positive and negative values represent compressed and stretched states, respectively.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">stress=&quot;sxx</span> <span class="pre">sxy</span> <span class="pre">sxz</span> <span class="pre">syx</span> <span class="pre">syy</span> <span class="pre">syz</span> <span class="pre">szx</span> <span class="pre">szy</span> <span class="pre">szz&quot;</span></code> is optional and gives the <span class="math notranslate nohighlight">\(3\times3\)</span> stress tensor of the structure in eV/Å<span class="math notranslate nohighlight">\(^3\)</span>.
+Positive and negative values represent stretched and compressed states, respectively.
+If both <code class="xref py py-attr docutils literal notranslate"><span class="pre">virial</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">stress</span></code> are present the former is used.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">weight=relative_weight</span></code> is optional and gives the relative weight for the current structure in the total loss function.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">properties=property_name:data_type:number_of_columns</span></code> is mandatory but only read the following items:</p>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">species:S:1</span></code> chemical symbol in the periodic table (case-sensitive)</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">pos:R:3</span></code> position vector</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">force:R:3</span></code> or <code class="xref py py-attr docutils literal notranslate"><span class="pre">forces:R:3</span></code> target force vector</p></li>
+</ul>
+</li>
+<li><p>If a dipole model is to be trained, energy, virial, stress, and force will be ignored and one should additionally provide <code class="xref py py-attr docutils literal notranslate"><span class="pre">dipole=&quot;dx</span> <span class="pre">dy</span> <span class="pre">dz&quot;</span></code>, which is the dipole vector of the structure.</p></li>
+<li><p>If a polarizability model is to be trained, energy, virial, stress, force, and dipole will be ignored and one should additionally provide <code class="xref py py-attr docutils literal notranslate"><span class="pre">pol=&quot;pxx</span> <span class="pre">pxy</span> <span class="pre">pxz</span> <span class="pre">pyx</span> <span class="pre">pyy</span> <span class="pre">pyz</span> <span class="pre">pzx</span> <span class="pre">pzy</span> <span class="pre">pzz&quot;</span></code>, which is the polarizability tensor of the structure.</p></li>
+</ul>
+</section>
+<section id="starting-from-line-3">
+<h3>Starting from line 3<a class="headerlink" href="#starting-from-line-3" title="Link to this heading"></a></h3>
+<p>Each line should contain the same number of items, which are determined by the <code class="xref py py-attr docutils literal notranslate"><span class="pre">property</span></code> keywords on line 2.</p>
+</section>
+</section>
+<section id="units">
+<h2>Units<a class="headerlink" href="#units" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Length and position are expected in units of Ångstrom.</p></li>
+<li><p>The energy is expected  in units of eV.</p></li>
+<li><p>Forces are expected in units of eV/Å.</p></li>
+<li><p>Virials are expected in units of eV (such that the virial divided by the volume yields the stress).</p></li>
+<li><p>Dipole and polarizability can be in arbitrary units (such as the Hartree atomic units) as liked (and remembered) by the user.</p></li>
+</ul>
+</section>
+<section id="tips">
+<h2>Tips<a class="headerlink" href="#tips" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Periodic boundary conditions are always assumed for all directions in each configuration.
+When the box thickness in a direction is smaller than twice of the radial cutoff distance, the code will internally replicate the box in that direction.</p></li>
+<li><p>The minimal number of atoms in a configuration is 1.
+The user is responsible for choosing a sensible reference energy when preparing the energy data.
+But this is not crucial as the absolute energies are not relevant in the present context.
+However, because NEP training uses single precision, accuracy will be lost if any reference energy is smaller than -100 eV/atom. The code will give a warning message in this case.</p></li>
+<li><p>The energy and virial data refer to the total energy and virial for the system.
+They are not per-atom but per-cell quantities.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="nep_in.html" class="btn btn-neutral float-left" title="nep.in" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../input_parameters/index.html" class="btn btn-neutral float-right" title="Input parameters" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

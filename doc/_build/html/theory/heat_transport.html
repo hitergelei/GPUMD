@@ -1,0 +1,414 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Heat transport &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Interatomic potentials" href="../potentials/index.html" />
+    <link rel="prev" title="Heat current" href="heat_current.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Theoretical background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="forces_and_stresses.html">Forces and stresses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ensembles.html">Ensembles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heat_current.html">Heat current</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Heat transport</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#emd-method">EMD method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nemd-method">NEMD method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hnemd-method">HNEMD method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spectral-heat-current">Spectral heat current</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#modal-analysis-methods">Modal analysis methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#index-6">Green-Kubo modal analysis</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#homogeneous-non-equilibrium-modal-analysis">Homogeneous non-equilibrium modal analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#hnemdec-method">HNEMDEC method</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../potentials/index.html">Interatomic potentials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../gpumd/index.html">gpumd executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nep/index.html">nep executable</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="heat-transport">
+<span id="index-0"></span><h1>Heat transport<a class="headerlink" href="#heat-transport" title="Link to this heading"></a></h1>
+<section id="emd-method">
+<span id="index-1"></span><span id="running-thermal-conductivity"></span><span id="heat-current-autocorrelation"></span><span id="green-kubo-method"></span><h2>EMD method<a class="headerlink" href="#emd-method" title="Link to this heading"></a></h2>
+<p>A popular approach for computing the lattice thermal conductivity is to use equilibrium molecular dynamics (<a class="reference internal" href="../glossary.html#term-EMD"><span class="xref std std-term">EMD</span></a>) simulations and the Green-Kubo (<a class="reference internal" href="../glossary.html#term-GK"><span class="xref std std-term">GK</span></a>) formula.
+In this method, the running thermal conductivity (<a class="reference internal" href="../glossary.html#term-RTC"><span class="xref std std-term">RTC</span></a>) along the <span class="math notranslate nohighlight">\(x\)</span>-direction (similar expressions apply to other directions) can be expressed as an integral of the heat current autocorrelation (<a class="reference internal" href="../glossary.html#term-HAC"><span class="xref std std-term">HAC</span></a>) function:</p>
+<div class="math notranslate nohighlight">
+\[\kappa_{xx}(t) = \frac{1}{k_BT^2V} \int_0^{t} dt' \text{HAC}_{xx}(t').\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(k_{\rm B}\)</span> is Boltzmann’s constant, <span class="math notranslate nohighlight">\(V\)</span> is the volume of the simulated system, <span class="math notranslate nohighlight">\(T\)</span> is the absolute temperature, and <span class="math notranslate nohighlight">\(t\)</span> is the correlation time.
+The <a class="reference internal" href="../glossary.html#term-HAC"><span class="xref std std-term">HAC</span></a> is</p>
+<div class="math notranslate nohighlight">
+\[\text{HAC}_{xx}(t)=\langle J_{x}(0)J_{x}(t)\rangle,\]</div>
+<p>where <span class="math notranslate nohighlight">\(J_{x}(0)\)</span> and <span class="math notranslate nohighlight">\(J_{x}(t)\)</span> are the total heat current of the system at two time points separated by an interval of <span class="math notranslate nohighlight">\(t\)</span>.
+The symbol <span class="math notranslate nohighlight">\(\langle \rangle\)</span> means that the quantity inside will be averaged over different time origins.</p>
+<ul class="simple">
+<li><p>Related keyword in the <a class="reference internal" href="../gpumd/input_files/run_in.html#run-in"><span class="std std-ref">run.in file</span></a>: <a class="reference internal" href="../gpumd/input_parameters/compute_hac.html#kw-compute-hac"><span class="std std-ref">compute_hac</span></a></p></li>
+<li><p>Related output file: <a class="reference internal" href="../gpumd/output_files/hac_out.html#hac-out"><span class="std std-ref">hac.out</span></a></p></li>
+</ul>
+<p>We only used the potential part of the heat current.
+If you are studying fluids, you need to output the heat currents (potential and kinetic part) using the <a class="reference internal" href="../gpumd/input_parameters/compute.html#kw-compute"><span class="std std-ref">compute</span></a> keyword and calculated the <a class="reference internal" href="../glossary.html#term-HAC"><span class="xref std std-term">HAC</span></a> by yourself.</p>
+<p>We have decomposed the potential part of the heat current into in-plane and out-of-plane components <a class="reference internal" href="../bibliography.html#fan2017" id="id1"><span>[Fan2017]</span></a>.
+If you do not need this decomposition, you can simply sum up some components in the <a class="reference internal" href="../gpumd/output_files/hac_out.html#hac-out"><span class="std std-ref">hac.out</span></a> file.</p>
+</section>
+<section id="nemd-method">
+<span id="index-2"></span><span id="nemd"></span><h2>NEMD method<a class="headerlink" href="#nemd-method" title="Link to this heading"></a></h2>
+<p>Non-equilibrium molecular dynamics (<a class="reference internal" href="../glossary.html#term-NEMD"><span class="xref std std-term">NEMD</span></a>) can be used to study thermal transport.
+In this method, two local thermostats at different temperatures are used to generate a non-equilibrium steady state with a constant heat flux.</p>
+<p>If the temperature difference between the two thermostats is <span class="math notranslate nohighlight">\(\Delta T\)</span> and the heat flux is <span class="math notranslate nohighlight">\(Q/S\)</span>, the thermal conductance <span class="math notranslate nohighlight">\(G\)</span> between the two thermostats can be calculated as</p>
+<div class="math notranslate nohighlight">
+\[G = \frac{Q/S}{\Delta T}.\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(Q\)</span> is the energy transfer rate between the thermostat and the thermostated region and <span class="math notranslate nohighlight">\(S\)</span> is the cross-sectional area perpendicular to the transport direction.</p>
+<p>We can also calculate an effective thermal conductivity (also called the apparent thermal conductivity) <span class="math notranslate nohighlight">\(\kappa(L)\)</span> for the finite system:</p>
+<div class="math notranslate nohighlight">
+\[\kappa(L) = GL = \frac{Q/S}{\Delta T/L}.\]</div>
+<p>where <span class="math notranslate nohighlight">\(L\)</span> is the length between the heat source and the heat sink.
+This is to say that the temperature gradient should be calculated as <span class="math notranslate nohighlight">\(\Delta T/L\)</span>, rather than that extracted from the linear part of the temperature profile away from the local thermostats.
+This is an important conclusion in <a class="reference internal" href="../bibliography.html#li2019" id="id2"><span>[Li2019]</span></a>.</p>
+<p>To generate the non-equilibrium steady state, one can use a pair of local thermostats.
+Based on <a class="reference internal" href="../bibliography.html#li2019" id="id3"><span>[Li2019]</span></a>, the Langevin thermostatting method is recommended.
+Therefore, the <a class="reference internal" href="../gpumd/input_parameters/ensemble.html#kw-ensemble"><span class="std std-ref">ensemble</span></a> keyword with the first parameter of <code class="xref py py-attr docutils literal notranslate"><span class="pre">heat_lan</span></code> should be used to generate the heat current.</p>
+<ul class="simple">
+<li><p>The <a class="reference internal" href="../gpumd/input_parameters/compute.html#kw-compute"><span class="std std-ref">compute</span></a> keyword should be used to compute the temperature profile and the heat transfer rate <span class="math notranslate nohighlight">\(Q\)</span>.</p></li>
+<li><p>Related output file: <a class="reference internal" href="../gpumd/output_files/compute_out.html#compute-out"><span class="std std-ref">compute.out</span></a></p></li>
+</ul>
+</section>
+<section id="hnemd-method">
+<span id="index-3"></span><span id="hnemd"></span><h2>HNEMD method<a class="headerlink" href="#hnemd-method" title="Link to this heading"></a></h2>
+<p>The homogeneous non-equilibrium molecular dynamics (<a class="reference internal" href="../glossary.html#term-HNEMD"><span class="xref std std-term">HNEMD</span></a>) method for heat transport by Evans has been generalized to general many-body potentials <a class="reference internal" href="../bibliography.html#fan2019" id="id4"><span>[Fan2019]</span></a>.
+This method is physically equivalent to the <a class="reference internal" href="../glossary.html#term-EMD"><span class="xref std std-term">EMD</span></a> method but can be computationally faster.</p>
+<p>In this method, an external force of the form <a class="reference internal" href="../bibliography.html#fan2019" id="id5"><span>[Fan2019]</span></a></p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{F}_{i}^{\rm ext}
+= E_i \boldsymbol{F}_{\rm e} + \sum_{j \neq i} \left(\frac{\partial U_j}{\partial \boldsymbol{r}_{ji}} \otimes \boldsymbol{r}_{ij}\right) \cdot \boldsymbol{F}_{\rm e}\]</div>
+<p>is added to each atom <span class="math notranslate nohighlight">\(i\)</span>, driving the system out of equilibrium. According to <a class="reference internal" href="../bibliography.html#gabourie2021" id="id6"><span>[Gabourie2021]</span></a>, it can also be written as</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{F}_{i}^{\rm ext}
+= E_i \boldsymbol{F}_{\rm e} + \boldsymbol{F}_{\rm e} \cdot \mathbf{W}_i\]</div>
+<p>Here,
+<span class="math notranslate nohighlight">\(E_i\)</span> is the total energy of particle <span class="math notranslate nohighlight">\(i\)</span>.
+<span class="math notranslate nohighlight">\(U_i\)</span> is the potential energy of particle <span class="math notranslate nohighlight">\(i\)</span>.
+<span class="math notranslate nohighlight">\(\mathbf{W}_i\)</span> is the per-atom virial.
+<span class="math notranslate nohighlight">\(\boldsymbol{r}_{ij}\equiv\boldsymbol{r}_{j}-\boldsymbol{r}_{i}\)</span>, and <span class="math notranslate nohighlight">\(\boldsymbol{r}_i\)</span> is the position of particle <span class="math notranslate nohighlight">\(i\)</span>.</p>
+<p>The parameter <span class="math notranslate nohighlight">\(\boldsymbol{F}_{\rm e}\)</span> is of the dimension of inverse length and should be small enough to keep the system within the linear response regime.
+The driving force will induce a non-equilibrium heat current <span class="math notranslate nohighlight">\(\langle \boldsymbol{J} \rangle_{\rm ne}\)</span> linearly related to <span class="math notranslate nohighlight">\(\boldsymbol{F}_{\rm e}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\langle J^{\mu}(t)\rangle_{\rm ne}}{TV} = \sum_{\nu} \kappa^{\mu\nu}  F^{\nu}_{\rm e},\]</div>
+<p>where <span class="math notranslate nohighlight">\(\kappa^{\mu\nu}\)</span> is the thermal conductivity tensor, <span class="math notranslate nohighlight">\(T\)</span> is the system temperature, and <span class="math notranslate nohighlight">\(V\)</span> is the system volume.</p>
+<p>A global thermostat should be applied to control the temperature of the system.
+For this, we recommend using the Nose-Hoover chain thermostat.
+So one should use the <a class="reference internal" href="../gpumd/input_parameters/ensemble.html#kw-ensemble"><span class="std std-ref">ensemble</span></a> keyword with the first parameter of <code class="xref py py-attr docutils literal notranslate"><span class="pre">nvt_nhc</span></code>.</p>
+<ul class="simple">
+<li><p>The <a class="reference internal" href="../gpumd/input_parameters/compute_hnemd.html#kw-compute-hnemd"><span class="std std-ref">compute_hnemd</span></a> keyword should be used to add the driving force and calculate the thermal conductivity.</p></li>
+<li><p>The computed results are saved to the <a class="reference internal" href="../gpumd/output_files/kappa_out.html#kappa-out"><span class="std std-ref">kappa.out</span></a> file.</p></li>
+</ul>
+</section>
+<section id="spectral-heat-current">
+<span id="index-4"></span><h2>Spectral heat current<a class="headerlink" href="#spectral-heat-current" title="Link to this heading"></a></h2>
+<p>In the framework of the <a class="reference internal" href="../glossary.html#term-NEMD"><span class="xref std std-term">NEMD</span></a> and <a class="reference internal" href="../glossary.html#term-HNEMD"><span class="xref std std-term">HNEMD</span></a> methods, one can also calculate spectrally decomposed thermal conductivity (or conductance).
+In this method, one first calculates the following virial-velocity correlation function <a class="reference internal" href="../bibliography.html#gabourie2021" id="id7"><span>[Gabourie2021]</span></a>:</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{K}(t) = \sum_{i}
+\left\langle
+\mathbf{W}_i(0) \cdot \boldsymbol{v}_i (t)
+\right\rangle,\]</div>
+<p>which reduces to the non-equilibrium heat current when <span class="math notranslate nohighlight">\(t=0\)</span>.</p>
+<p>Then one can define the following Fourier transform pairs <a class="reference internal" href="../bibliography.html#fan2017" id="id8"><span>[Fan2017]</span></a>:</p>
+<div class="math notranslate nohighlight">
+\[\tilde{\boldsymbol{K}}(\omega) = \int_{-\infty}^{\infty} dt e^{i\omega t} K(t)\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{K}(t) = \int_{-\infty}^{\infty} \frac{d\omega}{2\pi} e^{-i\omega t}
+\tilde{\boldsymbol{K}}(\omega)\]</div>
+<p>By setting <span class="math notranslate nohighlight">\(t=0\)</span> in the equation above, we can get the following spectral decomposition of the non-equilibrium heat current:</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{J} = \int_{0}^{\infty} \frac{d\omega}{2\pi}
+\left[2\tilde{\boldsymbol{K}}(\omega)\right].\]</div>
+<p>From the spectral decomposition of the non-equilibrium heat current, one can deduce the spectrally decomposed thermal conductance in the <a class="reference internal" href="../glossary.html#term-NEMD"><span class="xref std std-term">NEMD</span></a> method:</p>
+<div class="math notranslate nohighlight">
+\[G(\omega) = \frac{2\tilde{\boldsymbol{K}}(\omega)}{V\Delta T}\]</div>
+<p>with</p>
+<div class="math notranslate nohighlight">
+\[G = \int_{0}^{\infty} \frac{d\omega}{2\pi} G(\omega).\]</div>
+<p>where <span class="math notranslate nohighlight">\(\Delta T\)</span> is the temperature difference between the two thermostats and <span class="math notranslate nohighlight">\(V\)</span> is the volume of the considered system or subsystem.</p>
+<p>One can also calculate the spectrally decomposed thermal conductivity in the <a class="reference internal" href="../glossary.html#term-HNEMD"><span class="xref std std-term">HNEMD</span></a> method:</p>
+<div class="math notranslate nohighlight">
+\[\kappa(\omega) = \frac{2\tilde{\boldsymbol{K}}(\omega)}{VTF_{\rm e}}\]</div>
+<p>with</p>
+<div class="math notranslate nohighlight">
+\[\kappa = \int_{0}^{\infty} \frac{d\omega}{2\pi} \kappa(\omega).\]</div>
+<p>where <span class="math notranslate nohighlight">\(F_{\rm e}\)</span> is the magnitude of the driving force parameter in the <a class="reference internal" href="../glossary.html#term-HNEMD"><span class="xref std std-term">HNEMD</span></a> method.</p>
+<p>This calculation is invoked by the <a class="reference internal" href="../gpumd/input_parameters/compute_shc.html#kw-compute-shc"><span class="std std-ref">compute_shc</span></a> keyword and the results are saved to the <a class="reference internal" href="../gpumd/output_files/shc_out.html#shc-out"><span class="std std-ref">shc.out</span></a> file.</p>
+</section>
+<section id="modal-analysis-methods">
+<span id="index-5"></span><h2>Modal analysis methods<a class="headerlink" href="#modal-analysis-methods" title="Link to this heading"></a></h2>
+<p>A system with <span class="math notranslate nohighlight">\(N\)</span> atoms will have <span class="math notranslate nohighlight">\(3N\)</span> vibrational modes.
+Using lattice dynamics, the vibrational modes (or eigenmodes) of the system can be found.
+The heat flux can be decomposed into contributions from each vibrational mode and the thermal conductivity can be written in terms of those contributions <a class="reference internal" href="../bibliography.html#lv2016" id="id9"><span>[Lv2016]</span></a>.
+To calculate the modal heat current in GPUMD, the velocities must first be decomposed into their modal contributions:</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{v}_i (t) = \frac{1}{\sqrt{m_i}} \sum_{n}  \boldsymbol{e}_{i,n} \cdot \boldsymbol{\dot{X}}_n(t)\]</div>
+<p>Here,
+<span class="math notranslate nohighlight">\(\boldsymbol{\dot{X}}_n\)</span> is the normal mode coordinates of the velocity of mode <span class="math notranslate nohighlight">\(n\)</span>
+<span class="math notranslate nohighlight">\(m_i\)</span> is the mass of atom <span class="math notranslate nohighlight">\(i\)</span>
+<span class="math notranslate nohighlight">\(\boldsymbol{e}_{i,n}\)</span> is the eigenvector that gives the magnitude and direction of mode <span class="math notranslate nohighlight">\(n\)</span> for atom <span class="math notranslate nohighlight">\(i\)</span>
+<span class="math notranslate nohighlight">\(\boldsymbol{v}_i\)</span> is the velocity of atom <span class="math notranslate nohighlight">\(i\)</span></p>
+<p>The heat current can be rewritten in terms of the modal velocity to be:</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{J}^{\text{pot}} = \sum_{i} \mathbf{W}_i  \cdot \left[ \frac{1}{\sqrt{m_i}} \sum_{n}  \boldsymbol{e}_{i,n} \cdot \boldsymbol{\dot{X}}_n(t) \right]
+= \sum_{n} \left(\sum_{i} \frac{1}{\sqrt{m_i}} \mathbf{W}_i  \cdot \boldsymbol{e}_{i,n} \right) \cdot \boldsymbol{\dot{X}}_n(t)\]</div>
+<p>This means that the modal heat current can be written as:</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{J}^{\text{pot}}_n = \left(\sum_{i} \frac{1}{\sqrt{m_i}} \mathbf{W}_i  \cdot \boldsymbol{e}_{i,n} \right) \cdot \boldsymbol{\dot{X}}_n(t)\]</div>
+<p>This modal heat current can be used to extend the capabilities of the <a class="reference internal" href="../glossary.html#term-EMD"><span class="xref std std-term">EMD</span></a> and <a class="reference internal" href="../glossary.html#term-HNEMD"><span class="xref std std-term">HNEMD</span></a> methods.
+The extended methods are called Green-Kubo modal analysis (<a class="reference internal" href="../glossary.html#term-GKMA"><span class="xref std std-term">GKMA</span></a>) <a class="reference internal" href="../bibliography.html#lv2016" id="id10"><span>[Lv2016]</span></a> and homogeneous non-equilibrium modal analysis (<a class="reference internal" href="../glossary.html#term-HNEMA"><span class="xref std std-term">HNEMA</span></a>) <a class="reference internal" href="../bibliography.html#gabourie2021" id="id11"><span>[Gabourie2021]</span></a>.</p>
+<section id="index-6">
+<span id="green-kubo-modal-analysis"></span><span id="id12"></span><h3>Green-Kubo modal analysis<a class="headerlink" href="#index-6" title="Link to this heading"></a></h3>
+<p>The Green-Kubo Modal Analysis (<a class="reference internal" href="../glossary.html#term-GKMA"><span class="xref std std-term">GKMA</span></a>) calculates the modal contributions to thermal conductivity by using <a class="reference internal" href="../bibliography.html#lv2016" id="id13"><span>[Lv2016]</span></a> <a class="reference internal" href="../bibliography.html#gabourie2021" id="id14"><span>[Gabourie2021]</span></a>:</p>
+<div class="math notranslate nohighlight">
+\[\kappa_{xx,n}(t) = \frac{1}{k_BT^2V} \int_0^{t} dt' \langle J_{x,n}(t')J_{x}(0)\rangle.\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(k_{\rm B}\)</span> is Boltzmann’s constant, <span class="math notranslate nohighlight">\(V\)</span> is the volume of the simulated system, <span class="math notranslate nohighlight">\(T\)</span> is the absolute temperature, and <span class="math notranslate nohighlight">\(t\)</span> is the correlation time. <span class="math notranslate nohighlight">\(J_{x}(0)\)</span> is the total heat current and and:math:<cite>J_{x,n}(t’)</cite> is the mode-specific heat current of the system at two time points separated by an interval of <span class="math notranslate nohighlight">\(t'\)</span>.
+The symbol <span class="math notranslate nohighlight">\(\langle \rangle\)</span> means that the quantity inside will be averaged over different time origins.</p>
+<ul class="simple">
+<li><p>Related input file: <a class="reference internal" href="../gpumd/input_files/eigenvector_in.html#eigenvector-in"><span class="std std-ref">eigenvector.in</span></a></p></li>
+<li><p>Related keyword in the <a class="reference internal" href="../gpumd/input_files/run_in.html#run-in"><span class="std std-ref">run.in file</span></a>: <a class="reference internal" href="../gpumd/input_parameters/compute_gkma.html#kw-compute-gkma"><span class="std std-ref">compute_gkma</span></a></p></li>
+<li><p>Related output file: <a class="reference internal" href="../gpumd/output_files/heatmode_out.html#heatmode-out"><span class="std std-ref">heatmode.out</span></a></p></li>
+</ul>
+<p>For the <a class="reference internal" href="../glossary.html#term-GKMA"><span class="xref std std-term">GKMA</span></a> method, we only used the potential part of the heat current.</p>
+</section>
+<section id="homogeneous-non-equilibrium-modal-analysis">
+<span id="index-7"></span><span id="hnema"></span><h3>Homogeneous non-equilibrium modal analysis<a class="headerlink" href="#homogeneous-non-equilibrium-modal-analysis" title="Link to this heading"></a></h3>
+<p>The homogeneous non-equilibrium modal analysis (<a class="reference internal" href="../glossary.html#term-HNEMA"><span class="xref std std-term">HNEMA</span></a>) method calculates the modal contributions of thermal conductivity using <a class="reference internal" href="../bibliography.html#gabourie2021" id="id15"><span>[Gabourie2021]</span></a>:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\langle J_n^{\mu}(t)\rangle_{\rm ne}}{TV} = \sum_{\nu} \kappa_n^{\mu\nu}  F^{\nu}_{\rm e},\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(\kappa_n^{\mu\nu}\)</span> is the thermal conductivity tensor of mode <span class="math notranslate nohighlight">\(n\)</span>, <span class="math notranslate nohighlight">\(T\)</span> is the system temperature, and <span class="math notranslate nohighlight">\(V\)</span> is the system volume.
+The mode-specific non-equilibrium heat current is <span class="math notranslate nohighlight">\(\langle J_n^{\mu}(t)\rangle_{\rm ne}\)</span> and the driving force parameter is <span class="math notranslate nohighlight">\(\boldsymbol{F}_{\rm e}\)</span>.</p>
+<ul class="simple">
+<li><p>Related input file: <a class="reference internal" href="../gpumd/input_files/eigenvector_in.html#eigenvector-in"><span class="std std-ref">eigenvector.in</span></a></p></li>
+<li><p>Related keyword in the run.in file: <a class="reference internal" href="../gpumd/input_parameters/compute_hnema.html#kw-compute-hnema"><span class="std std-ref">compute_hnema</span></a></p></li>
+<li><p>Related output file: <a class="reference internal" href="../gpumd/output_files/kappamode_out.html#kappamode-out"><span class="std std-ref">kappamode.out</span></a></p></li>
+</ul>
+<p>For the <a class="reference internal" href="../glossary.html#term-HNEMA"><span class="xref std std-term">HNEMA</span></a> method, we only used the potential part of the heat current.
+A global thermostat should be applied to control the temperature of the system.
+For this, we recommend using the Nose-Hoover chain thermostat. So one should use the <a class="reference internal" href="../gpumd/input_parameters/ensemble.html#kw-ensemble"><span class="std std-ref">ensemble</span></a> keyword with the first parameter of <code class="xref py py-attr docutils literal notranslate"><span class="pre">nvt_nhc</span></code>.</p>
+</section>
+</section>
+<section id="hnemdec-method">
+<span id="index-8"></span><span id="hnemdec"></span><h2>HNEMDEC method<a class="headerlink" href="#hnemdec-method" title="Link to this heading"></a></h2>
+<p>A system with <span class="math notranslate nohighlight">\(M\)</span> components has <span class="math notranslate nohighlight">\(M\)</span> independent fluxes: the heat flux and any <span class="math notranslate nohighlight">\(M-1\)</span> momentum fluxes of the <span class="math notranslate nohighlight">\(M\)</span> component.
+The central idea of Evans-Cummings algorithm is designing such a driving force that produce a dissipative flux that is equivalent to heat flux or momentum flux.
+By measuring the heat current and momentum current, we obtain onsager coefficents that can be used to derive the thermal conductivity.</p>
+<p>In the case of heat flux <span class="math notranslate nohighlight">\(\boldsymbol{J}_{q}\)</span> as dissipative flux, for the <span class="math notranslate nohighlight">\(i\)</span> atom belonging to <span class="math notranslate nohighlight">\(\alpha\)</span> component:</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{F}_{i}^{\alpha,\rm ext}
+=( \mathbf{S}_{i}^{\alpha}
+-\frac{m_{\alpha}}{M}\mathbf{S}
++k_BT\frac{M_{tot}-Nm_{\alpha}}{M_{tot}N}\mathbf{I})\cdot \boldsymbol{F}_{\rm e}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{S}_{i}^{\alpha}=E_{i}^{\alpha}\mathbf{I}+\mathbf{W}_{i}^{\alpha}\)</span>, <span class="math notranslate nohighlight">\(\mathbf{S}=\sum_{\beta=1}^{M}\sum_{i=1}^{N_{\beta}}\mathbf{S}_{i}^{\beta}\)</span>, <span class="math notranslate nohighlight">\(M_{tot}\)</span> is the total mass of the system, <span class="math notranslate nohighlight">\(N\)</span> is the atom number of the system. Any physical quantity <span class="math notranslate nohighlight">\(A(t)\)</span> is related to driving force by correlation funtion:</p>
+<div class="math notranslate nohighlight">
+\[\langle \boldsymbol{A}(t) \rangle
+=\langle A(0) \rangle + (\int_{0}^{t}dt'\frac{\langle \boldsymbol{A}(t') \otimes \boldsymbol{J}_{q}(0) \rangle}{k_BT})\cdot \boldsymbol{F}_{\rm e}\]</div>
+<p>In the case of momentum flux <span class="math notranslate nohighlight">\(\boldsymbol{J}_{\gamma}\)</span> of <span class="math notranslate nohighlight">\(\gamma\)</span> component as dissipative flux:</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{F}_{i}^{\alpha,\rm ext}=c_{\alpha}\boldsymbol{F}_{\rm e}\]</div>
+<p>where <span class="math notranslate nohighlight">\(c_{\gamma}=\frac{N}{N_{\gamma}}\)</span>, and <span class="math notranslate nohighlight">\(c_{\beta}=-\frac{Nm_{\beta}}{M'}\)</span>, <span class="math notranslate nohighlight">\(M'=\sum_{\epsilon=1,\epsilon\neq\gamma}^{M}N_{\epsilon}m_{\epsilon}\)</span>.
+Similar to the former case,</p>
+<div class="math notranslate nohighlight">
+\[\langle \boldsymbol{A}(t) \rangle
+=\langle A(0) \rangle
++ (\frac{N}{M'}+\frac{N}{N_{\gamma}m_{\gamma}})(\int_{0}^{t}dt'\frac{\langle \boldsymbol{A}(t') \otimes \boldsymbol{J}_{\gamma}(0) \rangle}{k_BT})\cdot \boldsymbol{F}_{\rm e}\]</div>
+<p>Then we can obtain any matrix element <span class="math notranslate nohighlight">\(\Lambda_{ij}\)</span> of onsager matrix by:</p>
+<div class="math notranslate nohighlight">
+\[\Lambda_{ij}
+=\frac{1}{k_BV}\int_{0}^{t}dt'\langle \boldsymbol{J}_{i}(t') \otimes \boldsymbol{J}_{j}(0) \rangle\]</div>
+<p>The onsager matrix is arranged as:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{cccc}
+\Lambda_{qq}
+&amp; \Lambda_{q1}
+&amp; \cdots
+&amp; \Lambda_{q(M-1)}
+\\
+\Lambda_{1q}
+&amp; \Lambda_{11}
+&amp; \cdots
+&amp; \Lambda_{1(M-1)}
+\\
+\vdots
+&amp; \vdots
+&amp; \ddots
+&amp; \vdots
+\\
+\Lambda_{(M-1)q}
+&amp; \Lambda_{(M-1)1}
+&amp; \cdots
+&amp; \Lambda_{(M-1)(M-1)}
+\end{array}\end{split}\]</div>
+<p>The thermal conductivity could be derived from onsager matrix:</p>
+<div class="math notranslate nohighlight">
+\[\kappa=\frac{1}{T^{2}(\Lambda^{-1})_{00}}\]</div>
+<ul class="simple">
+<li><p>The <a class="reference internal" href="../gpumd/input_parameters/compute_hnemdec.html#kw-compute-hnemdec"><span class="std std-ref">compute_hnemdec</span></a> keyword should be used to add the driving force and calculate the thermal conductivity.</p></li>
+<li><p>The computed results are saved to the <a class="reference internal" href="../gpumd/output_files/onsager_out.html#onsager-out"><span class="std std-ref">onsager.out</span></a> file.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="heat_current.html" class="btn btn-neutral float-left" title="Heat current" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../potentials/index.html" class="btn btn-neutral float-right" title="Interatomic potentials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

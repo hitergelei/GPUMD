@@ -1,0 +1,318 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neuroevolution potential &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Hybrid NEP+ILP potential" href="nep_ilp.html" />
+    <link rel="prev" title="Force constant potential" href="fcp.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/index.html">Theoretical background</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Interatomic potentials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tersoff_1988.html">Tersoff potential (1988)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tersoff_1989.html">Tersoff potential (1989)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tersoff_mini.html">Tersoff mini-potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lennard_jones.html">Lennard-Jones potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="eam.html">Embedded atom method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adp.html">Angular Dependent Potential (ADP)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fcp.html">Force constant potential</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Neuroevolution potential</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-neural-network-model">The neural network model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-descriptor">The descriptor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#model-dimensions">Model dimensions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#optimization-procedure">Optimization procedure</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="nep_ilp.html">Hybrid NEP+ILP potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sw_ilp.html">Hybrid SW+ILP potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tersoff_ilp.html">Hybrid Tersoff+ILP potential</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../gpumd/index.html">gpumd executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nep/index.html">nep executable</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="neuroevolution-potential">
+<span id="index-0"></span><span id="nep-formalism"></span><h1>Neuroevolution potential<a class="headerlink" href="#neuroevolution-potential" title="Link to this heading"></a></h1>
+<p>The neuroevolution potential (<a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a>) approach was proposed in <a class="reference internal" href="../bibliography.html#fan2021" id="id1"><span>[Fan2021]</span></a> (NEP1) and later improved in <a class="reference internal" href="../bibliography.html#fan2022a" id="id2"><span>[Fan2022a]</span></a> (NEP2), <a class="reference internal" href="../bibliography.html#fan2022b" id="id3"><span>[Fan2022b]</span></a> (NEP3), and <a class="reference internal" href="../bibliography.html#song2024" id="id4"><span>[Song2024]</span></a> (NEP4).
+Currently, <strong class="program">GPUMD</strong> only supports NEP3 and NEP4, as NEP1 and NEP2 are deprecated.
+Both versions are identical for single-component systems.
+For multi-component systems, NEP4 usually has higher accuracy, if all the other hyperparameters are the same.</p>
+<p><strong class="program">GPUMD</strong> not only allows one to carry out simulations using <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> models via the <a class="reference internal" href="../gpumd/index.html#gpumd-executable"><span class="std std-ref">gpumd executable</span></a> but even the construction of such models via the <a class="reference internal" href="../nep/index.html#nep-executable"><span class="std std-ref">nep executable</span></a>.</p>
+<section id="the-neural-network-model">
+<h2>The neural network model<a class="headerlink" href="#the-neural-network-model" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> uses a simple feedforward neural network (<a class="reference internal" href="../glossary.html#term-NN"><span class="xref std std-term">NN</span></a>) to represent the site energy of atom <span class="math notranslate nohighlight">\(i\)</span> as a function of a descriptor vector with <span class="math notranslate nohighlight">\(N_\mathrm{des}\)</span> components,</p>
+<div class="math notranslate nohighlight">
+\[U_i(\mathbf{q}) = U_i \left(\{q^i_{\nu}\}_{\nu =1}^{N_\mathrm{des}}\right).\]</div>
+<p>There is a single hidden layer with <span class="math notranslate nohighlight">\(N_\mathrm{neu}\)</span> neurons in the NN and we have</p>
+<div class="math notranslate nohighlight">
+\[U_i = \sum_{\mu=1}^{N_\mathrm{neu}}w^{(1)}_{\mu}\tanh\left(\sum_{\nu=1}^{N_\mathrm{des}} w^{(0)}_{\mu\nu} q^i_{\nu} - b^{(0)}_{\mu}\right) - b^{(1)},\]</div>
+<p>where <span class="math notranslate nohighlight">\(\tanh(x)\)</span> is the activation function in the hidden layer, <span class="math notranslate nohighlight">\(\mathbf{w}^{(0)}\)</span> is the connection weight matrix from the input layer (descriptor vector) to the hidden layer, <span class="math notranslate nohighlight">\(\mathbf{w}^{(1)}\)</span> is the connection weight vector from the hidden layer to the output node, which is the energy <span class="math notranslate nohighlight">\(U_i\)</span>, <span class="math notranslate nohighlight">\(\mathbf{b}^{(0)}\)</span> is the bias vector in the hidden layer, and <span class="math notranslate nohighlight">\(b^{(1)}\)</span> is the bias for node <span class="math notranslate nohighlight">\(U_i\)</span>.</p>
+</section>
+<section id="the-descriptor">
+<h2>The descriptor<a class="headerlink" href="#the-descriptor" title="Link to this heading"></a></h2>
+<p>The descriptor for atom <span class="math notranslate nohighlight">\(i\)</span> consists of a number of radial and angular components as described below.</p>
+<p>The <strong>radial descriptor</strong> components are defined as</p>
+<div class="math notranslate nohighlight">
+\[q^i_{n} = \sum_{j\neq i} g_{n}(r_{ij})\]</div>
+<p>with</p>
+<div class="math notranslate nohighlight">
+\[0\leq n\leq n_\mathrm{max}^\mathrm{R},\]</div>
+<p>where the summation runs over all the neighbors of atom <span class="math notranslate nohighlight">\(i\)</span> within a certain cutoff distance.
+There are thus <span class="math notranslate nohighlight">\(n_\mathrm{max}^\mathrm{R}+1\)</span> radial descriptor components.</p>
+<p>For the <strong>angular descriptor</strong> components, we consider 3-body to 5-body ones.
+The formulation is similar but not identical to the atomic cluster expansion (<a class="reference internal" href="../glossary.html#term-ACE"><span class="xref std std-term">ACE</span></a>) approach <a class="reference internal" href="../bibliography.html#drautz2019" id="id5"><span>[Drautz2019]</span></a>.
+For 3-body ones, we define (<span class="math notranslate nohighlight">\(0\leq n\leq n_\mathrm{max}^\mathrm{A}\)</span>, <span class="math notranslate nohighlight">\(1\leq l \leq l_\mathrm{max}^\mathrm{3b}\)</span>)</p>
+<div class="math notranslate nohighlight">
+\[q^i_{nl} = \sum_{m=-l}^l (-1)^m A^i_{nlm} A^i_{nl(-m)},\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[A^i_{nlm} = \sum_{j\neq i} g_n(r_{ij}) Y_{lm}(\theta_{ij},\phi_{ij}),\]</div>
+<p>and <span class="math notranslate nohighlight">\(Y_{lm}(\theta_{ij},\phi_{ij})\)</span> are the spherical harmonics as a function of the polar angle <span class="math notranslate nohighlight">\(\theta_{ij}\)</span> and the azimuthal angle <span class="math notranslate nohighlight">\(\phi_{ij}\)</span>.
+For expressions of the 4-body and 5-body descriptor components, we refer to <a class="reference internal" href="../bibliography.html#fan2022b" id="id6"><span>[Fan2022b]</span></a>.</p>
+<p>The radial functions <span class="math notranslate nohighlight">\(g_n(r_{ij})\)</span> appear in both the radial and the angular descriptor components.
+In the radial descriptor components,</p>
+<div class="math notranslate nohighlight">
+\[g_n(r_{ij}) = \sum_{k=0}^{N_\mathrm{bas}^\mathrm{R}} c^{ij}_{nk} f_k(r_{ij}),\]</div>
+<p>with</p>
+<div class="math notranslate nohighlight">
+\[f_k(r_{ij}) = \frac{1}{2}
+\left[T_k\left(2\left(r_{ij}/r_\mathrm{c}^\mathrm{R}-1\right)^2-1\right)+1\right]
+f_\mathrm{c}(r_{ij}),\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}f_\mathrm{c}(r_{ij})
+= \begin{cases}
+\frac{1}{2}\left[
+1 + \cos\left( \pi \frac{r_{ij}}{r_\mathrm{c}^\mathrm{R}} \right)
+\right],&amp; r_{ij}\leq r_\mathrm{c}^\mathrm{R}; \\
+0, &amp; r_{ij} &gt; r_\mathrm{c}^\mathrm{R}.
+\end{cases}\end{split}\]</div>
+<p>In the angular descriptor components, <span class="math notranslate nohighlight">\(g_n(r_{ij})\)</span> have similar forms but with <span class="math notranslate nohighlight">\(N_\mathrm{bas}^\mathrm{R}\)</span> changed to <span class="math notranslate nohighlight">\(N_\mathrm{bas}^\mathrm{A}\)</span> and with <span class="math notranslate nohighlight">\(r_\mathrm{c}^\mathrm{R}\)</span> changed to <span class="math notranslate nohighlight">\(r_\mathrm{c}^\mathrm{A}\)</span>.</p>
+</section>
+<section id="model-dimensions">
+<h2>Model dimensions<a class="headerlink" href="#model-dimensions" title="Link to this heading"></a></h2>
+<table class="docutils align-default" style="width: 100%">
+<thead>
+<tr class="row-odd"><th class="head"><p>Number of …</p></th>
+<th class="head"><p>Count</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>atom types</p></td>
+<td><p><span class="math notranslate nohighlight">\(N_\mathrm{typ}\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>radial descriptor components</p></td>
+<td><p><span class="math notranslate nohighlight">\(n_\mathrm{max}^\mathrm{R}+1\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>3-body angular descriptor components</p></td>
+<td><p><span class="math notranslate nohighlight">\((n_\mathrm{max}^\mathrm{A}+1) l_\mathrm{max}^\mathrm{3b}\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>4-body angular descriptor components</p></td>
+<td><p><span class="math notranslate nohighlight">\((n_\mathrm{max}^\mathrm{A}+1)\)</span> or zero (if not used)</p></td>
+</tr>
+<tr class="row-even"><td><p>5-body angular descriptor components</p></td>
+<td><p><span class="math notranslate nohighlight">\((n_\mathrm{max}^\mathrm{A}+1)\)</span> or zero (if not used)</p></td>
+</tr>
+<tr class="row-odd"><td><p>descriptor components</p></td>
+<td><p><span class="math notranslate nohighlight">\(N_\mathrm{des}\)</span> is the sum of the above numbers of descriptor components</p></td>
+</tr>
+<tr class="row-even"><td><p>trainable parameters <span class="math notranslate nohighlight">\(c_{nk}^{ij}\)</span> in the descriptor</p></td>
+<td><p><span class="math notranslate nohighlight">\(N_\mathrm{typ}^2 [(n_\mathrm{max}^\mathrm{R}+1)(N_\mathrm{bas}^\mathrm{R}+1)+(n_\mathrm{max}^\mathrm{A}+1)(N_\mathrm{bas}^\mathrm{A}+1)]\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>trainable <a class="reference internal" href="../glossary.html#term-NN"><span class="xref std std-term">NN</span></a> parameters</p></td>
+<td><p><span class="math notranslate nohighlight">\(N_\mathrm{nn} = (N_\mathrm{des} +2) N_\mathrm{neu}+1\)</span> (NEP3)</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p><span class="math notranslate nohighlight">\(N_\mathrm{nn} = (N_\mathrm{des} +2) N_\mathrm{neu} N_\mathrm{typ}+1\)</span> (NEP4)</p></td>
+</tr>
+</tbody>
+</table>
+<p>The total number of trainable parameters is the sum of the number of trainable descriptor parameters and the number of <a class="reference internal" href="../glossary.html#term-NN"><span class="xref std std-term">NN</span></a> parameters <span class="math notranslate nohighlight">\(N_\mathrm{nn}\)</span>.</p>
+</section>
+<section id="optimization-procedure">
+<span id="index-1"></span><span id="nep-optimization-procedure"></span><span id="nep-loss-function"></span><h2>Optimization procedure<a class="headerlink" href="#optimization-procedure" title="Link to this heading"></a></h2>
+<p>The name of the <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> model is owed to the use of the separable natural evolution strategy (<a class="reference internal" href="../glossary.html#term-SNES"><span class="xref std std-term">SNES</span></a>) that is used for the optimization of the parameters <a class="reference internal" href="../bibliography.html#schaul2011" id="id7"><span>[Schaul2011]</span></a>.
+The interested reader is referred to <a class="reference internal" href="../bibliography.html#schaul2011" id="id8"><span>[Schaul2011]</span></a> and <a class="reference internal" href="../bibliography.html#fan2021" id="id9"><span>[Fan2021]</span></a> for details.</p>
+<p>The key quantity in the optimization procedure is the loss (or objective) function, which is being minimized.
+It is defined as a weighted sum over the loss terms associated with energies, forces and virials as well as the <span class="math notranslate nohighlight">\(\mathcal{L}_1\)</span> and <span class="math notranslate nohighlight">\(\mathcal{L}_2\)</span> norms of the parameter vector.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}L(\boldsymbol{z})
+&amp;= \lambda_\mathrm{e} \left(
+\frac{1}{N_\mathrm{str}}\sum_{n=1}^{N_\mathrm{str}} \left( U^\mathrm{NEP}(n,\boldsymbol{z}) - U^\mathrm{tar}(n)\right)^2
+\right)^{1/2} \nonumber \\
+&amp;+  \lambda_\mathrm{f} \left(
+\frac{1}{3N}
+\sum_{i=1}^{N} \left( \boldsymbol{F}_i^\mathrm{NEP}(\boldsymbol{z}) - \boldsymbol{F}_i^\mathrm{tar}\right)^2
+\right)^{1/2} \nonumber \\
+&amp;+  \lambda_\mathrm{v} \left(
+\frac{1}{6N_\mathrm{str}}
+\sum_{n=1}^{N_\mathrm{str}} \sum_{\mu\nu} \left( W_{\mu\nu}^\mathrm{NEP}(n,\boldsymbol{z}) - W_{\mu\nu}^\mathrm{tar}(n)\right)^2
+\right)^{1/2} \nonumber \\
+&amp;+  \lambda_1 \frac{1}{N_\mathrm{par}} \sum_{n=1}^{N_\mathrm{par}} |z_n| \nonumber \\
+&amp;+  \lambda_2 \left(\frac{1}{N_\mathrm{par}} \sum_{n=1}^{N_\mathrm{par}} z_n^2\right)^{1/2}.\end{split}\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(N_\mathrm{str}\)</span> is the number of structures in the training data set (if using a full batch) or the number of structures in a mini-batch (see the <a class="reference internal" href="../nep/input_parameters/batch.html#kw-batch"><span class="std std-ref">batch keyword</span></a> in the <a class="reference internal" href="../nep/input_files/nep_in.html#nep-in"><span class="std std-ref">nep.in input file</span></a>) and <span class="math notranslate nohighlight">\(N\)</span> is the total number of atoms in these structures.
+<span class="math notranslate nohighlight">\(U^\mathrm{NEP}(n,\boldsymbol{z})\)</span> and <span class="math notranslate nohighlight">\(W_{\mu\nu}^\mathrm{NEP}(n,\boldsymbol{z})\)</span> are the per-atom energy and virial tensor predicted by the <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> model with parameters <span class="math notranslate nohighlight">\(\boldsymbol{z}\)</span> for the <span class="math notranslate nohighlight">\(n^\mathrm{th}\)</span> structure, and <span class="math notranslate nohighlight">\(\boldsymbol{F}_i^\mathrm{NEP}(\boldsymbol{z})\)</span> is the predicted force for the <span class="math notranslate nohighlight">\(i^\mathrm{th}\)</span> atom.
+<span class="math notranslate nohighlight">\(U^\mathrm{tar}(n)\)</span>, <span class="math notranslate nohighlight">\(W_{\mu\nu}^\mathrm{tar}(n)\)</span>, and <span class="math notranslate nohighlight">\(\boldsymbol{F}_i^\mathrm{tar}\)</span> are the corresponding target values.
+That is, the loss terms for energies, forces, and virials are defined as the respective <a class="reference internal" href="../glossary.html#term-RMSE"><span class="xref std std-term">RMSE</span></a> values between the <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> predictions and the target values.
+The last two terms represent <span class="math notranslate nohighlight">\(\mathcal{L}_1\)</span> and <span class="math notranslate nohighlight">\(\mathcal{L}_2\)</span> regularization terms of the parameter vector.
+The weights <span class="math notranslate nohighlight">\(\lambda_\mathrm{e}\)</span>, <span class="math notranslate nohighlight">\(\lambda_\mathrm{f}\)</span>, <span class="math notranslate nohighlight">\(\lambda_\mathrm{v}\)</span>, <span class="math notranslate nohighlight">\(\lambda_1\)</span>, and <span class="math notranslate nohighlight">\(\lambda_2\)</span> are tunable hyper-parameters (see the eponymous keywords in the <a class="reference internal" href="../nep/input_files/nep_in.html#nep-in"><span class="std std-ref">nep.in input file</span></a>).
+When calculating the loss function, we use eV/atom for energies and virials and eV/Å for force components.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="fcp.html" class="btn btn-neutral float-left" title="Force constant potential" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="nep_ilp.html" class="btn btn-neutral float-right" title="Hybrid NEP+ILP potential" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

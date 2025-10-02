@@ -1,0 +1,367 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hybrid NEP+ILP potential &mdash; GPUMD  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=ddb61244" />
+
+  
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Hybrid SW+ILP potential" href="sw_ilp.html" />
+    <link rel="prev" title="Neuroevolution potential" href="nep.html" />
+    <meta name="twitter:card" content="summary" />
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            GPUMD
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/index.html">Theoretical background</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Interatomic potentials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tersoff_1988.html">Tersoff potential (1988)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tersoff_1989.html">Tersoff potential (1989)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tersoff_mini.html">Tersoff mini-potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lennard_jones.html">Lennard-Jones potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="eam.html">Embedded atom method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adp.html">Angular Dependent Potential (ADP)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fcp.html">Force constant potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nep.html">Neuroevolution potential</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Hybrid NEP+ILP potential</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#potential-form">Potential form</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#file-format">File format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#example-1-bilayer-graphene">Example 1: bilayer graphene</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example-2-bilayer-h-bn-mathrm-mos-2">Example 2: bilayer <span class="math notranslate nohighlight">\(h\)</span>-BN / <span class="math notranslate nohighlight">\(\mathrm{MoS}_2\)</span></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sw_ilp.html">Hybrid SW+ILP potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tersoff_ilp.html">Hybrid Tersoff+ILP potential</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../gpumd/index.html">gpumd executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nep/index.html">nep executable</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Backmatter</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../publications.html">Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">GPUMD</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div style="text-align: right;">
+<a href="https://github.com/brucefan1983/GPUMD" target="_blank">source repo</a>
+| <a href="https://gpumd.org/" target="_blank">gpumd.org</a>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="hybrid-nep-ilp-potential">
+<span id="index-0"></span><span id="nep-ilp"></span><h1>Hybrid NEP+ILP potential<a class="headerlink" href="#hybrid-nep-ilp-potential" title="Link to this heading"></a></h1>
+<p>The hybrid <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> + <a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a> potential <a class="reference internal" href="../bibliography.html#bu2025" id="id1"><span>[Bu2025]</span></a> in <strong class="program">GPUMD</strong> combines the neuroevolution potential
+(<a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a>), <a class="reference internal" href="../bibliography.html#fan2022b" id="id2"><span>[Fan2022b]</span></a> (NEP3), and <a class="reference internal" href="../bibliography.html#song2024" id="id3"><span>[Song2024]</span></a> (NEP4), for intralyer
+interactions and the interlayer potential (<a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a>) <a class="reference internal" href="../bibliography.html#ouyang2018" id="id4"><span>[Ouyang2018]</span></a> <a class="reference internal" href="../bibliography.html#ouyang2020" id="id5"><span>[Ouyang2020]</span></a>
+for interlayer interactions to simulate van der Waals materials.
+Now this hybrid potential supports to simulate homo- and heterostructures based on
+graphene, <span class="math notranslate nohighlight">\(h\)</span>-BN and transition metal dichalcogenides (TMDs) layered materials.
+The <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">nep</span></a> potential here doesn’t support <code class="xref py py-attr docutils literal notranslate"><span class="pre">USE_TABLE</span></code> flag to accelerate now.</p>
+<section id="potential-form">
+<h2>Potential form<a class="headerlink" href="#potential-form" title="Link to this heading"></a></h2>
+<p>The site potential of <a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a> can be written as:</p>
+<div class="math notranslate nohighlight">
+\[U_i^{\mathrm{ILP}}=  \mathrm{Tap}(r_{ij}) \left[U^{\mathrm{att}}(r_{ij})+U^{\mathrm{rep}}(r_{ij}, \boldsymbol{n}_i, \boldsymbol{n}_j)\right]\]</div>
+<p>The function <span class="math notranslate nohighlight">\(\mathrm{Tap}(r_{ij})\)</span> is a cutoff function and takes the following form in the intermediate region:</p>
+<div class="math notranslate nohighlight">
+\[\mathrm{Tap}(r_{ij})=20{\left(\frac{r_{ij}}{R_{\mathrm{cut}}}\right)}^7-
+70{\left(\frac{r_{ij}}{R_{\mathrm{cut}}}\right)}^6+84{\left(\frac{r_{ij}}{R_{\mathrm{cut}}}\right)}^5-
+35{\left(\frac{r_{ij}}{R_{\mathrm{cut}}}\right)}^4+1\]</div>
+<p>The repulsive term and the attractive term take the following forms:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}U^{\mathrm{att}}(r_{ij})&amp;=-\frac{1}{1+e^{-d_{ij}\left[r_{ij}/(S_{\mathrm{R},ij}\cdot r_{ij}^{\mathrm{eff}})-1\right]}}\frac{C_{6,ij}}{r_{ij}^{6}}.\\U^{\mathrm{rep}}(r_{ij}, \boldsymbol{n}_i, \boldsymbol{n}_j)&amp;=e^{\alpha_{ij}\left(1-\frac{\gamma_{ij}}{\beta_{ij}}\right)} \left\{\epsilon_{ij}+C_{ij}\left[e^{-{(\frac{\rho_{ij}}{\gamma_{ij}})}^2}+e^{-{\left(\frac{\rho_{ji}}{\gamma_{ij}}\right)}^2}\right]\right\}.\end{aligned}\end{align} \]</div>
+<p>where <span class="math notranslate nohighlight">\(\boldsymbol n_i\)</span> and <span class="math notranslate nohighlight">\(\boldsymbol n_j\)</span> are normal vectors of atom <span class="math notranslate nohighlight">\(i\)</span> and <span class="math notranslate nohighlight">\(j\)</span>,
+<span class="math notranslate nohighlight">\(\rho_{ij}\)</span> and <span class="math notranslate nohighlight">\(\rho_{ji}\)</span> are the lateral interatomic distance, which can be expressed as:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\rho_{ij}^{2}&amp;= r_{ij}^2-{(\boldsymbol r_{ij} \cdot \boldsymbol n_i)}^2\\
+\rho_{ji}^{2}&amp;= r_{ij}^2-{(\boldsymbol r_{ij} \cdot \boldsymbol n_j)}^2\end{split}\]</div>
+<p>Other variables are all fitting parameters.</p>
+<p>The site potential of <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> can be written as:</p>
+<div class="math notranslate nohighlight">
+\[U_i^{\mathrm{NEP}} = \sum_{\mu=1}^{N_\mathrm{neu}}w^{(1)}_{\mu}\tanh\left(\sum_{\nu=1}^{N_\mathrm{des}} w^{(0)}_{\mu\nu} q^i_{\nu} - b^{(0)}_{\mu}\right) - b^{(1)},\]</div>
+<p>More details of <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> potential are in <a class="reference internal" href="nep.html#nep-formalism"><span class="std std-ref">Neuroevolution potential</span></a>. Note that in hybrid <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> + <a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a> potential, the <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> potential will
+just compute the intralayer interactions.</p>
+</section>
+<section id="file-format">
+<h2>File format<a class="headerlink" href="#file-format" title="Link to this heading"></a></h2>
+<p>This hybrid potential requires 3 kinds of files: one for <a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a> potential,
+one for <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> potential and the other for mapping <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> potential to groups in model file.
+We have adopted the <a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a> file format that similar but not identical to that used by <a class="reference external" href="https://docs.lammps.org/pair_ilp_graphene_hbn.html">lammps</a>.
+The <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> potential file is not required to modify, while to make the <a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a> and <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> potentials identify the layers, it’s required to set some groups
+in <code class="docutils literal notranslate"><span class="pre">model.xyz</span></code> file.</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">run.in</span></code> file, the <code class="xref py py-attr docutils literal notranslate"><span class="pre">potential</span></code> setting is as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="o">&lt;</span><span class="n">ilp</span> <span class="n">file</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">nep</span> <span class="nb">map</span> <span class="n">file</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>where <code class="xref py py-attr docutils literal notranslate"><span class="pre">ilp</span> <span class="pre">file</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">nep</span> <span class="pre">map</span> <span class="pre">file</span></code> are the filenames of
+the <a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a> potential file and <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> mapping file.</p>
+<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">ilp</span> <span class="pre">file</span></code> is similar to other empirical potential files in <strong class="program">GPUMD</strong>.
+But in addition, <a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a> uses different <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_ids</span></code> to identify the different layers, so
+you need to add two <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_methods</span></code> in <code class="xref py py-attr docutils literal notranslate"><span class="pre">ilp</span> <span class="pre">file</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nep_ilp</span> <span class="o">&lt;</span><span class="n">number</span> <span class="n">of</span> <span class="n">atom</span> <span class="n">types</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="nb">list</span> <span class="n">of</span> <span class="n">elements</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">group_method</span> <span class="k">for</span> <span class="n">layers</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">group_method</span> <span class="k">for</span> <span class="n">sublayers</span><span class="o">&gt;</span>
+<span class="n">beta</span> <span class="n">alpha</span> <span class="n">delta</span> <span class="n">epsilon</span> <span class="n">C</span> <span class="n">d</span> <span class="n">sR</span> <span class="n">reff</span> <span class="n">C6</span> <span class="n">S</span> <span class="n">rcut1</span> <span class="n">rcut2</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">nep_ilp</span></code> is the name of this hybrid potential.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">number</span> <span class="pre">of</span> <span class="pre">atom</span> <span class="pre">types</span></code> is the number of atom types defined in the <code class="docutils literal notranslate"><span class="pre">model.xyz</span></code>.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">list</span> <span class="pre">of</span> <span class="pre">element</span></code> is a list of all the elements in the potential (can be in any order).</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span> <span class="pre">for</span> <span class="pre">layers</span></code> is the <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span></code> set in <code class="docutils literal notranslate"><span class="pre">model.xyz</span></code>
+to identify different layers. For example, monolayer graphene and monolayer
+<span class="math notranslate nohighlight">\(\mathrm{MoS}_2\)</span> are both single layer so for the atoms in each layer
+the <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_id</span></code> of <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span> <span class="pre">for</span> <span class="pre">layers</span></code> are the same.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span> <span class="pre">for</span> <span class="pre">sublayers</span></code> is used to identify the different sublayers.
+For example, monolayer graphene contains one sublayer while monolayer <span class="math notranslate nohighlight">\(\mathrm{MoS}_2\)</span>
+contains three sublayers, one Mo sublayer and two S sublayers. For the atoms in each sublayer
+the <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_id</span></code> of <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span> <span class="pre">for</span> <span class="pre">sublayers</span></code> are the same.</p></li>
+<li><p>The last line(s) is(are) parameters of <a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a>. <code class="xref py py-attr docutils literal notranslate"><span class="pre">rcut1</span></code> is used for calculating the normal vectors
+and <code class="xref py py-attr docutils literal notranslate"><span class="pre">rcut2</span></code> is the cutoff of <a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a>, usually 16Å.</p></li>
+</ul>
+<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">nep_map_file</span></code> can map one or more <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> potential files to
+different layers. The setting is as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">group_method</span> <span class="k">for</span> <span class="n">layers</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">number</span> <span class="n">of</span> <span class="n">NEP</span> <span class="n">files</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="nb">list</span> <span class="n">of</span> <span class="n">NEP</span> <span class="n">files</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">number</span> <span class="n">of</span> <span class="n">groups</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">NEP_id</span> <span class="k">for</span> <span class="n">group_0</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">NEP_id</span> <span class="k">for</span> <span class="n">group_1</span><span class="o">&gt;</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span> <span class="pre">for</span> <span class="pre">layers</span></code> is the same as the setting in <code class="xref py py-attr docutils literal notranslate"><span class="pre">ilp</span> <span class="pre">file</span></code>.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">number</span> <span class="pre">of</span> <span class="pre">NEP</span> <span class="pre">files</span></code> is the number of <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> files used in your
+simulation.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">list</span> <span class="pre">of</span> <span class="pre">NEP</span> <span class="pre">files</span></code> is a list of all the <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> filenames. Note
+that the first file will be identified as <code class="xref py py-attr docutils literal notranslate"><span class="pre">NEP_0</span></code> and then <code class="xref py py-attr docutils literal notranslate"><span class="pre">NEP_1</span></code> and so on.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">number</span> <span class="pre">of</span> <span class="pre">groups</span></code> is the number of groups in <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span> <span class="pre">for</span> <span class="pre">layers</span></code>.</p></li>
+<li><p>The last <code class="xref py py-attr docutils literal notranslate"><span class="pre">number</span> <span class="pre">of</span> <span class="pre">groups</span></code> lines map the <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> to each group.
+If <code class="xref py py-attr docutils literal notranslate"><span class="pre">NEP_id</span> <span class="pre">for</span> <span class="pre">group_0</span></code> is set to 0, the intralayer interactions between
+atoms within <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_id</span></code> 0 are computed by the first <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> file (<code class="xref py py-attr docutils literal notranslate"><span class="pre">NEP_0</span></code>)
+in <code class="xref py py-attr docutils literal notranslate"><span class="pre">list</span> <span class="pre">of</span> <span class="pre">NEP</span> <span class="pre">files</span></code>. If set to 1, then computed by the second <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> file (<code class="xref py py-attr docutils literal notranslate"><span class="pre">NEP_1</span></code>) and so on.</p></li>
+</ul>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<section id="example-1-bilayer-graphene">
+<h3>Example 1: bilayer graphene<a class="headerlink" href="#example-1-bilayer-graphene" title="Link to this heading"></a></h3>
+<p>Assume your have three files: <a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a> potential file (<code class="docutils literal notranslate"><span class="pre">C.ilp</span></code>),
+<a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> potential file (<code class="docutils literal notranslate"><span class="pre">C.nep</span></code>) and <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> mapping file (<code class="docutils literal notranslate"><span class="pre">map.nep</span></code>). The potential
+setting in <code class="docutils literal notranslate"><span class="pre">run.in</span></code> file is as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">C</span><span class="o">.</span><span class="n">ilp</span> <span class="nb">map</span><span class="o">.</span><span class="n">nep</span>
+</pre></div>
+</div>
+<p>Assume that the first line in <code class="docutils literal notranslate"><span class="pre">C.nep</span></code> is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nep3</span> <span class="mi">1</span> <span class="n">C</span>
+</pre></div>
+</div>
+<p>and <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span></code> 0 is used to identify the different layers. Then <code class="docutils literal notranslate"><span class="pre">C.ilp</span></code>
+is required to set as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nep_ilp</span> <span class="mi">1</span> <span class="n">C</span>
+<span class="mi">0</span> <span class="mi">0</span>
+<span class="n">beta_CC</span> <span class="n">alpha_CC</span> <span class="n">delta_CC</span> <span class="n">epsilon_CC</span> <span class="n">C_CC</span> <span class="n">d_CC</span> <span class="n">sR_CC</span> <span class="n">reff_CC</span> <span class="n">C6_CC</span> <span class="n">S_CC</span> <span class="n">rcut1_CC</span> <span class="n">rcut2_CC</span>
+</pre></div>
+</div>
+<p>The first <strong>0</strong> in the second line represents <a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a> potential uses <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span></code> 0 to identify different
+layers. The second <strong>0</strong> represents <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span></code> 0 is used to identify the sublayers. For
+the system with only graphene and <span class="math notranslate nohighlight">\(h\)</span>-BN, just set it the same as the previous number.</p>
+<p>Then, <code class="docutils literal notranslate"><span class="pre">map.nep</span></code> file required to set as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">0</span> <span class="mi">1</span> <span class="n">C</span><span class="o">.</span><span class="n">nep</span>
+<span class="mi">2</span>
+<span class="mi">0</span>
+<span class="mi">0</span>
+</pre></div>
+</div>
+<p>The first <strong>0</strong> in the first line represents <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> potential uses <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span></code> 0 to identify different
+layers.
+The next <strong>1</strong> represents there is just one <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> potential file. The number in the second
+line represents there are two groups in the <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span></code> 0.
+The last two lines represent the <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_0</span></code>  and <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_1</span></code> in <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span></code> 0 will use
+<code class="docutils literal notranslate"><span class="pre">C.nep</span></code> potential file (<code class="xref py py-attr docutils literal notranslate"><span class="pre">NEP_0</span></code>).</p>
+</section>
+<section id="example-2-bilayer-h-bn-mathrm-mos-2">
+<h3>Example 2: bilayer <span class="math notranslate nohighlight">\(h\)</span>-BN / <span class="math notranslate nohighlight">\(\mathrm{MoS}_2\)</span><a class="headerlink" href="#example-2-bilayer-h-bn-mathrm-mos-2" title="Link to this heading"></a></h3>
+<p>Assume your have four files: <a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a> potential file (<code class="docutils literal notranslate"><span class="pre">BNMoS.ilp</span></code>),
+<a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> potential files (<code class="docutils literal notranslate"><span class="pre">BN.nep</span></code>, <code class="docutils literal notranslate"><span class="pre">MoS.nep</span></code>) and <a class="reference internal" href="../glossary.html#term-NEP"><span class="xref std std-term">NEP</span></a> mapping file (<code class="docutils literal notranslate"><span class="pre">map.nep</span></code>).
+The potential setting in <code class="docutils literal notranslate"><span class="pre">run.in</span></code> file is as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">potential</span> <span class="n">BNMoS</span><span class="o">.</span><span class="n">ilp</span> <span class="nb">map</span><span class="o">.</span><span class="n">nep</span>
+</pre></div>
+</div>
+<p>Assume the first line in <code class="docutils literal notranslate"><span class="pre">BN.nep</span></code> is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nep4</span> <span class="mi">2</span> <span class="n">B</span> <span class="n">N</span>
+</pre></div>
+</div>
+<p>and in <code class="docutils literal notranslate"><span class="pre">MoS.nep</span></code> is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nep4</span> <span class="mi">2</span> <span class="n">Mo</span> <span class="n">S</span>
+</pre></div>
+</div>
+<p>We also assume the <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span></code> 0 is used to identify the different layers and
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span></code> 1 is used to identify the different sublayers for <a class="reference internal" href="../glossary.html#term-ILP"><span class="xref std std-term">ILP</span></a>. In <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_method</span></code> 1,
+atoms in the sublayers of Mo and S should be set as the different
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">group_id</span></code>. Then <code class="docutils literal notranslate"><span class="pre">BNMoS.ilp</span></code> is required to set as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nep_ilp</span> <span class="mi">4</span> <span class="n">B</span> <span class="n">N</span> <span class="n">Mo</span> <span class="n">S</span>
+<span class="mi">0</span> <span class="mi">1</span>
+<span class="n">beta_BB</span> <span class="n">alpha_BB</span> <span class="n">delta_BB</span> <span class="n">epsilon_BB</span> <span class="n">C_BB</span> <span class="n">d_BB</span> <span class="n">sR_BB</span> <span class="n">reff_BB</span> <span class="n">C6_BB</span> <span class="n">S_BB</span> <span class="n">rcut1_BB</span> <span class="n">rcut2_BB</span>
+<span class="n">beta_BN</span> <span class="n">alpha_BN</span> <span class="n">delta_BN</span> <span class="n">epsilon_BN</span> <span class="n">C_BN</span> <span class="n">d_BN</span> <span class="n">sR_BN</span> <span class="n">reff_BN</span> <span class="n">C6_BN</span> <span class="n">S_BN</span> <span class="n">rcut1_BN</span> <span class="n">rcut2_BN</span>
+<span class="n">beta_BMo</span> <span class="n">alpha_BMo</span> <span class="n">delta_BMo</span> <span class="n">epsilon_BMo</span> <span class="n">C_BMo</span> <span class="n">d_BMo</span> <span class="n">sR_BMo</span> <span class="n">reff_BMo</span> <span class="n">C6_BMo</span> <span class="n">S_BMo</span> <span class="n">rcut1_BMo</span> <span class="n">rcut2_BMo</span>
+<span class="n">beta_BS</span> <span class="n">alpha_BS</span> <span class="n">delta_BS</span> <span class="n">epsilon_BS</span> <span class="n">C_BS</span> <span class="n">d_BS</span> <span class="n">sR_BS</span> <span class="n">reff_BS</span> <span class="n">C6_BS</span> <span class="n">S_BS</span> <span class="n">rcut1_BS</span> <span class="n">rcut2_BS</span>
+<span class="o">...</span>
+<span class="n">beta_SS</span> <span class="n">alpha_SS</span> <span class="n">delta_SS</span> <span class="n">epsilon_SS</span> <span class="n">C_SS</span> <span class="n">d_SS</span> <span class="n">sR_SS</span> <span class="n">reff_SS</span> <span class="n">C6_SS</span> <span class="n">S_SS</span> <span class="n">rcut1_SS</span> <span class="n">rcut2_SS</span>
+</pre></div>
+</div>
+<p>Assume <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_id</span></code> of <span class="math notranslate nohighlight">\(\mathrm{MoS}_2\)</span> is 0 and of <span class="math notranslate nohighlight">\(h\)</span>-BN is 1.
+Then <code class="docutils literal notranslate"><span class="pre">map.nep</span></code> file is set as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">0</span> <span class="mi">2</span> <span class="n">BN</span><span class="o">.</span><span class="n">nep</span> <span class="n">MoS</span><span class="o">.</span><span class="n">nep</span>
+<span class="mi">2</span>
+<span class="mi">1</span>
+<span class="mi">0</span>
+</pre></div>
+</div>
+<p>The <strong>1</strong> in the third line means <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_0</span></code> (<span class="math notranslate nohighlight">\(\mathrm{MoS}_2\)</span>) uses <code class="docutils literal notranslate"><span class="pre">MoS.nep</span></code> potential file (<code class="xref py py-attr docutils literal notranslate"><span class="pre">NEP_1</span></code>)
+and the last <strong>0</strong> means <code class="xref py py-attr docutils literal notranslate"><span class="pre">group_1</span></code> (<span class="math notranslate nohighlight">\(h\)</span>-BN) uses <code class="docutils literal notranslate"><span class="pre">BN.nep</span></code> potential file (<code class="xref py py-attr docutils literal notranslate"><span class="pre">NEP_0</span></code>).</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="nep.html" class="btn btn-neutral float-left" title="Neuroevolution potential" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sw_ilp.html" class="btn btn-neutral float-right" title="Hybrid SW+ILP potential" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+    <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Documentation</span>
+      v4.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>Versions</dt>
+        
+          <dd><a href="https://gpumd.org">latest release</a></dd>
+        
+          <dd><a href="https://gpumd.org/dev">development version</a></dd>
+        
+      </dl>
+    </div>
+  </div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle .header").show();
+        $(".toggle .header").click(function() {
+            $(this).parent().children().not(".header").toggle(400);
+            $(this).parent().children(".header").toggleClass("open");
+        })
+    });
+</script>
+
+<script>
+    (function() {
+      if (!localStorage.getItem('cookieconsent')) {
+        var banner = document.createElement("div");
+        banner.innerHTML ='\
+        <div class="cookieconsent" style="position:fixed;padding:18px;left:0;bottom:0;background-color:#121212;color:#FFF;text-align:center;width:100%;z-index:99999;">\
+          This website uses cookies to gather general statistics about its usage. \
+          <a href="#" style="font-size: 90%; border-radius: 5px; background-color: #CCCCCC; padding: 2px 7px; margin-left: 1em; color:black;">Hide</a>\
+        </div>';
+        document.body.appendChild(banner);
+        document.querySelector('.cookieconsent a').onclick = function(e) {
+          e.preventDefault();
+          document.querySelector('.cookieconsent').style.display = 'none';
+          localStorage.setItem('cookieconsent', true);
+        };
+      }
+    })();
+</script>
+
+
+</body>
+</html>

@@ -22,9 +22,43 @@ compute eng all pe/atom
 compute eatoms all reduce sum c_eng
 compute pe all pe/atom
 
-# Compute stress tensor
-compute stress_tensor all stress/atom NULL virial
-compute global_stress all reduce sum c_stress_tensor[1] c_stress_tensor[2] c_stress_tensor[3] c_stress_tensor[4] c_stress_tensor[5] c_stress_tensor[6]
+# Compute per-atom stress tensor
+# IMPORTANT: stress/atom outputs stress*volume in units of pressure*volume (bar*Å³)
+# According to LAMMPS docs: per-atom stress = -(per-atom pressure)
+# Output: [1]=xx, [2]=yy, [3]=zz, [4]=xy, [5]=xz, [6]=yz
+compute stress_tensor all stress/atom NULL
+
+# Compute per-atom volume using Voronoi tessellation
+compute v all voronoi/atom
+
+# Calculate per-atom stress in GPa
+# stress/atom outputs stress*volume (bar*Å³), divide by volume gives stress (bar)
+# Then convert bar to GPa: divide by 10000
+variable sx atom c_stress_tensor[1]/c_v[1]/10000
+variable sy atom c_stress_tensor[2]/c_v[1]/10000
+variable sz atom c_stress_tensor[3]/c_v[1]/10000
+variable sxy atom c_stress_tensor[4]/c_v[1]/10000
+variable sxz atom c_stress_tensor[5]/c_v[1]/10000
+variable syz atom c_stress_tensor[6]/c_v[1]/10000
+
+# Calculate global stress from pressure
+# LAMMPS docs: "per-atom stress is the negative of the per-atom pressure tensor"
+# So: stress = -pressure (this is LAMMPS convention, NOT a sign flip for virial)
+# Convert from bar to eV/Å³: divide by 1602177.0
+# Convert from bar to GPa: multiply by 0.0001
+variable stress_xx_ev equal -pxx/1602177.0
+variable stress_yy_ev equal -pyy/1602177.0
+variable stress_zz_ev equal -pzz/1602177.0
+variable stress_xy_ev equal -pxy/1602177.0
+variable stress_xz_ev equal -pxz/1602177.0
+variable stress_yz_ev equal -pyz/1602177.0
+
+variable stress_xx_gpa equal -pxx*0.0001
+variable stress_yy_gpa equal -pyy*0.0001
+variable stress_zz_gpa equal -pzz*0.0001
+variable stress_xy_gpa equal -pxy*0.0001
+variable stress_xz_gpa equal -pxz*0.0001
+variable stress_yz_gpa equal -pyz*0.0001
 
 # Set timestep and ensemble
 timestep 0.001
@@ -36,83 +70,47 @@ neighbor 0 bin
 thermo 1
 thermo_style custom step etotal pe lx ly lz press pxx pyy pzz pxy pxz pyz vol
 
-# Dump forces, energies and stress for first step
-dump 1 all custom 1 lammps_adp_reference.dump id element type x y z fx fy fz c_pe c_stress_tensor[1] c_stress_tensor[2] c_stress_tensor[3] c_stress_tensor[4] c_stress_tensor[5] c_stress_tensor[6]
+# Dump forces, energies and per-atom stress for first step
+dump 1 all custom 1 lammps_adp_reference.dump id element type x y z fx fy fz c_pe v_sx v_sy v_sz v_sxy v_sxz v_syz
 dump_modify 1 element Mo sort id
 
 # Run for 0 steps to get initial configuration stress
 run 0
 
-# Print stress tensor components
-# Note: LAMMPS outputs pressure (with positive compression)
-# Virial stress = -pressure, so we need to flip signs
-variable stress_xx equal -pxx
-variable stress_yy equal -pyy  
-variable stress_zz equal -pzz
-variable stress_xy equal -pxy
-variable stress_xz equal -pxz
-variable stress_yz equal -pyz
-
-print "=== LAMMPS ADP Virial Stress Results ==="
-print "Virial stress tensor (bar):"
-print "sigma_xx = ${stress_xx}"
-print "sigma_yy = ${stress_yy}" 
-print "sigma_zz = ${stress_zz}"
-print "sigma_xy = ${stress_xy}"
-print "sigma_xz = ${stress_xz}"
-print "sigma_yz = ${stress_yz}"
-print "Pressure = $(press)"
-print "Volume = $(vol)"
-
-# Convert to GPa 
-# Method 1: From bar to GPa (1 bar = 1e-4 GPa)
-variable stress_xx_gpa equal ${stress_xx}*1e-4
-variable stress_yy_gpa equal ${stress_yy}*1e-4
-variable stress_zz_gpa equal ${stress_zz}*1e-4
-variable stress_xy_gpa equal ${stress_xy}*1e-4
-variable stress_xz_gpa equal ${stress_xz}*1e-4
-variable stress_yz_gpa equal ${stress_yz}*1e-4
-
-# Method 2: Direct virial stress in eV/Å³ units, then convert to GPa
-# 1 eV/Å³ = 160.217662 GPa
-# 1 eV/Å³ = 1,602,177 bar (correct conversion factor)
-# Virial stress = -(1/V) * Σ r_ij ⊗ F_ij (already calculated by LAMMPS)
-# LAMMPS pressure is in bar, so convert bar to eV/Å³
-variable stress_xx_ev_a3 equal ${stress_xx}/1602177.0
-variable stress_yy_ev_a3 equal ${stress_yy}/1602177.0
-variable stress_zz_ev_a3 equal ${stress_zz}/1602177.0
-variable stress_xy_ev_a3 equal ${stress_xy}/1602177.0
-variable stress_xz_ev_a3 equal ${stress_xz}/1602177.0
-variable stress_yz_ev_a3 equal ${stress_yz}/1602177.0
-
-print "Virial stress tensor (GPa from bar):"
-print "sigma_xx = ${stress_xx_gpa}"
-print "sigma_yy = ${stress_yy_gpa}"
-print "sigma_zz = ${stress_zz_gpa}" 
-print "sigma_xy = ${stress_xy_gpa}"
-print "sigma_xz = ${stress_xz_gpa}"
-print "sigma_yz = ${stress_yz_gpa}"
-
-print "Virial stress tensor (eV/A^3):"
-print "sigma_xx = ${stress_xx_ev_a3}"
-print "sigma_yy = ${stress_yy_ev_a3}"
-print "sigma_zz = ${stress_zz_ev_a3}" 
-print "sigma_xy = ${stress_xy_ev_a3}"
-print "sigma_xz = ${stress_xz_ev_a3}"
-print "sigma_yz = ${stress_yz_ev_a3}"
-
-# Print in matrix format for easy comparison
-print "Virial stress matrix (GPa from bar):"
-print "${stress_xx_gpa} ${stress_xy_gpa} ${stress_xz_gpa}"
-print "${stress_xy_gpa} ${stress_yy_gpa} ${stress_yz_gpa}"
-print "${stress_xz_gpa} ${stress_yz_gpa} ${stress_zz_gpa}"
-
-print "Virial stress matrix (eV/A^3):"
-print "${stress_xx_ev_a3} ${stress_xy_ev_a3} ${stress_xz_ev_a3}"
-print "${stress_xy_ev_a3} ${stress_yy_ev_a3} ${stress_yz_ev_a3}"
-print "${stress_xz_ev_a3} ${stress_yz_ev_a3} ${stress_zz_ev_a3}"
-
-print "LAMMPS ADP reference data generated"
-print "Total energy: $(etotal)"
-print "Potential energy: $(pe)"
+# Print global stress results  
+print "=== LAMMPS ADP Stress Results ==="
+print "System info:"
+print "  Volume = $(vol) Å³"
+print "  Pressure = $(press) bar"
+print ""
+print "Global stress tensor (LAMMPS definition: stress = -pressure):"
+print "  In eV/Å³:"
+print "    sigma_xx = ${stress_xx_ev}"
+print "    sigma_yy = ${stress_yy_ev}" 
+print "    sigma_zz = ${stress_zz_ev}"
+print "    sigma_xy = ${stress_xy_ev}"
+print "    sigma_xz = ${stress_xz_ev}"
+print "    sigma_yz = ${stress_yz_ev}"
+print ""
+print "  In GPa:"
+print "    sigma_xx = ${stress_xx_gpa}"
+print "    sigma_yy = ${stress_yy_gpa}" 
+print "    sigma_zz = ${stress_zz_gpa}"
+print "    sigma_xy = ${stress_xy_gpa}"
+print "    sigma_xz = ${stress_xz_gpa}"
+print "    sigma_yz = ${stress_yz_gpa}"
+print ""
+print "Stress matrix (eV/Å³):"
+print "  [${stress_xx_ev}  ${stress_xy_ev}  ${stress_xz_ev}]"
+print "  [${stress_xy_ev}  ${stress_yy_ev}  ${stress_yz_ev}]"
+print "  [${stress_xz_ev}  ${stress_yz_ev}  ${stress_zz_ev}]"
+print ""
+print "Stress matrix (GPa):"
+print "  [${stress_xx_gpa}  ${stress_xy_gpa}  ${stress_xz_gpa}]"
+print "  [${stress_xy_gpa}  ${stress_yy_gpa}  ${stress_yz_gpa}]"
+print "  [${stress_xz_gpa}  ${stress_yz_gpa}  ${stress_zz_gpa}]"
+print ""
+print "Per-atom stress written to lammps_adp_reference.dump (in GPa)"
+print "Total energy: $(etotal) eV"
+print "Potential energy: $(pe) eV"
 

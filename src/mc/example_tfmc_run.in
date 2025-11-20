@@ -1,0 +1,39 @@
+# Example run.in file for tfMC (Time-stamped Force-bias Monte Carlo)
+# This example demonstrates basic usage of tfMC in GPUMD
+
+# Load NEP potential
+potential nep.txt
+
+# Velocity initialization (optional, for equilibration)
+velocity 300
+
+# NVT ensemble with Nose-Hoover thermostat
+ensemble nvt_nhc 300 300 100
+
+# Time step (fs)
+time_step 1.0
+
+# Dump trajectory every 1000 steps
+dump_thermo 1000
+dump_position 1000
+
+# Run equilibration MD
+run 10000
+
+# Switch to tfMC
+# Syntax: mc tfmc N_md N_mc T_initial T_final d_max seed [options]
+# - Every 100 MD steps, perform 50 MC trials
+# - Temperature: 300 K
+# - Maximum displacement: 0.20 Å
+# - Random seed: 12345
+# - Fix center of mass motion in all directions
+mc tfmc 100 50 300.0 300.0 0.20 12345 com 1 1 1
+
+# Run production with MCMD
+run 100000
+
+# Alternative: tfMC with rotation fixing
+# mc tfmc 100 50 300.0 300.0 0.20 12345 com 1 1 1 rot
+
+# Alternative: tfMC for specific group
+# mc tfmc 100 50 300.0 300.0 0.20 12345 group 0 1

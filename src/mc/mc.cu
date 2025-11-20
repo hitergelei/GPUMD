@@ -20,6 +20,7 @@ The driver class for the various MC ensembles.
 #include "mc.cuh"
 #include "mc_ensemble_canonical.cuh"
 #include "mc_ensemble_sgc.cuh"
+#include "mc_ensemble_tfmc.cuh"
 #include "model/atom.cuh"
 #include "utilities/common.cuh"
 #include "utilities/gpu_macro.cuh"
@@ -219,6 +220,9 @@ void MC::parse_mc(const char** param, int num_param, std::vector<Group>& groups,
   } else if (strcmp(param[1], "vcsgc") == 0) {
     printf("Perform VCSGC MCMD:\n");
     mc_ensemble_type = 2;
+  } else if (strcmp(param[1], "tfmc") == 0) {
+    printf("Perform tfMC (Time-stamped Force-bias Monte Carlo):\n");
+    mc_ensemble_type = 3;
   } else {
     PRINT_INPUT_ERROR("invalid MC ensemble for MCMD.\n");
   }
@@ -327,6 +331,63 @@ void MC::parse_mc(const char** param, int num_param, std::vector<Group>& groups,
     check_species_sgc(groups, atom);
     mc_ensemble.reset(new MC_Ensemble_SGC(
       param, num_param, num_steps_mc, true, species, types, num_atoms_species, mu_or_phi, kappa));
+  } else if (mc_ensemble_type == 3) {
+    // tfMC: mc tfmc N_md N_mc T_initial T_final d_max seed [com x y z] [rot] [group ...]
+    if (num_param < 7) {
+      PRINT_INPUT_ERROR("tfmc should have at least 7 parameters.\n");
+    }
+    double d_max;
+    int seed;
+    if (!is_valid_real(param[6], &d_max)) {
+      PRINT_INPUT_ERROR("d_max for tfmc should be a number.\n");
+    }
+    if (d_max <= 0) {
+      PRINT_INPUT_ERROR("d_max for tfmc should be positive.\n");
+    }
+    if (!is_valid_int(param[7], &seed)) {
+      PRINT_INPUT_ERROR("seed for tfmc should be an integer.\n");
+    }
+    if (seed <= 0) {
+      PRINT_INPUT_ERROR("seed for tfmc should be positive.\n");
+    }
+    
+    bool fix_com_x = false, fix_com_y = false, fix_com_z = false;
+    bool fix_rotation = false;
+    int current_param = 8;
+    
+    // Parse optional keywords
+    while (current_param < num_param) {
+      if (strcmp(param[current_param], "com") == 0) {
+        if (current_param + 3 >= num_param) {
+          PRINT_INPUT_ERROR("com keyword for tfmc requires 3 parameters (x y z).\n");
+        }
+        int x_flag, y_flag, z_flag;
+        if (!is_valid_int(param[current_param + 1], &x_flag) ||
+            !is_valid_int(param[current_param + 2], &y_flag) ||
+            !is_valid_int(param[current_param + 3], &z_flag)) {
+          PRINT_INPUT_ERROR("com flags for tfmc should be integers (0 or 1).\n");
+        }
+        fix_com_x = (x_flag == 1);
+        fix_com_y = (y_flag == 1);
+        fix_com_z = (z_flag == 1);
+        printf("    fix COM motion: x=%d y=%d z=%d\n", fix_com_x, fix_com_y, fix_com_z);
+        current_param += 4;
+      } else if (strcmp(param[current_param], "rot") == 0) {
+        fix_rotation = true;
+        printf("    fix rotation: yes\n");
+        current_param += 1;
+      } else if (strcmp(param[current_param], "group") == 0) {
+        parse_group(param, num_param, groups, current_param);
+        printf("    only for atoms in group %d of grouping method %d.\n", group_id, grouping_method);
+        break;
+      } else {
+        PRINT_INPUT_ERROR("Unknown keyword for tfmc.\n");
+      }
+    }
+    
+    mc_ensemble.reset(new MC_Ensemble_TFMC(
+      param, num_param, num_steps_mc, d_max, temperature_initial,
+      seed, fix_com_x, fix_com_y, fix_com_z, fix_rotation));
   }
 
   do_mcmd = true;

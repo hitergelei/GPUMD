@@ -117,11 +117,27 @@ mc tfmc 100 50 300.0 300.0 0.20 12345
 ```
 
 ### 使用分组
+
+#### model.xyz（定义group属性）
+```xyz
+1000
+Lattice="30 0 0 0 30 0 0 0 30" Properties=species:S:1:pos:R:3:group:I:1
+Cu 5.0 5.0 5.0 0
+Cu 6.0 5.0 5.0 0
+Cu 15.0 5.0 5.0 1
+Cu 16.0 5.0 5.0 1
+Cu 25.0 5.0 5.0 0
+...
+```
+
+#### run.in
 ```bash
-# run.in
-group 0 region 0 10.0 20.0 -INF INF -INF INF  # 定义组 0: x ∈ [10, 20]
-mc tfmc 100 50 300.0 300.0 0.20 12345 group 0 0
 # 只对组 0 中的原子生成位移
+mc tfmc 100 50 300.0 300.0 0.20 12345 group 0 0
+#                                     ^^^^^^^ ^
+#                                       |     |
+#                                grouping_method: 0 (使用第一个grouping)
+#                                              group_id: 0 (使用组ID=0)
 ```
 
 ## 内存和性能考虑
@@ -150,27 +166,52 @@ mc tfmc 100 50 300.0 300.0 0.20 12345 group 0 0
 
 ### 测试 1: 无分组
 ```bash
+# run.in
 mc tfmc 100 50 300.0 300.0 0.20 12345
 # 应该与之前行为完全一致
 ```
 
 ### 测试 2: 单一分组
+```xyz
+# model.xyz - 定义两个组
+1000
+Lattice="30 0 0 0 30 0 0 0 30" Properties=species:S:1:pos:R:3:group:I:1
+Cu 5.0 5.0 5.0 0
+Cu 15.0 5.0 5.0 1
+...
+```
 ```bash
-group 0 region 0 10.0 -INF INF -INF INF
+# run.in - 只对组0操作
 mc tfmc 100 50 300.0 300.0 0.20 12345 group 0 0
-# 只有 x < 10 的原子应该移动
+# 只有组0的原子应该移动，组1原子不动
 ```
 
 ### 测试 3: COM 固定 + 分组
+```xyz
+# model.xyz - 按原子类型分组
+1000
+Lattice="30 0 0 0 30 0 0 0 30" Properties=species:S:1:pos:R:3:group:I:1
+Cu 5.0 5.0 5.0 0
+Au 6.0 5.0 5.0 1
+...
+```
 ```bash
-group 0 type 0  # 只对类型 0 的原子
+# run.in - 只对组0操作，固定COM
 mc tfmc 100 50 300.0 300.0 0.20 12345 group 0 0 com 1 1 1
-# 类型 0 原子移动，且其 COM 固定
+# 组0原子移动，且其质心固定
 ```
 
 ### 测试 4: 转动固定 + 分组
+```xyz
+# model.xyz - 按区域分组（中心vs外围）
+1000
+Lattice="30 0 0 0 30 0 0 0 30" Properties=species:S:1:pos:R:3:group:I:1
+Cu 15.0 15.0 15.0 0
+Cu 5.0 5.0 5.0 1
+...
+```
 ```bash
-group 0 region -5.0 5.0 -5.0 5.0 -5.0 5.0  # 中心区域
+# run.in - 只对中心区域（组0）操作，移除转动
 mc tfmc 100 50 300.0 300.0 0.20 12345 group 0 0 rot
 # 中心区域原子移动，且整体转动被移除
 ```

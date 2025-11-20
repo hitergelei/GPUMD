@@ -65,11 +65,28 @@ Same as Example 1, but also fix rotational motion.
 
 #### Example 4: tfMC with group selection
 
+**model.xyz** (定义group属性):
+```xyz
+1000
+Lattice="30 0 0 0 30 0 0 0 30" Properties=species:S:1:pos:R:3:group:I:1
+Cu 15.0 15.0 15.0 0
+Cu 16.0 15.0 15.0 0
+Cu 5.0 5.0 5.0 1
+Cu 6.0 5.0 5.0 1
+...
+```
+
+**run.in**:
 ```
 mc tfmc 100 50 300.0 300.0 0.20 12345 group 0 1
 ```
 
-Apply tfMC only to atoms in group 1 of grouping method 0.
+Apply tfMC only to atoms in group 1 (grouping method 0).
+
+**说明**: 
+- `group:I:1` 在 model.xyz 的 Properties 中声明有group属性
+- 每行最后一个整数为该原子的group ID (0, 1, 2, ...)
+- 不需要在 run.in 中定义group，GPUMD自动从model.xyz读取
 
 ## Algorithm Details
 

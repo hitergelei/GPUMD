@@ -218,6 +218,7 @@ static __global__ void compute_center_of_mass_kernel(
 
   if (n < N) {
     double m = mass[n];
+    // Using unwrapped coordinates for accurate COM calculation across PBC
     s_cm_x[tid] = m * x[n];
     s_cm_y[tid] = m * y[n];
     s_cm_z[tid] = m * z[n];
@@ -275,6 +276,8 @@ static __global__ void compute_angular_momentum_kernel(
 
   if (n < N) {
     double m = mass[n];
+    // Using unwrapped coordinates for accurate angular momentum calculation
+    // This matches LAMMPS fix_tfmc behavior
     double rx = x[n] - cm_x;
     double ry = y[n] - cm_y;
     double rz = z[n] - cm_z;
@@ -326,6 +329,8 @@ static __global__ void compute_inertia_tensor_kernel(
 
   if (n < N) {
     double m = mass[n];
+    // Using unwrapped coordinates for accurate inertia tensor calculation
+    // This matches LAMMPS fix_tfmc behavior
     double dx = x[n] - cm_x;
     double dy = y[n] - cm_y;
     double dz = z[n] - cm_z;
@@ -376,11 +381,13 @@ static __global__ void remove_rotation_kernel(
   if (idx >= N) return;
   int n = group_contents ? group_contents[idx] : idx;
 
+  // Using unwrapped coordinates for accurate rotation removal
+  // This matches LAMMPS fix_tfmc behavior
   double rx = x[n] - cm_x;
   double ry = y[n] - cm_y;
   double rz = z[n] - cm_z;
 
-  // Remove rotation: r x omega
+  // Remove rotation: d -= omega x r
   dx[n] -= (omega_y * rz - omega_z * ry);
   dy[n] -= (omega_z * rx - omega_x * rz);
   dz[n] -= (omega_x * ry - omega_y * rx);
@@ -572,14 +579,14 @@ void MC_Ensemble_TFMC::remove_rotation(
   CHECK(cudaMemset(angmom_data.data(), 0, 3 * sizeof(double)));
   CHECK(cudaMemset(inertia_data.data(), 0, 6 * sizeof(double)));
 
-  // Compute center of mass
+  // Compute center of mass using unwrapped coordinates (like LAMMPS)
   compute_center_of_mass_kernel<<<grid_size, block_size>>>(
     N,
     group_contents_ptr,
     mass.data(),
-    atom.position_per_atom.data(),
-    atom.position_per_atom.data() + atom.number_of_atoms,
-    atom.position_per_atom.data() + 2 * atom.number_of_atoms,
+    atom.unwrapped_position.data(),
+    atom.unwrapped_position.data() + atom.number_of_atoms,
+    atom.unwrapped_position.data() + 2 * atom.number_of_atoms,
     cm_data.data(),
     cm_data.data() + 1,
     cm_data.data() + 2,
@@ -603,14 +610,15 @@ void MC_Ensemble_TFMC::remove_rotation(
   double cm_y = cpu_cm[1];
   double cm_z = cpu_cm[2];
 
-  // Compute angular momentum: L = sum[m_i * (r_i - r_cm) x d_i]
+  // Compute angular momentum using unwrapped coordinates (like LAMMPS)
+  // L = sum[m_i * (r_i - r_cm) x d_i]
   compute_angular_momentum_kernel<<<grid_size, block_size>>>(
     N,
     group_contents_ptr,
     mass.data(),
-    atom.position_per_atom.data(),
-    atom.position_per_atom.data() + atom.number_of_atoms,
-    atom.position_per_atom.data() + 2 * atom.number_of_atoms,
+    atom.unwrapped_position.data(),
+    atom.unwrapped_position.data() + atom.number_of_atoms,
+    atom.unwrapped_position.data() + 2 * atom.number_of_atoms,
     displacements.data(),
     displacements.data() + atom.number_of_atoms,
     displacements.data() + 2 * atom.number_of_atoms,
@@ -620,14 +628,14 @@ void MC_Ensemble_TFMC::remove_rotation(
     angmom_data.data() + 2);
   GPU_CHECK_KERNEL
 
-  // Compute inertia tensor
+  // Compute inertia tensor using unwrapped coordinates (like LAMMPS)
   compute_inertia_tensor_kernel<<<grid_size, block_size>>>(
     N,
     group_contents_ptr,
     mass.data(),
-    atom.position_per_atom.data(),
-    atom.position_per_atom.data() + atom.number_of_atoms,
-    atom.position_per_atom.data() + 2 * atom.number_of_atoms,
+    atom.unwrapped_position.data(),
+    atom.unwrapped_position.data() + atom.number_of_atoms,
+    atom.unwrapped_position.data() + 2 * atom.number_of_atoms,
     cm_x, cm_y, cm_z,
     inertia_data.data());
   GPU_CHECK_KERNEL
@@ -675,15 +683,16 @@ void MC_Ensemble_TFMC::remove_rotation(
   omega[1] = invI[1][0] * cpu_angmom[0] + invI[1][1] * cpu_angmom[1] + invI[1][2] * cpu_angmom[2];
   omega[2] = invI[2][0] * cpu_angmom[0] + invI[2][1] * cpu_angmom[1] + invI[2][2] * cpu_angmom[2];
 
-  // Remove rotation from displacements: d_i -= omega x (r_i - r_cm)
+  // Remove rotation from displacements using unwrapped coordinates (like LAMMPS)
+  // d_i -= omega x (r_i - r_cm)
   remove_rotation_kernel<<<grid_size, block_size>>>(
     N,
     group_contents_ptr,
     omega[0], omega[1], omega[2],
     cm_x, cm_y, cm_z,
-    atom.position_per_atom.data(),
-    atom.position_per_atom.data() + atom.number_of_atoms,
-    atom.position_per_atom.data() + 2 * atom.number_of_atoms,
+    atom.unwrapped_position.data(),
+    atom.unwrapped_position.data() + atom.number_of_atoms,
+    atom.unwrapped_position.data() + 2 * atom.number_of_atoms,
     displacements.data(),
     displacements.data() + atom.number_of_atoms,
     displacements.data() + 2 * atom.number_of_atoms);
@@ -720,6 +729,18 @@ void MC_Ensemble_TFMC::compute(
     initialize_curand_states<<<grid_size, block_size>>>(
       curand_states.data(), N, seed);
     GPU_CHECK_KERNEL
+
+    // Initialize unwrapped_position for accurate rotation removal (like LAMMPS)
+    if (fix_rotation) {
+      if (atom.unwrapped_position.size() == 0) {
+        atom.unwrapped_position.resize(3 * N);
+        atom.unwrapped_position.copy_from_device(atom.position_per_atom.data());
+      }
+      if (atom.position_temp.size() == 0) {
+        atom.position_temp.resize(3 * N);
+        atom.position_temp.copy_from_device(atom.position_per_atom.data());
+      }
+    }
   }
 
   // Perform MC steps

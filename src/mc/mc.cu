@@ -302,6 +302,8 @@ void MC::parse_mc(const char** param, int num_param, std::vector<Group>& groups,
     printf("    kappa = %g\n", kappa);
   }
 
+  // Group parameter checking for canonical, SGC, and VCSGC MC only
+  // tfMC (mc_ensemble_type == 3) handles group keyword internally
   int num_param_before_group = 6;
   if (mc_ensemble_type == 1) {
     num_param_before_group = 7 + num_types_mc * 2;
@@ -309,7 +311,7 @@ void MC::parse_mc(const char** param, int num_param, std::vector<Group>& groups,
     num_param_before_group = 8 + num_types_mc * 2;
   }
 
-  if (num_param > num_param_before_group) {
+  if (mc_ensemble_type != 3 && num_param > num_param_before_group) {
     if (num_param != num_param_before_group + 3) {
       PRINT_INPUT_ERROR("reading error grouping method.\n");
     }
@@ -377,6 +379,9 @@ void MC::parse_mc(const char** param, int num_param, std::vector<Group>& groups,
         printf("    fix rotation: yes\n");
         current_param += 1;
       } else if (strcmp(param[current_param], "group") == 0) {
+        if (current_param + 2 >= num_param) {
+          PRINT_INPUT_ERROR("group keyword for tfmc requires 2 parameters (grouping_method group_id).\n");
+        }
         parse_group(param, num_param, groups, current_param);
         printf("    only for atoms in group %d of grouping method %d.\n", group_id, grouping_method);
         break;

@@ -1,0 +1,15 @@
+# tfMC with both COM and rotation fixed
+# Most physically realistic for isolated systems
+
+potential   nep.txt
+velocity    300
+
+# Fix both COM motion and rotation
+# Recommended for most simulations
+mc          tfmc 100 50 300.0 300.0 0.20 12345 com 1 1 1 rot
+
+ensemble    nve
+time_step   1
+dump_thermo 100
+dump_exyz   1000
+run         100000

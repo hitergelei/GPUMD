@@ -1,0 +1,15 @@
+# tfMC for rare event sampling (large displacement)
+# Use larger d_max for exploring configuration space
+
+potential   nep.txt
+velocity    300
+
+# d_max = 0.5 Angstrom: Larger displacement for barrier crossing
+# Fewer MC trials but larger jumps
+mc          tfmc 50 20 300.0 300.0 0.50 12345 com 1 1 1 rot
+
+ensemble    nve
+time_step   1
+dump_thermo 100
+dump_exyz   1000
+run         50000

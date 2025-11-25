@@ -1,0 +1,32 @@
+# Basic tfMC example for GPUMD
+# Time-stamped Force-bias Monte Carlo simulation
+
+# Load NEP potential
+potential   nep.txt
+
+# Initialize velocities at 300K
+velocity    300
+
+# Run tfMC with NVT ensemble
+# mc tfmc N_md N_mc T_initial T_final d_max seed
+# N_md = 100: Do MC every 100 MD steps
+# N_mc = 50: Perform 50 MC trials each time
+# T = 300K: Temperature
+# d_max = 0.2: Maximum displacement 0.2 Angstrom
+# seed = 12345: Random seed
+mc          tfmc 100 50 300.0 300.0 0.20 12345
+
+# MD integrator (NVE for tfMC)
+ensemble    nve
+
+# Time step for MD part (fs)
+time_step   1
+
+# Output thermodynamic properties every 10 steps
+dump_thermo 100
+
+# Output trajectory every 1000 steps
+dump_exyz   1000
+
+# Run for 100000 steps (1000 MC cycles)
+run         100000

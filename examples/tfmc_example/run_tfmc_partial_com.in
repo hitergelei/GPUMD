@@ -1,0 +1,15 @@
+# tfMC with partial COM constraint
+# Fix only x and y directions, allow z motion
+
+potential   nep.txt
+velocity    300
+
+# com 1 1 0: Fix x and y, free z
+# Useful for surfaces or layered systems
+mc          tfmc 100 50 300.0 300.0 0.20 12345 com 1 1 0
+
+ensemble    nve
+time_step   1
+dump_thermo 100
+dump_exyz   1000
+run         100000

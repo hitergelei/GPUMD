@@ -1,0 +1,16 @@
+# tfMC with group selection
+# Apply MC only to specific atoms (requires group definition in model.xyz)
+
+potential   nep.txt
+velocity    300
+
+# Only apply tfMC to atoms in group 0 of grouping method 0
+# model.xyz must have: Properties=species:S:1:pos:R:3:group:I:1
+# and last column defines group ID for each atom
+mc          tfmc 100 50 300.0 300.0 0.20 12345 group 0 0
+
+ensemble    nve
+time_step   1
+dump_thermo 100
+dump_exyz   1000
+run         100000

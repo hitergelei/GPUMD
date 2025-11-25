@@ -1,0 +1,15 @@
+# tfMC with temperature annealing
+# Start at 500K, cool down to 100K
+
+potential   nep.txt
+velocity    500
+
+# Temperature annealing from 500K to 100K
+# Useful for structure optimization or finding low-energy configurations
+mc          tfmc 100 50 500.0 100.0 0.20 12345 com 1 1 1 rot
+
+ensemble    nve
+time_step   1
+dump_thermo 100
+dump_exyz   1000
+run         100000

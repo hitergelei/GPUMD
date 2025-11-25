@@ -426,6 +426,12 @@ MC_Ensemble_TFMC::MC_Ensemble_TFMC(
     PRINT_INPUT_ERROR("tfMC random seed must be > 0");
   }
 
+  // Overwrite the generic header with tfMC-specific one
+  mc_output.close();
+  mc_output.open("mcmd.out", std::ios::app);
+  mc_output << "# tfMC (time-stamped force-bias Monte Carlo)\n";
+  mc_output << "# num_MD_steps  temperature  num_MC_trials" << std::endl;
+
   printf("Time-stamped Force-bias Monte Carlo (tfMC) initialized:\n");
   printf("  Maximum displacement: %g A\n", d_max);
   printf("  Temperature: %g K\n", temperature);
@@ -444,10 +450,8 @@ void MC_Ensemble_TFMC::find_mass_min(Atom& atom)
   int N = atom.number_of_atoms;
   std::vector<double> cpu_mass(N);
   
-  // Copy mass to CPU to find minimum
-  for (int n = 0; n < N; n++) {
-    cpu_mass[n] = atom.mass[n];
-  }
+  // Copy mass from GPU to CPU to find minimum
+  CHECK(cudaMemcpy(cpu_mass.data(), atom.mass.data(), N * sizeof(double), cudaMemcpyDeviceToHost));
 
   mass_min = cpu_mass[0];
   for (int n = 1; n < N; n++) {
@@ -778,8 +782,12 @@ void MC_Ensemble_TFMC::compute(
     // Note: PBC will be applied by the main MD loop after forces are recalculated
   }
 
-  // Output statistics if needed
+  // Output statistics
   if (md_step % 100 == 0) {
     printf("tfMC step %d completed with %d MC trials\n", md_step, num_steps_mc);
+    fflush(stdout);  // Force flush output buffer
+    // Write to mcmd.out: MD_step, current_temperature, num_MC_trials
+    mc_output << md_step << "  " << temperature << "  " << num_steps_mc << std::endl;
+    mc_output.flush();  // Force flush file output
   }
 }

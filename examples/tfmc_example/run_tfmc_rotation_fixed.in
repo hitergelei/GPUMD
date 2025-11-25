@@ -1,0 +1,15 @@
+# tfMC with rotation removal
+# Useful for molecular systems or preventing rigid-body rotation
+
+potential   nep.txt
+velocity    300
+
+# Remove rotational motion
+# Uses unwrapped coordinates for accurate rotation removal (like LAMMPS)
+mc          tfmc 100 50 300.0 300.0 0.20 12345 rot
+
+ensemble    nve
+time_step   1
+dump_thermo 100
+dump_exyz   1000
+run         100000

@@ -1,0 +1,16 @@
+# tfMC with COM (Center of Mass) motion fixed
+# Useful for preventing system drift
+
+potential   nep.txt
+velocity    300
+
+# Fix COM motion in all three directions
+# mc tfmc N_md N_mc T_i T_f d_max seed com x y z
+# com 1 1 1: Fix COM in x, y, z directions
+mc          tfmc 100 50 300.0 300.0 0.20 12345 com 1 1 1
+
+ensemble    nve
+time_step   1
+dump_thermo 100
+dump_exyz   1000
+run         100000

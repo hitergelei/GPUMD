@@ -1,0 +1,16 @@
+# tfMC with high frequency sampling
+# More frequent MC steps for equilibration
+
+potential   nep.txt
+velocity    300
+
+# N_md = 10: Very frequent MC (every 10 MD steps)
+# N_mc = 100: Many trials per MC step
+# Good for rapid equilibration
+mc          tfmc 10 100 300.0 300.0 0.15 12345 com 1 1 1 rot
+
+ensemble    nve
+time_step   1
+dump_thermo 50
+dump_exyz   1000
+run         50000
